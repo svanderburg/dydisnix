@@ -1,0 +1,101 @@
+#!/bin/bash -e
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    echo "Usage: $0 -s services_expr -i infrastructure_expr [-q qos_expr] [options]"
+    echo "Options:"
+    echo
+    echo "-s,--services       Services Nix expression which describes all components of the distributed system"
+    echo "-i,--infrastructure Infrastructure Nix expression which captures properties of machines in the network"
+    echo "-q,--qos            Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
+    echo "--filter-buildable  Checks for each combination whether the service can be built (may take some time)"
+    echo "--xml               Output XML version of the distribution instead of a Nix expression"
+    echo "--show-trace        Shows a trace of the output"
+    echo "-h,--help           Shows the usage of this command"
+}
+
+# Autoconf settings
+
+export prefix=@prefix@
+
+# Import checks
+
+source @DISNIX_PREFIX@/share/disnix/checks
+
+# Parse valid argument options
+
+PARAMS=`getopt -n $0 -o s:i:q:h -l services:,infrastructure:,qos:,filter-buildable,xml,show-trace,help -- "$@"`
+
+if [ $? != 0 ]
+then
+    showUsage
+    exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -s|--services)	    
+	    servicesFile=`readlink -f $2`
+	    ;;
+	-i|--infrastructure)
+	    infrastructureFile=`readlink -f $2`
+	    ;;
+	-q|--qos)
+	    qosFile=`readlink -f $2`
+	    qosArg="--argstr qosFile \"$(readlink -f $qosFile)\""
+	    ;;
+	--filter-buildable)
+	    filterBuildable=1
+	    ;;
+	--xml)
+	    exprArg="--arg outputExpr false"
+	    ;;
+	--show-trace)
+	    showTrace=1
+	    ;;
+	-h|--help)
+	    showUsage
+	    exit 0
+	    ;;
+    esac
+    
+    shift
+done
+
+# Validate the given options
+
+checkServicesFile
+checkInfrastructureFile
+checkShowTrace
+checkTmpDir
+
+# Execute operation
+
+if [ "$filterBuildable" = "1" ]
+then
+    initialDistribution=`$0 --services $servicesFile --infrastructure $infrastructureFile`
+    initialDistributionXML=`$0 --services $servicesFile --infrastructure $infrastructureFile --xml`
+    filteredDistribution=`mktemp -p $TMPDIR`
+    dydisnix-filter-buildable --services $servicesFile --infrastructure $infrastructureFile --distribution $initialDistribution --distribution-xml $initialDistributionXML > $filteredDistribution
+    initialDistributionArg="--argstr distributionFile $filteredDistribution"
+fi
+
+nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
+          --argstr infrastructureFile "$(readlink -f $infrastructureFile)" \
+	  $initialDistributionArg \
+	  $qosArg \
+	  $exprArg \
+	  $showTraceArg \
+          "$(readlink -f @datadir@/@PACKAGE@/gendist.nix)"
+
+if [ "$filterBuildable" = "1" ]
+then
+    rm -f $filteredDistribution
+fi

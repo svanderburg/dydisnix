@@ -1,0 +1,71 @@
+{pkgs}:
+
+let
+  inherit (builtins) toXML;
+in
+rec {
+  generateServicesXML = services:
+    let servicesXSL = ./services.xsl;
+    in
+    pkgs.stdenv.mkDerivation {
+      name = "services.xml";
+      buildInputs = [ pkgs.libxslt ];
+      buildCommand = ''
+      (
+      cat <<EOF
+      ${builtins.toXML services}
+      EOF
+      ) | xsltproc ${servicesXSL} - > $out
+      '';
+    }
+  ;
+  
+  generateInfrastructureXML = infrastructure:
+    let infrastructureXSL = @DISNIX_PREFIX@/share/disnix/infrastructure.xsl;
+    in
+    pkgs.stdenv.mkDerivation {
+      name = "infrastructure.xml";
+      buildInputs = [ pkgs.libxslt @prefix@ ];
+      buildCommand = ''
+      (
+      cat <<EOF
+      ${builtins.toXML infrastructure}
+      EOF
+      ) | xsltproc ${infrastructureXSL} - > $out
+      '';
+    }
+  ;
+  
+  generateDistributionXML = distribution:
+    let distributionXSL = ./distribution.xsl;
+    in
+    pkgs.stdenv.mkDerivation {
+      name = "distribution.xml";
+      buildInputs = [ pkgs.libxslt ];
+      buildCommand = ''
+      (
+      cat <<EOF
+      ${builtins.toXML distribution}
+      EOF
+      ) | xsltproc ${distributionXSL} - > $out
+      '';
+    }
+  ;
+
+  divide = {strategy, services, infrastructure, distribution, serviceProperty, targetProperty}:
+    import "${(pkgs.stdenv.mkDerivation {
+      name = "distribution.nix";
+      buildInputs = [ @prefix@ ];
+      buildCommand = 
+      ''
+        dydisnix-divide \
+	  --strategy ${strategy} \
+	  --services-xml ${generateServicesXML services} \
+	  --infrastructure-xml ${generateInfrastructureXML infrastructure} \
+	  --distribution-xml ${generateDistributionXML distribution} \
+	  --service-property ${serviceProperty} \
+	  --target-property ${targetProperty} \
+	  > $out
+      '';
+    })}";
+}

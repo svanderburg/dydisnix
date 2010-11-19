@@ -1,0 +1,20 @@
+{servicesFile, infrastructureFile, distributionFile, serviceName, targetName}:
+
+let
+  inherit (builtins) getAttr;
+
+  servicesFun = import servicesFile;
+  infrastructure = import infrastructureFile;
+  distributionFun = import distributionFile;
+  
+  lib = import @DISNIX_PREFIX@/share/disnix/lib.nix;
+  
+  services = servicesFun { system = builtins.currentSystem; distribution = null; };
+  distribution = distributionFun { inherit infrastructure; };
+  
+  servicesWithTargets = lib.augumentTargetsInDependsOn distribution services;
+  target = getAttr targetName infrastructure;
+  system = if target ? system then target.system else builtins.currentSystem;
+  service = getAttr serviceName (servicesFun { inherit distribution system; });
+in
+if service ? dependsOn && service.dependsOn != {} then service.pkg (service.dependsOn) else service.pkg

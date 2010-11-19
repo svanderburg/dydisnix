@@ -1,0 +1,31 @@
+#ifndef __SERVICEPROPERTIES_H
+#define __SERVICEPROPERTIES_H
+#include <glib.h>
+
+typedef struct
+{
+    gchar *name;
+    
+    gchar *value;
+}
+ServiceProperty;
+
+typedef struct
+{
+    gchar *name;
+    
+    GArray *property;
+}
+Service;
+
+GArray *create_service_property_array(gchar *services_xml_file);
+
+void delete_service_property_array(GArray *service_property_array);
+
+void print_service_property_array(GArray *service_property_array);
+
+gint service_index(GArray *service_property_array, gchar *name);
+
+gint service_property_index(Service *service, gchar *name);
+
+#endif

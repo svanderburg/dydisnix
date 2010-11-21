@@ -4,11 +4,11 @@
 #define _GNU_SOURCE
 #include <string.h>
 
-static void print_usage()
+static void print_usage(char *command)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "dydisnix-divide --strategy strategy --services-xml services.xml --infrastructure-xml infrastructure.xml --distribution-xml distribution.xml --service-property serviceProperty --target-property targetProperty\n");
-    fprintf(stderr, "dydisnix-divide {-h | --help}\n");
+    fprintf(stderr, "%s --strategy strategy --services-xml services.xml --infrastructure-xml infrastructure.xml --distribution-xml distribution.xml --service-property serviceProperty --target-property targetProperty\n", command);
+    fprintf(stderr, "%s {-h | --help}\n", command);
 }
 
 int main(int argc, char *argv[])
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 		target_property = optarg;
 		break;
 	    case 'h':
-		print_usage();
+		print_usage(argv[0]);
 		return 0;
 	}
     }

@@ -3,11 +3,11 @@
 #include <getopt.h>
 #define _GNU_SOURCE
 
-static void print_usage()
+static void print_usage(char *command)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "dydisnix-filter-buildable --services services.nix --infrastructure infrastructure.nix --distribution distribution.nix --distribution-xml distribution.xml\n");
-    fprintf(stderr, "dydisnix-filter-buildable {-h | --help}\n");
+    fprintf(stderr, "%s --services services.nix --infrastructure infrastructure.nix --distribution distribution.nix --distribution-xml distribution.xml\n", command);
+    fprintf(stderr, "%s {-h | --help}\n", command);
 }
 
 int main(int argc, char *argv[])
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 		distribution_xml = optarg;
 		break;
 	    case 'h':
-		print_usage();
+		print_usage(argv[0]);
 		return 0;
 	}
     }

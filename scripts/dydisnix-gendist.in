@@ -12,6 +12,7 @@ showUsage()
     echo "-q,--qos            Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
     echo "--filter-buildable  Checks for each combination whether the service can be built (may take some time)"
     echo "--xml               Output XML version of the distribution instead of a Nix expression"
+    echo "--no-out-link       Do not create a 'result' symlink"
     echo "--show-trace        Shows a trace of the output"
     echo "-h,--help           Shows the usage of this command"
 }
@@ -26,7 +27,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`getopt -n $0 -o s:i:q:h -l services:,infrastructure:,qos:,filter-buildable,xml,show-trace,help -- "$@"`
+PARAMS=`getopt -n $0 -o s:i:q:h -l services:,infrastructure:,qos:,filter-buildable,xml,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -57,6 +58,9 @@ do
 	--xml)
 	    exprArg="--arg outputExpr false"
 	    ;;
+	--no-out-link)
+	    noOutLink=1
+	    ;;
 	--show-trace)
 	    showTrace=1
 	    ;;
@@ -73,6 +77,7 @@ done
 
 checkServicesFile
 checkInfrastructureFile
+checkNoOutLink
 checkShowTrace
 checkTmpDir
 
@@ -92,6 +97,7 @@ nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
 	  $initialDistributionArg \
 	  $qosArg \
 	  $exprArg \
+	  $noOutLinkArg \
 	  $showTraceArg \
           "$(readlink -f @datadir@/@PACKAGE@/gendist.nix)"
 

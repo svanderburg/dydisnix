@@ -50,7 +50,9 @@ test "$localstatedir" = '${prefix}/var' && localstatedir=/nix/var
 # Output
 AC_CONFIG_FILES([
 Makefile
+scripts/dydisnix-env
 scripts/dydisnix-gendist
+scripts/dydisnix-self-adapt
 scripts/Makefile
 src/Makefile
 src/filter-buildable/Makefile

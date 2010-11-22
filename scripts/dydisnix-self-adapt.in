@@ -1,0 +1,101 @@
+#!/bin/bash -e
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    echo "Usage: $0 -s services_expr -q qos_expr [options]"
+    echo "Options:"
+    echo
+    echo "-s,--services  Services Nix expression which describes all components of the distributed system"
+    echo "-q,--qos       Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
+    echo "--interval     Sleep interval (defaults to 1)"
+    echo "--infragen     Path to the infrastructure generator"
+    echo "-h,--help      Shows the usage of this command"
+}
+
+# Import checks
+
+source @DISNIX_PREFIX@/share/disnix/checks
+
+# Parse valid argument options
+
+PARAMS=`getopt -n $0 -o s:q:h -l services:,qos:,interval:,infragen:,help -- "$@"`
+
+if [ $? != 0 ]
+then
+    showUsage
+    exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -s|--services)	    
+	    servicesFile=`readlink -f $2`
+	    ;;
+	-q|--qos)
+	    qosFile=`readlink -f $2`
+	    ;;
+	--interval)
+	    interval=$2
+	    ;;
+	--infragen)
+	    infragen=$2
+	    ;;
+	-h|--help)
+	    showUsage
+	    exit 0
+	    ;;
+    esac
+    
+    shift
+done
+
+# Validate the given options
+
+checkServicesFile
+
+if [ "$qosFile" = "" ]
+then
+    echo "ERROR: A quality of service model must be specified!" >&2
+    exit 1
+fi
+
+if [ "$interval" = ""]
+then
+    interval=1
+fi
+
+if [ "$infragen" = "" ]
+then
+    if [ "$DYDISNIX_INFRAGEN" = "" ]
+    then
+	echo "ERROR: An infrastructure generator must be specified!" >&2
+	exit 1
+    else
+	infragen=$DYDISNIX_INFRAGEN
+    fi
+fi
+
+checkTmpDir
+
+# Execute operation
+
+while true
+do
+    $infragen > $TMPDIR/infrastructure.nix
+    
+    if [ ! -f $TMPDIR/previous_infrastructure.nix ] || [ "$(cat $TMPDIR/previous_infrastructure.nix | sha256sum -)" != "$(cat $TMPDIR/infrastructure.nix | sha256sum -)" ]
+    then
+	distribution=`dydisnix-gendist --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --qos $qosFile`
+	disnix-env --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --distribution $distribution
+	mv $TMPDIR/infrastructure.nix $TMPDIR/previous_infrastructure.nix
+    fi
+        
+    sleep $interval
+done

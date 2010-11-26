@@ -10,6 +10,7 @@ showUsage()
     echo "-s,--services       Services Nix expression which describes all components of the distributed system"
     echo "-q,--qos            Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
     echo "-i,--infrastructure Infrastructure Nix expression which captures properties of machines in the network"
+    echo "--augument          Nix epxression which auguments additional attributes into the infrastructure model"
     echo "--infragen          Path to the infrastructure generator"
     echo "-h,--help           Shows the usage of this command"
 }
@@ -20,7 +21,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`getopt -n $0 -o s:i:q:h -l services:,infrastructure:,qos:,infragen:,help -- "$@"`
+PARAMS=`getopt -n $0 -o s:i:q:h -l services:,infrastructure:,qos:,augument:,infragen:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -44,8 +45,8 @@ do
 	-i|--infrastructure)
 	    infrastructureFile=`readlink -f $2`
 	    ;;
-	--interval)
-	    interval=$2
+	--augument)
+	    augumentFile=`readlink -f $2`
 	    ;;
 	--infragen)
 	    infragen=$2
@@ -88,6 +89,11 @@ if [ "$infrastructureFile" = "" ]
 then
     $infragen > $TMPDIR/infrastructure.nix
     infrastructureFile=$TMPDIR/infrastructure.nix
+fi
+
+if [ "$augumentFile" != "" ]
+then
+    infrastructureFile=`dydisnix-augument-infra --infrastructure $infrastructureFile --augument $augumentFile`
 fi
 
 distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile`

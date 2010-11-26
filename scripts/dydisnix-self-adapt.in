@@ -9,6 +9,7 @@ showUsage()
     echo
     echo "-s,--services  Services Nix expression which describes all components of the distributed system"
     echo "-q,--qos       Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
+    echo "--augument     Nix epxression which auguments additional attributes into the infrastructure model"
     echo "--interval     Sleep interval (defaults to 1)"
     echo "--infragen     Path to the infrastructure generator"
     echo "-h,--help      Shows the usage of this command"
@@ -20,7 +21,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`getopt -n $0 -o s:q:h -l services:,qos:,interval:,infragen:,help -- "$@"`
+PARAMS=`getopt -n $0 -o s:q:h -l services:,qos:,augument:,interval:,infragen:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -40,6 +41,9 @@ do
 	    ;;
 	-q|--qos)
 	    qosFile=`readlink -f $2`
+	    ;;
+	--augument)
+	    augumentFile=`readlink -f $2`
 	    ;;
 	--interval)
 	    interval=$2
@@ -66,7 +70,7 @@ then
     exit 1
 fi
 
-if [ "$interval" = ""]
+if [ "$interval" = "" ]
 then
     interval=1
 fi
@@ -89,6 +93,12 @@ checkTmpDir
 while true
 do
     $infragen > $TMPDIR/infrastructure.nix
+    
+    if [ "$augumentFile" != "" ]
+    then
+	infrastructureFile=`dydisnix-augument-infra --infrastructure $infrastructureFile --augument $augumentFile`
+	mv $infrastructureFile $TMPDIR/infrastructure.nix
+    fi
     
     if [ ! -f $TMPDIR/previous_infrastructure.nix ] || [ "$(cat $TMPDIR/previous_infrastructure.nix | sha256sum -)" != "$(cat $TMPDIR/infrastructure.nix | sha256sum -)" ]
     then

@@ -68,4 +68,14 @@ rec {
 	  > $out
       '';
     })}";
+
+  multiwaycut = {distribution}:
+    import "${(pkgs.stdenv.mkDerivation {
+      name = "distribution.nix";
+      buildInputs = [ @prefix@ ];
+      buildCommand =
+      ''
+        dydisnix-multiwaycut ${generateDistributionXML distribution} > $out
+      '';
+    })}";
 }

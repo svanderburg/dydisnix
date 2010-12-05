@@ -1,1 +1,1 @@
-SUBDIRS = libservices libinfproperties libmapping filter-buildable divide
+SUBDIRS = libservices libinfproperties libmapping filter-buildable divide multiwaycut

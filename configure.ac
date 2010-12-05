@@ -58,6 +58,7 @@ scripts/Makefile
 src/Makefile
 src/filter-buildable/Makefile
 src/divide/Makefile
+src/multiwaycut/Makefile
 src/libmapping/Makefile
 src/libservices/Makefile
 src/libinfproperties/Makefile

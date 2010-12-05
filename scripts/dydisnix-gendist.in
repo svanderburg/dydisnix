@@ -50,7 +50,7 @@ do
 	    ;;
 	-q|--qos)
 	    qosFile=`readlink -f $2`
-	    qosArg="--argstr qosFile \"$(readlink -f $qosFile)\""
+	    qosArg="--argstr qosFile $(readlink -f $qosFile)"
 	    ;;
 	--filter-buildable)
 	    filterBuildable=1

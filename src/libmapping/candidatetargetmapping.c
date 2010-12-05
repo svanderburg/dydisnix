@@ -167,3 +167,25 @@ void print_expr_of_candidate_target_array(GArray *candidate_target_array)
     
     g_print("}\n");
 }
+
+int distribution_item_index(GArray *candidate_target_array, gchar *service)
+{
+    gint left = 0;
+    gint right = candidate_target_array->len - 1;
+    
+    while(left <= right)
+    {
+	gint mid = (left + right) / 2;
+	DistributionItem *mid_distribution_item = g_array_index(candidate_target_array, DistributionItem*, mid);
+        gint status = g_strcmp0(mid_distribution_item->service, service);
+	
+	if(status == 0)
+            return mid; /* Return index of the found service */
+	else if(status > 0)
+	    right = mid - 1;
+	else if(status < 0)
+	    left = mid + 1;
+    }
+    
+    return -1; /* service not found */
+}

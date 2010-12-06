@@ -78,4 +78,19 @@ rec {
         dydisnix-multiwaycut ${generateDistributionXML distribution} > $out
       '';
     })}";
+
+  minsetcover = {services, infrastructure, distribution, targetProperty}:
+    import "${(pkgs.stdenv.mkDerivation {
+      name = "distribution.nix";
+      buildInputs = [ @prefix@ ];
+      buildCommand =
+      ''
+        dydisnix-minsetcover \
+	  --services-xml ${generateServicesXML services} \
+	  --infrastructure-xml ${generateInfrastructureXML infrastructure} \
+	  --distribution-xml ${generateDistributionXML distribution} \
+	  --target-property ${targetProperty} \
+	  > $out
+      '';
+    })}";
 }

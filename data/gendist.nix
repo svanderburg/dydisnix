@@ -1,8 +1,14 @@
-{servicesFile, infrastructureFile, distributionFile ? null, qosFile ? null, outputExpr ? true}:
+{ servicesFile
+, infrastructureFile
+, distributionFile ? null
+, qosFile ? null
+, outputExpr ? true
+, nixpkgs ? builtins.getEnv "NIXPKGS_ALL"
+}:
 
 let
   # Dependencies
-  pkgs = import (builtins.getEnv "NIXPKGS_ALL") {};
+  pkgs = import nixpkgs {};
   filters = import ./filters.nix { inherit pkgs; };
   distributionXSL = if outputExpr then ./distribution_expr.xsl else ./distribution.xsl;
   

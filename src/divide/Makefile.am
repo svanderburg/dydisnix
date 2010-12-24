@@ -1,6 +1,7 @@
 AM_CPPFLAGS = -ggdb
 
 bin_PROGRAMS = dydisnix-divide
+noinst_HEADERS = divide.h
 
 dydisnix_divide_SOURCES = divide.c main.c
 dydisnix_divide_LDADD = ../libservices/libservices.la ../libinfproperties/libinfproperties.la ../libmapping/libmapping.la

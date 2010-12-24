@@ -18,7 +18,7 @@ let
   qosFun = import qosFile;
   
   # Evaluations
-  services = servicesFun { distribution = null; system = null; };
+  services = servicesFun { distribution = null; system = null; pkgs = null; };
   
   serviceProperties = filters.filterDerivations services;
   

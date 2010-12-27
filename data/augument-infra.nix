@@ -1,3 +1,5 @@
 {infrastructure, augumentFun}:
 
-augumentFun { inherit infrastructure; }
+let pkgs = import (builtins.getEnv "NIXPKGS_ALL") {};
+in
+augumentFun { inherit infrastructure pkgs; }

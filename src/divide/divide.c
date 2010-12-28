@@ -85,7 +85,10 @@ void divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gc
 	if(strategy == STRATEGY_HIGHEST_BIDDER)
 	{
 	    if(select_target != NULL)
+	    {
+		substract_target_value(select_target, infrastructure_property, atoi(service_prop->value));
 		g_array_append_val(result_item->targets, select_target->name);
+	    }
 	}
 	
 	g_array_append_val(result_array, result_item);

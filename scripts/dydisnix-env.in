@@ -72,12 +72,12 @@ fi
 
 if [ "$infragen" = "" ]
 then
-    if [ "$DYDISNIX_INFRAGEN" = "" ] && [ "$infrastructureFile" = "" ]
+    if [ "$DYDISNIX_GENINFRA" = "" ] && [ "$infrastructureFile" = "" ]
     then
 	echo "ERROR: Either an infrastructure generator or an infrastructure expression must be specified!" >&2
 	exit 1
     else
-	infragen=$DYDISNIX_INFRAGEN
+	infragen=$DYDISNIX_GENINFRA
     fi
 fi
 

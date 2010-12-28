@@ -80,9 +80,25 @@ void divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gc
 			select_target = target;
 		}
 	    }
+	    else if(strategy == STRATEGY_LOWEST_BIDDER)
+	    {
+		if(select_target == NULL)
+		{
+		    if(atoi(service_prop->value) <= atoi(infrastructure_prop->value))
+			select_target = target;
+		}
+		else
+		{
+		    gint select_infrastructure_prop_index = infrastructure_property_index(select_target, infrastructure_property);
+		    InfrastructureProperty *select_infrastructure_prop = g_array_index(select_target->property, InfrastructureProperty*, select_infrastructure_prop_index);
+		    
+		    if(atoi(infrastructure_prop->value) < atoi(select_infrastructure_prop->value))
+			select_target = target;
+		}
+	    }
 	}
 	
-	if(strategy == STRATEGY_HIGHEST_BIDDER)
+	if(strategy == STRATEGY_HIGHEST_BIDDER || strategy == STRATEGY_LOWEST_BIDDER)
 	{
 	    if(select_target != NULL)
 	    {

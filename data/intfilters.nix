@@ -1,7 +1,7 @@
 {lib}:
 
 rec {
-  inherit (builtins) listToAttrs attrNames getAttr;
+  inherit (builtins) listToAttrs attrNames getAttr hasAttr;
   inherit (lib) filter elem;
 
   filterDerivations = services:
@@ -26,7 +26,7 @@ rec {
     ) (attrNames services))
   ;
   
-  filterDistributionMapAttributeOnList = {distribution, services, infrastructure, serviceProperty, targetPropertyList}:
+  mapAttrOnList = {distribution, services, infrastructure, serviceProperty, targetPropertyList}:
     listToAttrs (map (serviceName:
       { name = serviceName;
         value = 
@@ -45,7 +45,7 @@ rec {
     ) (attrNames distribution))
   ;
   
-  filterDistributionMapListOnAttribute = {distribution, services, infrastructure, servicePropertyList, targetProperty}:
+  mapListOnAttr = {distribution, services, infrastructure, servicePropertyList, targetProperty}:
     listToAttrs (map (serviceName:
       { name = serviceName;
         value = 
@@ -65,7 +65,7 @@ rec {
     ) (attrNames distribution))
   ;
   
-  filterDistributionMapAttributes = {distribution, services, infrastructure, serviceProperty, targetProperty}:
+  mapAttrOnAttr = {distribution, services, infrastructure, serviceProperty, targetProperty}:
     listToAttrs (map (serviceName:
       { name = serviceName;
         value =
@@ -79,6 +79,23 @@ rec {
 	    in
 	    servicePropertyValue == targetPropertyValue
 	  ) targets;
+      }
+    ) (attrNames distribution))
+  ;
+  
+  mapStatefulToPrevious = {services, distribution, previousDistribution}:
+    listToAttrs (map (serviceName:
+      { name = serviceName;
+        value =
+          let
+            service = getAttr serviceName services;
+	    targets = getAttr serviceName distribution;
+	    previousTargets = if hasAttr serviceName previousDistribution then getAttr serviceName previousDistribution
+	                      else targets;
+          in
+          if service ? stateful && service.stateful then
+	    filter (targetName: elem targetName previousTargets) targets
+	  else targets;
       }
     ) (attrNames distribution))
   ;

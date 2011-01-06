@@ -7,12 +7,14 @@ showUsage()
     echo "Usage: $0 -s services_expr -q qos_expr [-i infrastructure_expr] [options]"
     echo "Options:"
     echo
-    echo "-s,--services       Services Nix expression which describes all components of the distributed system"
-    echo "-q,--qos            Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
-    echo "-i,--infrastructure Infrastructure Nix expression which captures properties of machines in the network"
-    echo "--augument          Nix epxression which auguments additional attributes into the infrastructure model"
-    echo "--infragen          Path to the infrastructure generator"
-    echo "-h,--help           Shows the usage of this command"
+    echo "-s,--services               Services Nix expression which describes all components of the distributed system"
+    echo "-q,--qos                    Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
+    echo "-i,--infrastructure         Infrastructure Nix expression which captures properties of machines in the network"
+    echo "--augument                  Nix epxression which auguments additional attributes into the infrastructure model"
+    echo "-p,--profile                Name of the profile that is used for this system. Defaults to: default"
+    echo "--coordinator-profile-path  Path where to store the coordinator profile generations"
+    echo "--geninfra                  Path to the infrastructure generator"
+    echo "-h,--help                   Shows the usage of this command"
 }
 
 # Import checks
@@ -21,7 +23,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`getopt -n $0 -o s:i:q:h -l services:,infrastructure:,qos:,augument:,infragen:,help -- "$@"`
+PARAMS=`getopt -n $0 -o s:i:q:p:h -l services:,infrastructure:,qos:,augument:,profile:,coordinator-profile-path:,geninfra:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -48,8 +50,14 @@ do
 	--augument)
 	    augumentFile=`readlink -f $2`
 	    ;;
-	--infragen)
-	    infragen=$2
+	-p|--profile)
+	    profileArg="--profile $2"
+	    ;;
+	--coordinator-profile-path)
+	    coordinatorProfilePathArg="--coordinator-profile-path $2"
+	    ;;
+	--geninfra)
+	    geninfra=$2
 	    ;;
 	-h|--help)
 	    showUsage
@@ -70,14 +78,14 @@ then
     exit 1
 fi
 
-if [ "$infragen" = "" ]
+if [ "$geninfra" = "" ]
 then
     if [ "$DYDISNIX_GENINFRA" = "" ] && [ "$infrastructureFile" = "" ]
     then
 	echo "ERROR: Either an infrastructure generator or an infrastructure expression must be specified!" >&2
 	exit 1
     else
-	infragen=$DYDISNIX_GENINFRA
+	geninfra=$DYDISNIX_GENINFRA
     fi
 fi
 
@@ -87,14 +95,14 @@ checkTmpDir
 
 if [ "$infrastructureFile" = "" ]
 then
-    $infragen > $TMPDIR/infrastructure.nix
+    $geninfra > $TMPDIR/infrastructure.nix
     infrastructureFile=$TMPDIR/infrastructure.nix
 fi
 
 if [ "$augumentFile" != "" ]
 then
-    infrastructureFile=`dydisnix-augument-infra --infrastructure $infrastructureFile --augument $augumentFile`
+    infrastructureFile=`dydisnix-augument-infra --infrastructure $infrastructureFile --augument $augumentFile $profileArg $coordinatorProfilePathArg`
 fi
 
-distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile`
-disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution
+distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg`
+disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg

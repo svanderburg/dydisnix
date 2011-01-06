@@ -2,4 +2,4 @@
 
 let pkgs = import (builtins.getEnv "NIXPKGS_ALL") {};
 in
-augumentFun { inherit infrastructure pkgs; }
+augumentFun { inherit infrastructure; inherit (pkgs) lib; }

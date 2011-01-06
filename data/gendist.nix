@@ -4,6 +4,7 @@
 , qosFile ? null
 , outputExpr ? true
 , nixpkgs ? builtins.getEnv "NIXPKGS_ALL"
+, coordinatorProfile ? null
 }:
 
 let
@@ -27,7 +28,13 @@ let
     else import distributionFile
   ;
   
-  qos = if qosFile == null then initialDistribution else qosFun { services = serviceProperties; inherit infrastructure initialDistribution filters; };
+  previousDistribution =
+    if coordinatorProfile == null then null
+    else
+      filters.generatePreviousDistribution coordinatorProfile
+  ;
+  
+  qos = if qosFile == null then initialDistribution else qosFun { services = serviceProperties; inherit infrastructure initialDistribution previousDistribution filters; };
 in
 pkgs.stdenv.mkDerivation {
   name = "distribution.${if outputExpr then "nix" else "xml"}";

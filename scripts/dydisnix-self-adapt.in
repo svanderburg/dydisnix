@@ -7,12 +7,14 @@ showUsage()
     echo "Usage: $0 -s services_expr -q qos_expr [options]"
     echo "Options:"
     echo
-    echo "-s,--services  Services Nix expression which describes all components of the distributed system"
-    echo "-q,--qos       Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
-    echo "--augument     Nix epxression which auguments additional attributes into the infrastructure model"
-    echo "--interval     Sleep interval (defaults to 1)"
-    echo "--infragen     Path to the infrastructure generator"
-    echo "-h,--help      Shows the usage of this command"
+    echo "-s,--services               Services Nix expression which describes all components of the distributed system"
+    echo "-q,--qos                    Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
+    echo "--augument                  Nix epxression which auguments additional attributes into the infrastructure model"
+    echo "-p,--profile                Name of the profile that is used for this system. Defaults to: default"
+    echo "--coordinator-profile-path  Path where to store the coordinator profile generations"
+    echo "--interval                  Sleep interval (defaults to 1)"
+    echo "--geninfra                  Path to the infrastructure generator"
+    echo "-h,--help                   Shows the usage of this command"
 }
 
 # Import checks
@@ -21,7 +23,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`getopt -n $0 -o s:q:h -l services:,qos:,augument:,interval:,infragen:,help -- "$@"`
+PARAMS=`getopt -n $0 -o s:q:p:h -l services:,qos:,augument:,interval:,profile:,coordinator-profile-path:,geninfra:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -48,8 +50,14 @@ do
 	--interval)
 	    interval=$2
 	    ;;
-	--infragen)
-	    infragen=$2
+	-p|--profile)
+	    profileArg="--profile $2"
+	    ;;
+	--coordinator-profile-path)
+	    coordinatorProfilePathArg="--coordinator-profile-path $2"
+	    ;;
+	--geninfra)
+	    geninfra=$2
 	    ;;
 	-h|--help)
 	    showUsage
@@ -75,14 +83,14 @@ then
     interval=1
 fi
 
-if [ "$infragen" = "" ]
+if [ "$geninfra" = "" ]
 then
     if [ "$DYDISNIX_GENINFRA" = "" ]
     then
 	echo "ERROR: An infrastructure generator must be specified!" >&2
 	exit 1
     else
-	infragen=$DYDISNIX_GENINFRA
+	geninfra=$DYDISNIX_GENINFRA
     fi
 fi
 
@@ -92,7 +100,7 @@ checkTmpDir
 
 while true
 do
-    $infragen > $TMPDIR/infrastructure.nix
+    $geninfra > $TMPDIR/infrastructure.nix
     
     if [ "$augumentFile" != "" ]
     then
@@ -102,8 +110,8 @@ do
     
     if [ ! -f $TMPDIR/previous_infrastructure.nix ] || [ "$(cat $TMPDIR/previous_infrastructure.nix | sha256sum -)" != "$(cat $TMPDIR/infrastructure.nix | sha256sum -)" ]
     then
-	distribution=`dydisnix-gendist --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --qos $qosFile`
-	disnix-env --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --distribution $distribution
+	distribution=`dydisnix-gendist --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --qos $qosFile $profileArg $coordinatorProfilePathArg`
+	disnix-env --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --distribution $distribution $profileArg $coordinatorProfilePathArg
 	mv $TMPDIR/infrastructure.nix $TMPDIR/previous_infrastructure.nix
     fi
         

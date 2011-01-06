@@ -7,14 +7,16 @@ showUsage()
     echo "Usage: $0 -s services_expr -i infrastructure_expr [-q qos_expr] [options]"
     echo "Options:"
     echo
-    echo "-s,--services       Services Nix expression which describes all components of the distributed system"
-    echo "-i,--infrastructure Infrastructure Nix expression which captures properties of machines in the network"
-    echo "-q,--qos            Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
-    echo "--filter-buildable  Checks for each combination whether the service can be built (may take some time)"
-    echo "--xml               Output XML version of the distribution instead of a Nix expression"
-    echo "--no-out-link       Do not create a 'result' symlink"
-    echo "--show-trace        Shows a trace of the output"
-    echo "-h,--help           Shows the usage of this command"
+    echo "-s,--services               Services Nix expression which describes all components of the distributed system"
+    echo "-i,--infrastructure         Infrastructure Nix expression which captures properties of machines in the network"
+    echo "-q,--qos                    Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
+    echo "--filter-buildable          Checks for each combination whether the service can be built (may take some time)"
+    echo "--xml                       Output XML version of the distribution instead of a Nix expression"
+    echo "-p,--profile                Name of the profile that is used for this system. Defaults to: default"
+    echo "--coordinator-profile-path  Path where to store the coordinator profile generations"
+    echo "--no-out-link               Do not create a 'result' symlink"
+    echo "--show-trace                Shows a trace of the output"
+    echo "-h,--help                   Shows the usage of this command"
 }
 
 # Autoconf settings
@@ -27,7 +29,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`getopt -n $0 -o s:i:q:h -l services:,infrastructure:,qos:,filter-buildable,xml,no-out-link,show-trace,help -- "$@"`
+PARAMS=`getopt -n $0 -o s:i:q:p:h -l services:,infrastructure:,qos:,filter-buildable,xml,profile:,coordinator-profile-path:,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -58,6 +60,12 @@ do
 	--xml)
 	    exprArg="--arg outputExpr false"
 	    ;;
+	-p|--profile)
+	    profile=$2
+	    ;;
+	--coordinator-profile-path)
+	    coordinatorProfilePath=$2
+	    ;;
 	--no-out-link)
 	    noOutLink=1
 	    ;;
@@ -81,6 +89,24 @@ checkNoOutLink
 checkShowTrace
 checkTmpDir
 
+if [ "$profile" = "" ]
+then
+    profile="default"
+fi
+
+if [ "$coordinatorProfilePath" = "" ]
+then
+    coordinatorProfilePath="/nix/var/nix/profiles/per-user/$(whoami)/disnix-coordinator"
+fi
+
+if [ -f $coordinatorProfilePath/$profile ]
+then
+    # Symlinks are copied verbatim into the Nix store, so dereference it first
+    coordinatorProfile=`mktemp -p $TMPDIR`
+    cp $coordinatorProfilePath/$profile $coordinatorProfile
+    coordinatorProfileArg="--arg coordinatorProfile $coordinatorProfile"
+fi
+
 # Execute operation
 
 if [ "$filterBuildable" = "1" ]
@@ -97,6 +123,7 @@ nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
 	  $initialDistributionArg \
 	  $qosArg \
 	  $exprArg \
+	  $coordinatorProfileArg \
 	  $noOutLinkArg \
 	  $showTraceArg \
           "$(readlink -f @datadir@/@PACKAGE@/gendist.nix)"
@@ -105,3 +132,5 @@ if [ "$filterBuildable" = "1" ]
 then
     rm -f $filteredDistribution
 fi
+
+rm -f $coordinatorProfile

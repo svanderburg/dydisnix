@@ -84,6 +84,8 @@ rec {
   ;
   
   mapStatefulToPrevious = {services, distribution, previousDistribution}:
+    if previousDistribution == null then distribution
+    else
     listToAttrs (map (serviceName:
       { name = serviceName;
         value =

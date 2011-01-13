@@ -78,6 +78,5 @@ int main(int argc, char *argv[])
     }
 
     /* Execute operation */
-    filter_buildable(services, infrastructure, distribution, distribution_xml);
-    return 0;
+    return filter_buildable(services, infrastructure, distribution, distribution_xml);
 }

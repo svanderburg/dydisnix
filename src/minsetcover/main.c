@@ -79,6 +79,5 @@ int main(int argc, char *argv[])
     }
     
     /* Execute operation */
-    minsetcover(services_xml, infrastructure_xml, distribution_xml, target_property);
-    return 0;
+    return minsetcover(services_xml, infrastructure_xml, distribution_xml, target_property);
 }

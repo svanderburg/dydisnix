@@ -124,36 +124,47 @@ static void fix_unmapped_services(GArray *initial_candidate_target_array, GArray
     }
 }
 
-void multiwaycut(gchar *distribution_xml)
+int multiwaycut(gchar *distribution_xml)
 {
     GArray *candidate_target_array = create_candidate_target_array(distribution_xml);
-    GArray *target_mapping_array = create_target_mapping_array(candidate_target_array);
-    GArray *filtered; 
-    GArray *distmapping;
-    unsigned int i;
     
-    filtered = filter_cuts(target_mapping_array);
-    
-    discard_heaviest_cut(filtered);
-    
-    distmapping = create_candidate_target_mapping_from(filtered);
-    
-    fix_unmapped_services(candidate_target_array, distmapping);
-    
-    print_expr_of_candidate_target_array(distmapping);
-    
-    /* Cleanup */
-    
-    for(i = 0; i < distmapping->len; i++)
+    if(candidate_target_array == NULL)
     {
-	DistributionItem *item = g_array_index(distmapping, DistributionItem*, i);
-	g_array_free(item->targets, TRUE);
-	g_free(item);
+	g_printerr("Error opening candidate target host mapping!\n");
+	return 1;
     }
+    else
+    {
+	GArray *target_mapping_array = create_target_mapping_array(candidate_target_array);
+	GArray *filtered; 
+	GArray *distmapping;
+	unsigned int i;
     
-    g_array_free(distmapping, TRUE);
+	filtered = filter_cuts(target_mapping_array);
     
-    delete_target_mapping_array(filtered);
-    delete_target_mapping_array(target_mapping_array);
-    delete_candidate_target_array(candidate_target_array);
+	discard_heaviest_cut(filtered);
+    
+	distmapping = create_candidate_target_mapping_from(filtered);
+    
+	fix_unmapped_services(candidate_target_array, distmapping);
+    
+	print_expr_of_candidate_target_array(distmapping);
+    
+	/* Cleanup */
+    
+	for(i = 0; i < distmapping->len; i++)
+	{
+	    DistributionItem *item = g_array_index(distmapping, DistributionItem*, i);
+	    g_array_free(item->targets, TRUE);
+	    g_free(item);
+	}
+    
+	g_array_free(distmapping, TRUE);
+    
+	delete_target_mapping_array(filtered);
+	delete_target_mapping_array(target_mapping_array);
+	delete_candidate_target_array(candidate_target_array);
+	
+	return 0;
+    }
 }

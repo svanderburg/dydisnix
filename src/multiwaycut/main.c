@@ -41,7 +41,6 @@ int main(int argc, char *argv[])
     else
     {
 	/* Execute operation */
-	multiwaycut(argv[optind]);
-	return 0;
+	return multiwaycut(argv[optind]);
     }
 }

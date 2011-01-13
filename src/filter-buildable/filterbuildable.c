@@ -33,34 +33,47 @@ static void delete_filtered_target_array(GArray *filtered_target_array)
     g_array_free(filtered_target_array, TRUE);
 }
 
-void filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, char *distribution_xml)
+int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, char *distribution_xml)
 {
     unsigned int i;
-    GArray *filtered_target_array = g_array_new(FALSE, FALSE, sizeof(DistributionItem*));
     GArray *candidate_target_array = create_candidate_target_array(distribution_xml);
-    
-    for(i = 0; i < candidate_target_array->len; i++)
+
+    if(candidate_target_array == NULL)
     {
-	DistributionItem *filter_item = g_malloc(sizeof(DistributionItem));
-        DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
-	unsigned int j;
-	
-	filter_item->service = item->service;
-	filter_item->targets = g_array_new(FALSE, FALSE, sizeof(gchar*));
-	
-	for(j = 0; j < item->targets->len; j++)
-	{
-	    gchar *target = g_array_index(item->targets, gchar*, j);
-	    
-	    if(instantiate(services_expr, infrastructure_expr, distribution_expr, item->service, target) == 0)
-	        g_array_append_val(filter_item->targets, target);
-	}
-	
-	g_array_append_val(filtered_target_array, filter_item);
+	g_printerr("Error opening candidate host mapping!\n");
+	return 1;
     }
+    else
+    {
+	GArray *filtered_target_array = g_array_new(FALSE, FALSE, sizeof(DistributionItem*));
     
-    print_expr_of_candidate_target_array(filtered_target_array);
+	for(i = 0; i < candidate_target_array->len; i++)
+	{
+	    DistributionItem *filter_item = g_malloc(sizeof(DistributionItem));
+    	    DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
+	    unsigned int j;
+	
+	    filter_item->service = item->service;
+	    filter_item->targets = g_array_new(FALSE, FALSE, sizeof(gchar*));
+	
+	    for(j = 0; j < item->targets->len; j++)
+	    {
+		gchar *target = g_array_index(item->targets, gchar*, j);
+	    
+		if(instantiate(services_expr, infrastructure_expr, distribution_expr, item->service, target) == 0)
+	    	    g_array_append_val(filter_item->targets, target);
+	    }
+	
+	    g_array_append_val(filtered_target_array, filter_item);
+	}
     
-    delete_filtered_target_array(filtered_target_array);
-    delete_candidate_target_array(candidate_target_array);
+	/* Print resulting expression */
+	print_expr_of_candidate_target_array(filtered_target_array);
+    
+	/* Cleanup */
+	delete_filtered_target_array(filtered_target_array);
+	delete_candidate_target_array(candidate_target_array);
+	
+	return 0;
+    }
 }

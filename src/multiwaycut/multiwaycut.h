@@ -2,6 +2,6 @@
 #define __MUTLIWAYCUT_H
 #include <glib.h>
 
-void multiwaycut(gchar *distribution_xml);
+int multiwaycut(gchar *distribution_xml);
 
 #endif

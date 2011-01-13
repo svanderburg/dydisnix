@@ -12,7 +12,7 @@ let
   services = servicesFun { system = builtins.currentSystem; distribution = null; pkgs = null; };
   distribution = distributionFun { inherit infrastructure; };
   
-  servicesWithTargets = lib.augumentTargetsInDependsOn distribution services;
+  servicesWithTargets = lib.augmentTargetsInDependsOn distribution services;
   target = getAttr targetName infrastructure;
   system = if target ? system then target.system else builtins.currentSystem;
   pkgs = lib.selectPkgs system;

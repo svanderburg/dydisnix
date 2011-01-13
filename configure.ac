@@ -53,7 +53,7 @@ Makefile
 scripts/dydisnix-env
 scripts/dydisnix-gendist
 scripts/dydisnix-self-adapt
-scripts/dydisnix-augument-infra
+scripts/dydisnix-augment-infra
 scripts/Makefile
 src/Makefile
 src/filter-buildable/Makefile

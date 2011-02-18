@@ -43,6 +43,13 @@ int main(int argc, char *argv[])
 		    strategy = STRATEGY_GREEDY;
 		else if(strcmp(optarg, "highest-bidder") == 0)
 		    strategy = STRATEGY_HIGHEST_BIDDER;
+		else if(strcmp(optarg, "lowest-bidder") == 0)
+		    strategy = STRATEGY_LOWEST_BIDDER;
+		else
+		{
+		    fprintf(stderr, "Unknown strategy: %s\n", optarg);
+		    return 1;
+		}
 		break;
 	    case 's':
 		services_xml = optarg;

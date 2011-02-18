@@ -101,7 +101,7 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 			gint select_infrastructure_prop_index = infrastructure_property_index(select_target, infrastructure_property);
 			InfrastructureProperty *select_infrastructure_prop = g_array_index(select_target->property, InfrastructureProperty*, select_infrastructure_prop_index);
 		    
-			if(atoi(infrastructure_prop->value) < atoi(select_infrastructure_prop->value))
+			if(atoi(infrastructure_prop->value) < atoi(select_infrastructure_prop->value) && atoi(service_prop->value) <= atoi(select_infrastructure_prop->value))
 			    select_target = target;
 		    }
 		}

@@ -8,6 +8,7 @@ rec {
     name = "testService1";
     pkg = customPkgs.testService1;
     type = "echo";
+    requireZone = "US";
     requireMem = 262144;
   };
   
@@ -18,6 +19,7 @@ rec {
       inherit testService1;
     };
     type = "echo";
+    requireZone = "US";
     requireMem = 262143;
   };
   
@@ -28,6 +30,7 @@ rec {
       inherit testService1 testService2;
     };
     type = "echo";
+    requireZone = "Europe";
     requireMem = 262145;
   };
 }

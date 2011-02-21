@@ -181,6 +181,24 @@ let
 		die "line 17 should contain testtarget2!\n";
 	    }
 	    
+	    # Execute order. The targets are order by looking to the priority
+	    # attribute. The order of the targets should be reversed.
+	    # This test should succeed.
+	    
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-order.nix");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
+	    
+	    if(@distribution[7] =~ /testtarget2/) {
+	        print "line 7 contains testtarget2!\n";
+	    } else {
+	        print "line 7 should contain testtarget2!\n";
+	    }
+	    
+	    if(@distribution[8] =~ /testtarget2/) {
+	        print "line 8 contains testtarget1!\n";
+	    } else {
+	        print "line 8 should contain testtarget1!\n";
+	    }
 	    # Execute the highest bidder method. testService1 should be
 	    # assigned to testtarget2. testService2 should be assigned to
 	    # targettarget1. testService3 should be assigned to testtarget2.

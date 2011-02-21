@@ -1,7 +1,7 @@
 {lib}:
 
 rec {
-  inherit (builtins) listToAttrs attrNames getAttr hasAttr;
+  inherit (builtins) listToAttrs attrNames getAttr hasAttr lessThan;
   inherit (lib) filter elem;
 
   filterDerivations = services:
@@ -100,5 +100,16 @@ rec {
 	  else targets;
       }
     ) (attrNames distribution))
+  ;
+  
+  order = {infrastructure, distribution, targetProperty}:
+    lib.mapAttrs (serviceName: mapping:
+      lib.sort (targetAName: targetBName:
+        let
+	  targetA = getAttr targetAName infrastructure;
+	  targetB = getAttr targetBName infrastructure;
+	in
+        lessThan (getAttr targetProperty targetA) (getAttr targetProperty targetB) ) mapping
+    ) distribution
   ;
 }

@@ -124,6 +124,38 @@ let
 		die "line 20 should contain testtarget2!\n";
 	    }
 	  
+	    # Execute the mapListOnAttr method to map requiredZones onto zones.
+	    # testService1 must be assigned to testtarget1. testService2 must be
+	    # assigned to testtarget2. testService3 must be assigned to both
+	    # machines. This test should succeed.
+	  
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-maplistonattr.nix");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
+	    
+	    if(@distribution[7] =~ /testtarget1/) {
+	        print "line 7 contains testtarget1!\n";
+	    } else {
+		die "line 7 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[12] =~ /testtarget2/) {
+	        print "line 12 contains testtarget2!\n";
+	    } else {
+		die "line 12 should contain testtarget2!\n";
+	    }
+	  
+	    if(@distribution[17] =~ /testtarget1/) {
+	        print "line 17 contains testtarget1!\n";
+	    } else {
+		die "line 17 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[18] =~ /testtarget2/) {
+	        print "line 18 contains testtarget2!\n";
+	    } else {
+		die "line 18 should contain testtarget2!\n";
+	    }
+	  
 	    # Execute the greedy division method. testService1 and testService2
 	    # should be assigned to testtarget2. testService3 should be assigned
 	    # to testtarget1. This test should succeed.
@@ -199,6 +231,39 @@ let
 	    } else {
 		die "line 17 should contain testtarget2!\n";
 	    }
+	    
+	    # Execute minimum set cover approximation method, by looking to the
+	    # cost attribute in the infrastructure model. All services should
+	    # be distributed to testtarget1.
+	    
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover.nix");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
+	    
+	    if(@distribution[7] =~ /testtarget1/) {
+	        print "line 7 contains testtarget1!\n";
+	    } else {
+	        print "line 7 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[12] =~ /testtarget1/) {
+	        print "line 12 contains testtarget1!\n";
+	    } else {
+		die "line 12 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[17] =~ /testtarget1/) {
+	        print "line 17 contains testtarget1!\n";
+	    } else {
+		die "line 17 should contain testtarget1!\n";
+	    }
+	    
+	    # Execute minimum set cover approximation method, by looking to the
+	    # cost attribute in the infrastructure model. All services should
+	    # be distributed to testtarget1.
+	    
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover2.nix");
+	    print("result is: $result\n");
+	    $machine->mustSucceed("(cat $result) >&2");
 	  '';
 	};
       };

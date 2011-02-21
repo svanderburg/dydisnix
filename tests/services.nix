@@ -9,7 +9,9 @@ rec {
     pkg = customPkgs.testService1;
     type = "echo";
     requireZone = "US";
+    requireZones = [ "US" "Asia" ];
     requireMem = 262144;
+    requireAccess = [ "public" "private" ];
   };
   
   testService2 = {
@@ -20,7 +22,9 @@ rec {
     };
     type = "echo";
     requireZone = "US";
+    requireZones = [ "Europe" "Asia" ];
     requireMem = 262143;
+    requireAccess = [ "public" "private" ];
   };
   
   testService3 = {
@@ -31,6 +35,8 @@ rec {
     };
     type = "echo";
     requireZone = "Europe";
+    requireZones = [ "US" "Europe" ];
     requireMem = 262145;
+    requireAccess = [ "private" ];
   };
 }

@@ -23,6 +23,7 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 	GArray *result = g_array_new(FALSE, FALSE, sizeof(DistributionItem*));
 	unsigned int i;
     
+        /* Create a result array with the same services as in the input distribution model and empty candidate hosts */
 	for(i = 0; i < candidate_target_array->len; i++)
 	{
 	    DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
@@ -34,13 +35,15 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 	    g_array_append_val(result, result_item);
 	}
     
+	/* Execute minimum set cover approximation */
+	
 	while(g_hash_table_size(covered_services_table) < service_property_array->len)
 	{
 	    unsigned int i;
 	    double min_cost = -1;
 	    int min_cost_index = -1;
 	    TargetMappingItem *min_cost_target_mapping;
-	
+		    
 	    for(i = 0; i < target_mapping_array->len; i++)
 	    {
 		TargetMappingItem *target_mapping = g_array_index(target_mapping_array, TargetMappingItem*, i);
@@ -59,7 +62,7 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 		    if(g_hash_table_lookup(covered_services_table, service_name) == NULL)
 			count++;
 		}
-	    
+		
 		cost = atoi(infrastructure_prop->value) / (double)count;
 	    
 		if(min_cost == -1 || cost < min_cost)
@@ -77,12 +80,15 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 		int index = distribution_item_index(result, service);
 		DistributionItem *item = g_array_index(result, DistributionItem*, index);
 	    
-		g_hash_table_insert(covered_services_table, service, service);
-
-		g_array_append_val(item->targets, min_cost_target_mapping->target);
+		if(g_hash_table_lookup(covered_services_table, service) == NULL)
+		{
+		    g_array_append_val(item->targets, min_cost_target_mapping->target);
+		    g_hash_table_insert(covered_services_table, service, service);
+		}
 	    }
 	}
     
+	/* Print resulting expression to stdout */
 	print_expr_of_candidate_target_array(result);
     
 	/* Cleanup */

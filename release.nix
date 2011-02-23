@@ -276,12 +276,30 @@ let
 	    }
 	    
 	    # Execute minimum set cover approximation method, by looking to the
-	    # cost attribute in the infrastructure model. All services should
-	    # be distributed to testtarget1.
+	    # cost attribute in the infrastructure model. testService1 and
+	    # testService2 should be distributed to testtarget1. testService3
+	    # should be distributed to testtarget2.
 	    
 	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover2.nix");
-	    print("result is: $result\n");
-	    $machine->mustSucceed("(cat $result) >&2");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
+	    
+	    if(@distribution[7] =~ /testtarget1/) {
+	        print "line 7 contains testtarget1!\n";
+	    } else {
+	        print "line 7 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[12] =~ /testtarget1/) {
+	        print "line 12 contains testtarget1!\n";
+	    } else {
+		die "line 12 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[17] =~ /testtarget2/) {
+	        print "line 17 contains testtarget2!\n";
+	    } else {
+		die "line 17 should contain testtarget2!\n";
+	    }
 	  '';
 	};
       };

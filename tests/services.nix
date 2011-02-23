@@ -12,6 +12,7 @@ rec {
     requireZones = [ "US" "Asia" ];
     requireMem = 262144;
     requireAccess = [ "public" "private" ];
+    stateful = true;
   };
   
   testService2 = {

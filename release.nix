@@ -35,7 +35,9 @@ let
       };
 
     tests = 
-      { nixos ? /etc/nixos/nixos }:
+      { nixos ? /etc/nixos/nixos
+      , disnix ? (import ../../disnix/trunk/release.nix {}).build {}
+      }:
       
       let
         dydisnix = build { system = "x86_64-linux"; };
@@ -51,7 +53,7 @@ let
 	      
 	      {
 	        virtualisation.writableStore = true;
-	        environment.systemPackages = [ dydisnix pkgs.stdenv ];
+	        environment.systemPackages = [ disnix dydisnix pkgs.stdenv ];
 	      };
 	  };
 	  testScript = ''
@@ -191,13 +193,13 @@ let
 	    if(@distribution[7] =~ /testtarget2/) {
 	        print "line 7 contains testtarget2!\n";
 	    } else {
-	        print "line 7 should contain testtarget2!\n";
+	        die "line 7 should contain testtarget2!\n";
 	    }
 	    
-	    if(@distribution[8] =~ /testtarget2/) {
+	    if(@distribution[8] =~ /testtarget1/) {
 	        print "line 8 contains testtarget1!\n";
 	    } else {
-	        print "line 8 should contain testtarget1!\n";
+	        die "line 8 should contain testtarget1!\n";
 	    }
 	    # Execute the highest bidder method. testService1 should be
 	    # assigned to testtarget2. testService2 should be assigned to
@@ -210,7 +212,7 @@ let
 	    if(@distribution[7] =~ /testtarget2/) {
 	        print "line 7 contains testtarget2!\n";
 	    } else {
-	        print "line 7 should contain testtarget2!\n";
+	        die "line 7 should contain testtarget2!\n";
 	    }
 	    
 	    if(@distribution[12] =~ /testtarget1/) {
@@ -235,7 +237,7 @@ let
 	    if(@distribution[7] =~ /testtarget1/) {
 	        print "line 7 contains testtarget1!\n";
 	    } else {
-	        print "line 7 should contain testtarget1!\n";
+	        die "line 7 should contain testtarget1!\n";
 	    }
 	    
 	    if(@distribution[12] =~ /testtarget1/) {
@@ -260,7 +262,7 @@ let
 	    if(@distribution[7] =~ /testtarget1/) {
 	        print "line 7 contains testtarget1!\n";
 	    } else {
-	        print "line 7 should contain testtarget1!\n";
+	        die "line 7 should contain testtarget1!\n";
 	    }
 	    
 	    if(@distribution[12] =~ /testtarget1/) {
@@ -286,7 +288,7 @@ let
 	    if(@distribution[7] =~ /testtarget1/) {
 	        print "line 7 contains testtarget1!\n";
 	    } else {
-	        print "line 7 should contain testtarget1!\n";
+	        die "line 7 should contain testtarget1!\n";
 	    }
 	    
 	    if(@distribution[12] =~ /testtarget1/) {
@@ -299,6 +301,31 @@ let
 	        print "line 17 contains testtarget2!\n";
 	    } else {
 		die "line 17 should contain testtarget2!\n";
+	    }
+	    
+	    # Execute map stateful to previous test. First, all services are
+	    # mapped to testtarget1. Then an upgrade is performed in which
+	    # services are mapped to all targets. testService1 which is marked
+	    # as stateful is only mapped to testtarget1. This test should
+	    # succeed.
+	    
+	    my $firstTargets = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-firsttargets.nix");
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix disnix-manifest -s ${tests}/services.nix -i ${tests}/infrastructure.nix -d $firstTargets");
+	    $machine->mustSucceed("mkdir /nix/var/nix/profiles/per-user/root/disnix-coordinator");
+	    $machine->mustSucceed("nix-env -p /nix/var/nix/profiles/per-user/root/disnix-coordinator/default --set $result");
+	    
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapstatefultoprevious.nix");
+	    
+	    if(@distribution[7] =~ /testtarget1/) {
+	        print "line 7 contains testtarget1!\n";
+	    } else {
+	        die "line 7 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[8] =~ /testtarget2/) {
+	        die "line 8 contains testtarget2!\n";
+	    } else {
+	        print "line 8 does not contain testtarget2!\n";
 	    }
 	  '';
 	};

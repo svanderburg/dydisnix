@@ -57,6 +57,62 @@ let
 	      };
 	  };
 	  testScript = ''
+	    # Execute filter buildable. In this situation no build exceptions
+	    # occur, so all machines in the network are valid candidate hosts.
+	    # This test should succeed.
+	    
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist --filter-buildable -s ${tests}/services.nix -i ${tests}/infrastructure.nix");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
+	  
+	    if(@distribution[7] =~ /testtarget1/) {
+	        print "line 7 contains testtarget1!\n";
+	    } else {
+		die "line 7 should contain testtarget1!\n";
+	    }
+	  
+	    if(@distribution[8] =~ /testtarget2/) {
+	        print "line 8 contains testtarget2!\n";
+	    } else {
+		die "line 8 should contain testtarget2!\n";
+	    }
+	    
+	    if(@distribution[13] =~ /testtarget1/) {
+	        print "line 13 contains testtarget1!\n";
+	    } else {
+		die "line 13 should contain testtarget1!\n";
+	    }
+	  
+	    if(@distribution[14] =~ /testtarget2/) {
+	        print "line 14 contains testtarget2!\n";
+	    } else {
+		die "line 14 should contain testtarget2!\n";
+	    }
+	    
+	    if(@distribution[19] =~ /testtarget1/) {
+	        print "line 19 contains testtarget1!\n";
+	    } else {
+		die "line 19 should contain testtarget1!\n";
+	    }
+	  
+	    if(@distribution[20] =~ /testtarget2/) {
+	        print "line 20 contains testtarget2!\n";
+	    } else {
+		die "line 20 should contain testtarget2!\n";
+	    }
+	  
+	    # Execute filter buildable. In this situation a build exception is
+	    # thrown for testService1B rendering it undeployable.
+	    # This test should succeed.
+	    
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist --filter-buildable -s ${tests}/services-error.nix -i ${tests}/infrastructure.nix");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
+	  
+	    if(@distribution[7] =~ /testtarget1/) {
+	        die "line 7 contains testtarget1!\n";
+	    } else {
+		print "line 7 should contain testtarget1!\n";
+	    }
+	  
 	    # Execute the mapAttrOnAttr method to map requireZone onto zone.
 	    # testService1 should be assigned to testtarget1. testService2 and
 	    # testService3 should be assigned to testtarget2. This test should

@@ -1,4 +1,6 @@
-{servicesFile, infrastructureFile, distributionFile, serviceName, targetName}:
+{ servicesFile, infrastructureFile, distributionFile, serviceName, targetName
+, nixpkgs ? builtins.getEnv "NIXPKGS_ALL"
+}:
 
 let
   inherit (builtins) getAttr;
@@ -7,15 +9,16 @@ let
   infrastructure = import infrastructureFile;
   distributionFun = import distributionFile;
   
-  lib = import @DISNIX_PREFIX@/share/disnix/lib.nix;
+  lib = import @DISNIX_PREFIX@/share/disnix/lib.nix { inherit nixpkgs pkgs; };
+  pkgs = lib.selectPkgs system;
   
-  services = servicesFun { system = builtins.currentSystem; distribution = null; pkgs = null; };
   distribution = distributionFun { inherit infrastructure; };
+  services = servicesFun { inherit distribution system pkgs; };
   
   servicesWithTargets = lib.augmentTargetsInDependsOn distribution services;
   target = getAttr targetName infrastructure;
   system = if target ? system then target.system else builtins.currentSystem;
-  pkgs = lib.selectPkgs system;
-  service = getAttr serviceName (servicesFun { inherit distribution system pkgs; });
+  
+  service = getAttr serviceName servicesWithTargets;
 in
 if service ? dependsOn && service.dependsOn != {} then service.pkg (service.dependsOn) else service.pkg

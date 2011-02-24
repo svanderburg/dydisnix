@@ -1,5 +1,5 @@
 { nixpkgs ? /etc/nixos/nixpkgs 
-, disnix #? (import ../../disnix/trunk/release.nix {}).build {}
+, disnix ? (import ../../disnix/trunk/release.nix {}).build {}
 }:
 
 let

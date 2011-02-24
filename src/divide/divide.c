@@ -39,12 +39,21 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 	{
 	    DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
 	    Service *service = lookup_service(service_property_array, item->service);
-	    ServiceProperty *service_prop = lookup_service_property(service, service_property);
-
+	    ServiceProperty *service_prop = lookup_service_property(service, service_property);	    	    	    	    
+	    
 	    GArray *targets = item->targets;
 	    unsigned int j;
 	
-	    DistributionItem *result_item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
+	    DistributionItem *result_item;
+	    
+	    if(service_prop == NULL)
+	    {
+		g_printerr("Service property: %s not found!\n", service_property);
+		exit_status = 1;
+		break;
+	    }
+	    
+	    result_item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
 	    result_item->service = item->service;
 	    result_item->targets = g_array_new(FALSE, FALSE, sizeof(gchar*));
 	
@@ -57,6 +66,13 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 		gchar *target_name = g_array_index(targets, gchar*, j);
 		Target *target = lookup_target(infrastructure_property_array, target_name);	    
 		InfrastructureProperty *infrastructure_prop = lookup_infrastructure_property(target, infrastructure_property);
+		
+		if(infrastructure_prop == NULL)
+		{
+		    g_printerr("Infrastructure property: %s not found!\n", infrastructure_property);
+		    exit_status = 1;
+		    break;
+		}
 	    
 		if(strategy == STRATEGY_GREEDY)
 		{

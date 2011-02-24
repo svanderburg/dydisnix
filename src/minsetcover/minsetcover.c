@@ -54,6 +54,13 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 		double cost;
 		unsigned int j;
 	    
+		if(infrastructure_prop == NULL)
+		{
+		    g_printerr("Infrastructure property: %s not found!\n", target_property);
+		    exit_status = 1;
+		    break;
+		}
+	    
 		for(j = 0; j < target_mapping->services->len; j++)
 		{
 		    gchar *service_name = g_array_index(target_mapping->services, gchar*, j);

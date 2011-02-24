@@ -1,11 +1,12 @@
-{ nixpkgs ? /etc/nixos/nixpkgs }:
+{ nixpkgs ? /etc/nixos/nixpkgs 
+, disnix #? (import ../../disnix/trunk/release.nix {}).build {}
+}:
 
 let
   jobs = rec {
     tarball =
       { dydisnix ? {outPath = ./.; rev = 1234;}
       , officialRelease ? false
-      , disnix ? (import ../../disnix/trunk/release.nix {}).build {}
       }:
 
       with import nixpkgs {};
@@ -22,7 +23,6 @@ let
     build =
       { tarball ? jobs.tarball {}
       , system ? "x86_64-linux"
-      , disnix ? (import ../../disnix/trunk/release.nix {}).build {}
       }:
 
       with import nixpkgs { inherit system; };
@@ -35,9 +35,7 @@ let
       };
 
     tests = 
-      { nixos ? /etc/nixos/nixos
-      , disnix ? (import ../../disnix/trunk/release.nix {}).build {}
-      }:
+      { nixos ? /etc/nixos/nixos }:
       
       let
         dydisnix = build { system = "x86_64-linux"; };

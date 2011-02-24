@@ -57,6 +57,13 @@ let
 	      };
 	  };
 	  testScript = ''
+	    # Test augment infra. For each target in the infrastructure model
+	    # we add the attribute: augment = "augment". This test should
+	    # succeed.
+	  
+	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-augment-infra -i ${tests}/infrastructure.nix -a ${tests}/augment.nix");
+	    $machine->mustSucceed("[ \"\$((NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix nix-instantiate --eval-only --xml --strict $result) | grep 'augment')\" != \"\" ]");
+	    
 	    # Execute filter buildable. In this situation no build exceptions
 	    # occur, so all machines in the network are valid candidate hosts.
 	    # This test should succeed.

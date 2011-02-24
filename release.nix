@@ -17,7 +17,9 @@ let
         src = dydisnix;
         inherit officialRelease;
 
-        buildInputs = [ pkgconfig getopt libxml2 glib disnix ];
+        buildInputs = [ pkgconfig getopt libxml2 glib disnix ]
+          ++ lib.optional (!stdenv.isLinux) libiconv
+	  ++ lib.optional (!stdenv.isLinux) gettext;
       };
 
     build =

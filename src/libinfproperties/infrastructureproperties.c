@@ -147,7 +147,7 @@ void print_infrastructure_property_array(GArray *infrastructure_property_array)
     }
 }
 
-gint infrastructure_index(GArray *infrastructure_property_array, gchar *name)
+static gint infrastructure_index(GArray *infrastructure_property_array, gchar *name)
 {
     gint left = 0;
     gint right = infrastructure_property_array->len - 1;
@@ -169,7 +169,17 @@ gint infrastructure_index(GArray *infrastructure_property_array, gchar *name)
     return -1; /* Target not found */
 }
 
-gint infrastructure_property_index(Target *target, gchar *name)
+Target* lookup_target(GArray *infrastructure_property_array, gchar *name)
+{
+    gint index = infrastructure_index(infrastructure_property_array, name);
+    
+    if(index == -1)
+	return NULL;
+    else
+	return g_array_index(infrastructure_property_array, Target*, index);
+}
+
+static gint infrastructure_property_index(Target *target, gchar *name)
 {
     GArray *property = target->property;
     
@@ -191,6 +201,16 @@ gint infrastructure_property_index(Target *target, gchar *name)
     }
     
     return -1; /* Target property not found */
+}
+
+InfrastructureProperty *lookup_infrastructure_property(Target *target, gchar *name)
+{
+    gint index = infrastructure_property_index(target, name);
+    
+    if(index == -1)
+	return NULL;
+    else
+	return g_array_index(target->property, InfrastructureProperty*, index);
 }
 
 void substract_target_value(Target *target, gchar *property_name, int amount)

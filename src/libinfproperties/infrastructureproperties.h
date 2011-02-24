@@ -24,10 +24,10 @@ void delete_infrastructure_property_array(GArray *infrastructure_property_array)
 
 void print_infrastructure_property_array(GArray *infrastructure_property_array);
 
-gint infrastructure_index(GArray *infrastructure_property_array, gchar *name);
-
-gint infrastructure_property_index(Target *target, gchar *name);
-
 void substract_target_value(Target *target, gchar *property_name, int amount);
+
+Target* lookup_target(GArray *infrastructure_property_array, gchar *name);
+
+InfrastructureProperty *lookup_infrastructure_property(Target *target, gchar *name);
 
 #endif

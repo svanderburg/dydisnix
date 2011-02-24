@@ -24,8 +24,8 @@ void delete_service_property_array(GArray *service_property_array);
 
 void print_service_property_array(GArray *service_property_array);
 
-gint service_index(GArray *service_property_array, gchar *name);
+Service *lookup_service(GArray *service_property_array, gchar *name);
 
-gint service_property_index(Service *service, gchar *name);
+ServiceProperty *lookup_service_property(Service *service, gchar *name);
 
 #endif

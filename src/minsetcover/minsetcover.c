@@ -47,10 +47,9 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 	    for(i = 0; i < target_mapping_array->len; i++)
 	    {
 		TargetMappingItem *target_mapping = g_array_index(target_mapping_array, TargetMappingItem*, i);
-		int target_index = infrastructure_index(infrastructure_property_array, target_mapping->target);
-		Target *target = g_array_index(infrastructure_property_array, Target*, target_index);
-		int infrastructure_prop_index = infrastructure_property_index(target, target_property);
-		InfrastructureProperty *infrastructure_prop = g_array_index(target->property, InfrastructureProperty*, infrastructure_prop_index);
+		Target *target = lookup_target(infrastructure_property_array, target_mapping->target);
+		InfrastructureProperty *infrastructure_prop = lookup_infrastructure_property(target, target_property);
+		
 		int count = 0;
 		double cost;
 		unsigned int j;
@@ -77,9 +76,8 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 	    for(i = 0; i < min_cost_target_mapping->services->len; i++)
 	    {
 		gchar *service = g_array_index(min_cost_target_mapping->services, gchar*, i);
-		int index = distribution_item_index(result, service);
-		DistributionItem *item = g_array_index(result, DistributionItem*, index);
-	    
+		DistributionItem *item = lookup_distribution_item(result, service);
+		
 		if(g_hash_table_lookup(covered_services_table, service) == NULL)
 		{
 		    g_array_append_val(item->targets, min_cost_target_mapping->target);

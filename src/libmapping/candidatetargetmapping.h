@@ -22,6 +22,8 @@ void print_candidate_target_array(GArray *candidate_target_array);
 
 void print_expr_of_candidate_target_array(GArray *candidate_target_array);
 
-int distribution_item_index(GArray *candidate_target_array, gchar *service);
+gint distribution_item_index(GArray *candidate_target_array, gchar *service);
+
+DistributionItem *lookup_distribution_item(GArray *candidate_target_array, gchar *service);
 
 #endif

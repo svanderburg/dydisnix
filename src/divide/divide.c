@@ -38,12 +38,9 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 	for(i = 0; i < candidate_target_array->len; i++)
 	{
 	    DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
-	    gint s_index = service_index(service_property_array, item->service);
-	    Service *service = g_array_index(service_property_array, Service*, s_index);
+	    Service *service = lookup_service(service_property_array, item->service);
+	    ServiceProperty *service_prop = lookup_service_property(service, service_property);
 
-	    gint service_prop_index = service_property_index(service, service_property);
-    	    ServiceProperty *service_prop = g_array_index(service->property, ServiceProperty*, service_prop_index);
-	
 	    GArray *targets = item->targets;
 	    unsigned int j;
 	
@@ -58,11 +55,8 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 	    for(j = 0; j < targets->len; j++)
 	    {
 		gchar *target_name = g_array_index(targets, gchar*, j);
-		gint i_index = infrastructure_index(infrastructure_property_array, target_name);
-		Target *target = g_array_index(infrastructure_property_array, Target*, i_index);
-	    
-		gint infrastructure_prop_index = infrastructure_property_index(target, infrastructure_property);
-		InfrastructureProperty *infrastructure_prop = g_array_index(target->property, InfrastructureProperty*, infrastructure_prop_index);
+		Target *target = lookup_target(infrastructure_property_array, target_name);	    
+		InfrastructureProperty *infrastructure_prop = lookup_infrastructure_property(target, infrastructure_property);
 	    
 		if(strategy == STRATEGY_GREEDY)
 		{
@@ -82,8 +76,7 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 		    }
 		    else
 		    {
-			gint select_infrastructure_prop_index = infrastructure_property_index(select_target, infrastructure_property);
-			InfrastructureProperty *select_infrastructure_prop = g_array_index(select_target->property, InfrastructureProperty*, select_infrastructure_prop_index);
+			InfrastructureProperty *select_infrastructure_prop = lookup_infrastructure_property(select_target, infrastructure_property);
 		    
 			if(atoi(infrastructure_prop->value) > atoi(select_infrastructure_prop->value))
 			    select_target = target;
@@ -98,9 +91,8 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 		    }
 		    else
 		    {
-			gint select_infrastructure_prop_index = infrastructure_property_index(select_target, infrastructure_property);
-			InfrastructureProperty *select_infrastructure_prop = g_array_index(select_target->property, InfrastructureProperty*, select_infrastructure_prop_index);
-		    
+			InfrastructureProperty *select_infrastructure_prop = lookup_infrastructure_property(select_target, infrastructure_property);
+			
 			if(atoi(infrastructure_prop->value) < atoi(select_infrastructure_prop->value) && atoi(service_prop->value) <= atoi(select_infrastructure_prop->value))
 			    select_target = target;
 		    }

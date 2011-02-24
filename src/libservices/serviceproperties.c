@@ -144,7 +144,7 @@ void print_service_property_array(GArray *service_property_array)
     }
 }
 
-gint service_index(GArray *service_property_array, gchar *name)
+static gint service_index(GArray *service_property_array, gchar *name)
 {
     gint left = 0;
     gint right = service_property_array->len - 1;
@@ -166,7 +166,17 @@ gint service_index(GArray *service_property_array, gchar *name)
     return -1; /* Service not found */
 }
 
-gint service_property_index(Service *service, gchar *name)
+Service *lookup_service(GArray *service_property_array, gchar *name)
+{
+    gint index = service_index(service_property_array, name);
+    
+    if(index == -1)
+	return NULL;
+    else
+	return g_array_index(service_property_array, Service*, index);	
+}
+
+static gint service_property_index(Service *service, gchar *name)
 {
     GArray *property = service->property;
     
@@ -188,4 +198,14 @@ gint service_property_index(Service *service, gchar *name)
     }
     
     return -1; /* Service property not found */
+}
+
+ServiceProperty *lookup_service_property(Service *service, gchar *name)
+{
+    gint index = service_property_index(service, name);
+    
+    if(index == -1)
+	return NULL;
+    else
+	return g_array_index(service->property, ServiceProperty*, index);
 }

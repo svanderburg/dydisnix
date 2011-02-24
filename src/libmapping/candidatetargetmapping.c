@@ -168,7 +168,7 @@ void print_expr_of_candidate_target_array(GArray *candidate_target_array)
     g_print("}\n");
 }
 
-int distribution_item_index(GArray *candidate_target_array, gchar *service)
+gint distribution_item_index(GArray *candidate_target_array, gchar *service)
 {
     gint left = 0;
     gint right = candidate_target_array->len - 1;
@@ -188,4 +188,14 @@ int distribution_item_index(GArray *candidate_target_array, gchar *service)
     }
     
     return -1; /* service not found */
+}
+
+DistributionItem *lookup_distribution_item(GArray *candidate_target_array, gchar *service)
+{
+    gint index = distribution_item_index(candidate_target_array, service);
+    
+    if(index == -1)
+	return NULL;
+    else
+	return g_array_index(candidate_target_array, DistributionItem*, index);
 }

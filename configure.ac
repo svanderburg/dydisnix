@@ -41,9 +41,6 @@ AC_SUBST(DISNIX_PREFIX)
 AC_SUBST(DISNIX_CFLAGS)
 AC_SUBST(DISNIX_LIBS)
 
-# Checks for Nixpkgs
-AC_SUBST(NIXPKGS_ALL)
-
 # State should be stored in /nix/var, unless the user overrides it explicitly.
 test "$localstatedir" = '${prefix}/var' && localstatedir=/nix/var
 

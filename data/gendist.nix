@@ -3,7 +3,7 @@
 , distributionFile ? null
 , qosFile ? null
 , outputExpr ? true
-, nixpkgs ? builtins.getEnv "NIXPKGS_ALL"
+, nixpkgs ? <nixpkgs>
 , coordinatorProfile ? null
 }:
 

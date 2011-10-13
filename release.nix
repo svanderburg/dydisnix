@@ -63,14 +63,14 @@ let
 	    # we add the attribute: augment = "augment". This test should
 	    # succeed.
 	  
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-augment-infra -i ${tests}/infrastructure.nix -a ${tests}/augment.nix");
-	    $machine->mustSucceed("[ \"\$((NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix nix-instantiate --eval-only --xml --strict $result) | grep 'augment')\" != \"\" ]");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-augment-infra -i ${tests}/infrastructure.nix -a ${tests}/augment.nix");
+	    $machine->mustSucceed("[ \"\$((NIX_PATH='nixpkgs=${nixpkgs}' nix-instantiate --eval-only --xml --strict $result) | grep 'augment')\" != \"\" ]");
 	    
 	    # Execute filter buildable. In this situation no build exceptions
 	    # occur, so all machines in the network are valid candidate hosts.
 	    # This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist --filter-buildable -s ${tests}/services.nix -i ${tests}/infrastructure.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist --filter-buildable -s ${tests}/services.nix -i ${tests}/infrastructure.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	  
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -113,7 +113,7 @@ let
 	    # thrown for testService1B rendering it undeployable.
 	    # This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist --filter-buildable -s ${tests}/services-error.nix -i ${tests}/infrastructure.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist --filter-buildable -s ${tests}/services-error.nix -i ${tests}/infrastructure.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	  
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -127,7 +127,7 @@ let
 	    # testService3 should be assigned to testtarget2. This test should
 	    # succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapattronattr.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapattronattr.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -152,7 +152,7 @@ let
 	    # All services must be assigned to both testtarget1 and testtarget2.
 	    # This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapattronlist.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapattronlist.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -196,7 +196,7 @@ let
 	    # assigned to testtarget2. testService3 must be assigned to both
 	    # machines. This test should succeed.
 	  
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-maplistonattr.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-maplistonattr.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -227,7 +227,7 @@ let
 	    # should be assigned to testtarget2. testService3 should be assigned
 	    # to testtarget1. This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-greedy.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-greedy.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -252,7 +252,7 @@ let
 	    # attribute. The order of the targets should be reversed.
 	    # This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-order.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-order.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget2/) {
@@ -271,7 +271,7 @@ let
 	    # targettarget1. testService3 should be assigned to testtarget2.
 	    # This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-highest-bidder.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-highest-bidder.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget2/) {
@@ -296,7 +296,7 @@ let
 	    # should be assigned to testtarget1. testService3 should be assinged
 	    # to testtarget2. This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-lowest-bidder.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-lowest-bidder.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -321,7 +321,7 @@ let
 	    # cost attribute in the infrastructure model. All services should
 	    # be distributed to testtarget1.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -347,7 +347,7 @@ let
 	    # testService2 should be distributed to testtarget1. testService3
 	    # should be distributed to testtarget2.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover2.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover2.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -372,7 +372,7 @@ let
 	    # In this case all services should be mapped to testtarget1.
 	    # This test should succeed.
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-multiwaycut.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-multiwaycut.nix");
 	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
@@ -399,12 +399,12 @@ let
 	    # as stateful is only mapped to testtarget1. This test should
 	    # succeed.
 	    
-	    my $firstTargets = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-firsttargets.nix");
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix disnix-manifest -s ${tests}/services.nix -i ${tests}/infrastructure.nix -d $firstTargets");
+	    my $firstTargets = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-firsttargets.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' disnix-manifest -s ${tests}/services.nix -i ${tests}/infrastructure.nix -d $firstTargets");
 	    $machine->mustSucceed("mkdir /nix/var/nix/profiles/per-user/root/disnix-coordinator");
 	    $machine->mustSucceed("nix-env -p /nix/var/nix/profiles/per-user/root/disnix-coordinator/default --set $result");
 	    
-	    my $result = $machine->mustSucceed("NIXPKGS_ALL=${nixpkgs}/pkgs/top-level/all-packages.nix dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapstatefultoprevious.nix");
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapstatefultoprevious.nix");
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
 	        print "line 7 contains testtarget1!\n";

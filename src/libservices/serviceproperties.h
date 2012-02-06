@@ -1,5 +1,5 @@
-#ifndef __SERVICEPROPERTIES_H
-#define __SERVICEPROPERTIES_H
+#ifndef __DYDISNIX_SERVICEPROPERTIES_H
+#define __DYDISNIX_SERVICEPROPERTIES_H
 #include <glib.h>
 
 typedef struct

@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <getopt.h>
-#define _GNU_SOURCE
 #include "multiwaycut.h"
 
 static void print_usage(char *command)

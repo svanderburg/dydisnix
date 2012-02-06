@@ -1,9 +1,9 @@
-#ifndef __CANDIDATETARGETMAPPING_H
-#define __CANDIDATETARGETMAPPING_H
+#ifndef __DYDISNIX_CANDIDATETARGETMAPPING_H
+#define __DYDISNIX_CANDIDATETARGETMAPPING_H
 #include <glib.h>
 
 /**
- * Contains a mapping of a service to an array of canidate targets
+ * @brief Contains a mapping of a service to an array of candidate targets
  */
 typedef struct
 {

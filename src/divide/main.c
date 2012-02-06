@@ -1,7 +1,6 @@
 #include "divide.h"
 #include <stdio.h>
 #include <getopt.h>
-#define _GNU_SOURCE
 #include <string.h>
 
 static void print_usage(char *command)

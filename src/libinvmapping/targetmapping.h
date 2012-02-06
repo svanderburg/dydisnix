@@ -1,5 +1,5 @@
-#ifndef __SERVICE_MAPPING_H
-#define __SERVICE_MAPPING_H
+#ifndef __DYDISNIX_SERVICE_MAPPING_H
+#define __DYDISNIX_SERVICE_MAPPING_H
 #include <glib.h>
 
 typedef struct

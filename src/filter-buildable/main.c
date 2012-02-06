@@ -1,7 +1,6 @@
 #include "filterbuildable.h"
 #include <stdio.h>
 #include <getopt.h>
-#define _GNU_SOURCE
 
 static void print_usage(char *command)
 {

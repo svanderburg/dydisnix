@@ -1,5 +1,5 @@
-#ifndef __MULTIWAYCUT_H
-#define __MUTLIWAYCUT_H
+#ifndef __DYDISNIX_MULTIWAYCUT_H
+#define __DYDISNIX_MUTLIWAYCUT_H
 #include <glib.h>
 
 int multiwaycut(gchar *distribution_xml);

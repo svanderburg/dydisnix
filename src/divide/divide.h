@@ -1,5 +1,5 @@
-#ifndef __DIVIDE_H
-#define __DIVIDE_H
+#ifndef __DYDISNIX_DIVIDE_H
+#define __DYDISNIX_DIVIDE_H
 #include <glib.h>
 
 typedef enum

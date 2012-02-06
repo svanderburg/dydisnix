@@ -27,7 +27,7 @@ static GArray *filter_cuts(GArray *target_mapping_array)
 		if(service_name_index(target_item, service) != -1)
 		{
 		    g_array_append_val(cut_item->services, service);
-		    break;		    
+		    break;
 		}
 	    }
 	}

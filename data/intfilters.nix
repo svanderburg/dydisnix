@@ -11,8 +11,11 @@ rec {
       in
       { name = serviceName;
         value = listToAttrs(map (propertyName:
-	          { name = propertyName; value = getAttr propertyName service; }
-		  ) (filter (propertyName: propertyName != "pkg" && propertyName != "dependsOn") (attrNames service)))
+	          { name = propertyName;
+	            value = if propertyName == "dependsOn"
+	              then map (dependencyName: (getAttr dependencyName (service.dependsOn)).name) (attrNames (service.dependsOn))
+	              else getAttr propertyName service;
+	          } ) (filter (propertyName: propertyName != "pkg") (attrNames service)))
 		;
       }
     ) (attrNames services))

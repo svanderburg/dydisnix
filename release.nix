@@ -1,5 +1,5 @@
-{ nixpkgs ? /etc/nixos/nixpkgs 
-, disnix ? (import ../../disnix/trunk/release.nix {}).build {}
+{ nixpkgs ? <nixpkgs>
+, disnix ? (import ../../disnix/trunk/release.nix {}).build { system = "x86_64-linux"; }
 }:
 
 let

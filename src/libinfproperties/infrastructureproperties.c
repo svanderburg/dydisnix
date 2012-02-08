@@ -4,7 +4,7 @@
 
 #define BUFFER_SIZE 1024
 
-GArray *create_infrastructure_property_array(gchar *infrastructure_xml_file)
+GArray *create_infrastructure_property_array(const gchar *infrastructure_xml_file)
 {
     /* Declarations */
     xmlDocPtr doc;
@@ -127,7 +127,7 @@ void delete_infrastructure_property_array(GArray *infrastructure_property_array)
     g_array_free(infrastructure_property_array, TRUE);
 }
 
-void print_infrastructure_property_array(GArray *infrastructure_property_array)
+void print_infrastructure_property_array(const GArray *infrastructure_property_array)
 {
     unsigned int i;
     

@@ -32,6 +32,9 @@ let
       releaseTools.nixBuild {
         name = "dydisnix";
         src = tarball;
+        
+        dontStrip = true;
+        NIX_STRIP_DEBUG = true;
 
         buildInputs = [ pkgconfig getopt libxml2 glib disnix ]
 	              ++ lib.optional (!stdenv.isLinux) libiconv
@@ -405,6 +408,7 @@ let
 	    $machine->mustSucceed("nix-env -p /nix/var/nix/profiles/per-user/root/disnix-coordinator/default --set $result");
 	    
 	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapstatefultoprevious.nix");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
 	    
 	    if(@distribution[7] =~ /testtarget1/) {
 	        print "line 7 contains testtarget1!\n";
@@ -416,6 +420,29 @@ let
 	        die "line 8 contains testtarget2!\n";
 	    } else {
 	        print "line 8 does not contain testtarget2!\n";
+	    }
+	    
+	    # Execute graph coloring test. Each service should be mapped to a different machine.
+	    
+	    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure-3.nix -q ${tests}/qos/qos-graphcol.nix");
+	    my @distribution = split('\n', $machine->mustSucceed("cat $result"));
+	    
+	    if(@distribution[7] =~ /testtarget1/) {
+	        print "line 7 contains testtarget1!\n";
+	    } else {
+	        die "line 7 should contain testtarget1!\n";
+	    }
+	    
+	    if(@distribution[12] =~ /testtarget2/) {
+	        print "line 12 contains testtarget2!\n";
+	    } else {
+	        die "line 12 should contain testtarget2!\n";
+	    }
+	    
+	    if(@distribution[17] =~ /testtarget3/) {
+	        print "line 17 contains testtarget3!\n";
+	    } else {
+	        die "line 17 should contain testtarget3!\n";
 	    }
 	  '';
 	};

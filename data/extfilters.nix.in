@@ -105,4 +105,17 @@ rec {
 	  > $out
       '';
     })}";
+
+  graphcol = {services, infrastructure}:
+    import "${(pkgs.stdenv.mkDerivation {
+      name = "distribution.nix";
+      buildInputs = [ @prefix@ ];
+      buildCommand =
+      ''
+         dydisnix-graphcol \
+	  --services-xml ${generateServicesXML services} \
+	  --infrastructure-xml ${generateInfrastructureXML infrastructure} \
+	  > $out
+      '';
+    })}";
 }

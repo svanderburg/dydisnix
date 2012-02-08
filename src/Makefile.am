@@ -1,1 +1,1 @@
-SUBDIRS = libservices libinfproperties libmapping libinvmapping filter-buildable divide multiwaycut minsetcover
+SUBDIRS = libservices libinfproperties libmapping libinvmapping filter-buildable divide multiwaycut minsetcover graphcol

@@ -1,7 +1,7 @@
 #include "candidatetargetmapping.h"
 #include <xmlutil.h>
 
-GArray *create_candidate_target_array(char *candidate_mapping_file)
+GArray *create_candidate_target_array(const char *candidate_mapping_file)
 {
     /* Declarations */    
     xmlDocPtr doc;
@@ -122,7 +122,7 @@ void delete_candidate_target_array(GArray *candidate_target_array)
     g_array_free(candidate_target_array, TRUE);
 }
 
-void print_candidate_target_array(GArray *candidate_target_array)
+void print_candidate_target_array(const GArray *candidate_target_array)
 {
     unsigned int i;
     
@@ -143,7 +143,7 @@ void print_candidate_target_array(GArray *candidate_target_array)
     }
 }
 
-void print_expr_of_candidate_target_array(GArray *candidate_target_array)
+void print_expr_of_candidate_target_array(const GArray *candidate_target_array)
 {
     unsigned int i;
     

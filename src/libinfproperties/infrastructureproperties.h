@@ -18,11 +18,11 @@ typedef struct
 }
 Target;
 
-GArray *create_infrastructure_property_array(gchar *infrastructure_xml_file);
+GArray *create_infrastructure_property_array(const gchar *infrastructure_xml_file);
 
 void delete_infrastructure_property_array(GArray *infrastructure_property_array);
 
-void print_infrastructure_property_array(GArray *infrastructure_property_array);
+void print_infrastructure_property_array(const GArray *infrastructure_property_array);
 
 void substract_target_value(Target *target, gchar *property_name, int amount);
 

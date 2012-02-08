@@ -144,7 +144,7 @@ void print_service_property_array(const GArray *service_property_array)
     }
 }
 
-static gint service_index(GArray *service_property_array, gchar *name)
+gint service_index(GArray *service_property_array, gchar *name)
 {
     gint left = 0;
     gint right = service_property_array->len - 1;

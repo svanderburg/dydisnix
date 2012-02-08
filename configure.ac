@@ -57,6 +57,7 @@ src/filter-buildable/Makefile
 src/divide/Makefile
 src/multiwaycut/Makefile
 src/minsetcover/Makefile
+src/graphcol/Makefile
 src/libmapping/Makefile
 src/libinvmapping/Makefile
 src/libservices/Makefile

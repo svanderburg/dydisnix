@@ -14,13 +14,13 @@ typedef struct
 }
 DistributionItem;
 
-GArray *create_candidate_target_array(char *candidate_mapping_file);
+GArray *create_candidate_target_array(const char *candidate_mapping_file);
 
 void delete_candidate_target_array(GArray *candidate_target_array);
 
-void print_candidate_target_array(GArray *candidate_target_array);
+void print_candidate_target_array(const GArray *candidate_target_array);
 
-void print_expr_of_candidate_target_array(GArray *candidate_target_array);
+void print_expr_of_candidate_target_array(const GArray *candidate_target_array);
 
 gint distribution_item_index(GArray *candidate_target_array, gchar *service);
 

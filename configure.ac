@@ -53,6 +53,7 @@ scripts/dydisnix-self-adapt
 scripts/dydisnix-augment-infra
 scripts/Makefile
 src/Makefile
+src/dydisnix.pc
 src/filter-buildable/Makefile
 src/divide/Makefile
 src/multiwaycut/Makefile

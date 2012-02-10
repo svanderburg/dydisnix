@@ -53,13 +53,13 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	vertex_adjacency->service = current_service->name;
 	vertex_adjacency->adjacentServices = g_array_new(FALSE, FALSE, sizeof(gchar*));
 	
-	if(dependsOn != NULL)
+	if(dependsOn != NULL && dependsOn->value != NULL)
 	{
 	    unsigned int j;
 	    gchar **dependencies = g_strsplit(dependsOn->value, " ", 0);
 	
 	    for(j = 0; j < g_strv_length(dependencies) - 1; j++)
-		g_array_append_val(vertex_adjacency->adjacentServices, dependencies[j]);
+	        g_array_append_val(vertex_adjacency->adjacentServices, dependencies[j]);
 	
 	    g_free(dependencies);
 	}
@@ -75,7 +75,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	Service *current_service = g_array_index(service_property_array, Service*, i);
 	ServiceProperty *dependsOn = lookup_service_property(current_service, "dependsOn");
 	
-	if(dependsOn != NULL)
+	if(dependsOn != NULL && dependsOn->value != NULL)
 	{
 	    unsigned int j;
 	    gchar **dependencies = g_strsplit(dependsOn->value, " ", 0);
@@ -202,7 +202,11 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     for(i = 0; i < adjacency_array->len; i++)
     {
 	VertexAdjacency *current_adjacency = g_array_index(adjacency_array, VertexAdjacency*, i);
-	g_print("  %s = [ \"%s\" ];\n", current_adjacency->service, current_adjacency->target);
+	
+	if(current_adjacency->target == NULL)
+	    g_print("  %s = [];\n", current_adjacency->service);
+	else
+	    g_print("  %s = [ \"%s\" ];\n", current_adjacency->service, current_adjacency->target);
     }
     
     g_print("}\n");

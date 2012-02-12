@@ -36,9 +36,8 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     GArray *infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
     GArray *adjacency_array = g_array_new(FALSE, FALSE, sizeof(VertexAdjacency*));
     VertexAdjacency *max_adjacency = NULL;
-    VertexAdjacency *max_saturation_adjacency = NULL;
     unsigned int i;
-    int maxSaturationDegree = 0;
+    
     int colored_vertices = 0;
     
     /* Create adjacency array */
@@ -110,17 +109,20 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     while(colored_vertices < adjacency_array->len)
     {
 	gchar *pickTarget = NULL;
+	VertexAdjacency *max_saturation_adjacency = NULL;
+	int maxSaturationDegree = 0;
 	
 	/* Determine the uncolored vertex with maximum saturation degree */
 	
 	for(i = 0; i < adjacency_array->len; i++)
 	{
-	    int saturationDegree = 0;
 	    VertexAdjacency *current_adjacency = g_array_index(adjacency_array, VertexAdjacency*, i);
 	    unsigned int j;
 	    
 	    if(current_adjacency->target == NULL)
 	    {
+		int saturationDegree = 0;
+		
 		for(j = 0; j < current_adjacency->adjacentServices->len; j++)
 		{
 		    gchar *adjacentServiceName = g_array_index(current_adjacency->adjacentServices, gchar*, j);
@@ -165,7 +167,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	    
 	    for(j = 0; j < used_targets->len; j++)
 	    {
-		gchar *current_used_target = g_array_index(used_targets, char*, j);
+		gchar *current_used_target = g_array_index(used_targets, gchar*, j);
 		
 		if(g_strcmp0(current_target->name, current_used_target) == 0)
 		{
@@ -173,7 +175,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 		    break;
 		}
 	    }
-
+	    
 	    if(!exists)
 	    {
 		pickTarget = current_target->name;

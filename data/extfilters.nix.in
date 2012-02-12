@@ -12,7 +12,7 @@ rec {
       buildInputs = [ pkgs.libxslt ];
       buildCommand = ''
       (
-      cat <<EOF
+      cat << "EOF"
       ${builtins.toXML services}
       EOF
       ) | xsltproc ${servicesXSL} - > $out
@@ -28,7 +28,7 @@ rec {
       buildInputs = [ pkgs.libxslt @prefix@ ];
       buildCommand = ''
       (
-      cat <<EOF
+      cat << "EOF"
       ${builtins.toXML infrastructure}
       EOF
       ) | xsltproc ${infrastructureXSL} - > $out
@@ -44,7 +44,7 @@ rec {
       buildInputs = [ pkgs.libxslt ];
       buildCommand = ''
       (
-      cat <<EOF
+      cat << "EOF"
       ${builtins.toXML distribution}
       EOF
       ) | xsltproc ${distributionXSL} - > $out

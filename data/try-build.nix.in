@@ -1,5 +1,6 @@
 { servicesFile, infrastructureFile, distributionFile, serviceName, targetName
 , nixpkgs ? <nixpkgs>
+, disnix ? builtins.storePath @DISNIX_PREFIX@
 }:
 
 let
@@ -9,7 +10,7 @@ let
   infrastructure = import infrastructureFile;
   distributionFun = import distributionFile;
   
-  lib = import @DISNIX_PREFIX@/share/disnix/lib.nix { inherit nixpkgs pkgs; };
+  lib = import "${disnix}/share/disnix/lib.nix" { inherit nixpkgs pkgs; };
   pkgs = lib.selectPkgs system;
   
   distribution = distributionFun { inherit infrastructure; };

@@ -1,4 +1,7 @@
-{pkgs}:
+{ pkgs
+, dydisnix ? builtins.storePath @prefix@
+, disnix ? builtins.storePath @DISNIX_PREFIX@
+}:
 
 let
   inherit (builtins) toXML;
@@ -21,11 +24,11 @@ rec {
   ;
   
   generateInfrastructureXML = infrastructure:
-    let infrastructureXSL = @DISNIX_PREFIX@/share/disnix/infrastructure.xsl;
+    let infrastructureXSL = "${disnix}/share/disnix/infrastructure.xsl";
     in
     pkgs.stdenv.mkDerivation {
       name = "infrastructure.xml";
-      buildInputs = [ pkgs.libxslt @prefix@ ];
+      buildInputs = [ pkgs.libxslt dydisnix ];
       buildCommand = ''
       (
       cat << "EOF"
@@ -67,24 +70,24 @@ rec {
   divide = {strategy, services, infrastructure, distribution, serviceProperty, targetProperty}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
-      buildInputs = [ @prefix@ ];
+      buildInputs = [ dydisnix ];
       buildCommand = 
       ''
         dydisnix-divide \
-	  --strategy ${strategy} \
-	  --services-xml ${generateServicesXML services} \
-	  --infrastructure-xml ${generateInfrastructureXML infrastructure} \
-	  --distribution-xml ${generateDistributionXML distribution} \
-	  --service-property ${serviceProperty} \
-	  --target-property ${targetProperty} \
-	  > $out
+          --strategy ${strategy} \
+          --services-xml ${generateServicesXML services} \
+          --infrastructure-xml ${generateInfrastructureXML infrastructure} \
+          --distribution-xml ${generateDistributionXML distribution} \
+          --service-property ${serviceProperty} \
+          --target-property ${targetProperty} \
+          > $out
       '';
     })}";
 
   multiwaycut = {distribution}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
-      buildInputs = [ @prefix@ ];
+      buildInputs = [ dydisnix ];
       buildCommand =
       ''
         dydisnix-multiwaycut ${generateDistributionXML distribution} > $out
@@ -94,28 +97,28 @@ rec {
   minsetcover = {services, infrastructure, distribution, targetProperty}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
-      buildInputs = [ @prefix@ ];
+      buildInputs = [ dydisnix ];
       buildCommand =
       ''
         dydisnix-minsetcover \
-	  --services-xml ${generateServicesXML services} \
-	  --infrastructure-xml ${generateInfrastructureXML infrastructure} \
-	  --distribution-xml ${generateDistributionXML distribution} \
-	  --target-property ${targetProperty} \
-	  > $out
+          --services-xml ${generateServicesXML services} \
+          --infrastructure-xml ${generateInfrastructureXML infrastructure} \
+          --distribution-xml ${generateDistributionXML distribution} \
+          --target-property ${targetProperty} \
+          > $out
       '';
     })}";
 
   graphcol = {services, infrastructure}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
-      buildInputs = [ @prefix@ ];
+      buildInputs = [ dydisnix ];
       buildCommand =
       ''
          dydisnix-graphcol \
-	  --services-xml ${generateServicesXML services} \
-	  --infrastructure-xml ${generateInfrastructureXML infrastructure} \
-	  > $out
+          --services-xml ${generateServicesXML services} \
+          --infrastructure-xml ${generateInfrastructureXML infrastructure} \
+          > $out
       '';
     })}";
 }

@@ -1,6 +1,4 @@
-{ nixpkgs ? <nixpkgs>
-, disnix ? (import ../../disnix/trunk/release.nix {}).build { system = builtins.currentSystem; }
-}:
+{ nixpkgs ? <nixpkgs> }:
 
 let
   jobs = rec {

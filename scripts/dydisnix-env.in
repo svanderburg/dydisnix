@@ -23,7 +23,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`getopt -n $0 -o s:i:q:a:p:h -l services:,infrastructure:,qos:,augment:,profile:,coordinator-profile-path:,geninfra:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:h -l services:,infrastructure:,qos:,augment:,profile:,coordinator-profile-path:,geninfra:,help -- "$@"`
 
 if [ $? != 0 ]
 then

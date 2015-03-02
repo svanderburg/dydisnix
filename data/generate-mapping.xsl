@@ -8,8 +8,8 @@
 		<xsl:for-each select="/manifest/activation/mapping[not(name=preceding-sibling::mapping/name)]">
 			<xsl:variable name="name" select="name" />
 			<xsl:value-of select="$name" /> = [
-				<xsl:for-each select="/manifest/activation/mapping[name=$name]/target">
-					"<xsl:value-of select="hostname" />"
+				<xsl:for-each select="/manifest/activation/mapping[name=$name]">
+					"<xsl:value-of select="target" />"
 				</xsl:for-each>
 			];
 		</xsl:for-each>

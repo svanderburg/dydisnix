@@ -423,7 +423,7 @@ let
             # mapped to testtarget1. Then an upgrade is performed in which
             # services are mapped to all targets. testService1 which is marked
             # as stateful is only mapped to testtarget1. This test should
-            # succeed. (BROKEN since manifest file format has been changed)
+            # succeed.
             
             my $firstTargets = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-firsttargets.nix");
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' disnix-manifest -s ${tests}/services.nix -i ${tests}/infrastructure.nix -d $firstTargets");
@@ -431,19 +431,18 @@ let
             $machine->mustSucceed("nix-env -p /nix/var/nix/profiles/per-user/root/disnix-coordinator/default --set $result");
             
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapstatefultoprevious.nix");
-            $machine->mustSucceed("(cat $result) >&2");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[11] =~ /testtarget1/) {
-                print "line 11 contains testtarget1!\n";
+            if(@distribution[7] =~ /testtarget1/) {
+                print "line 7 contains testtarget1!\n";
             } else {
-                die "line 11 should contain testtarget1! Instead: $distribution[10]\n";
+                die "line 7 should contain testtarget1!\n";
             }
-            
-            if($distribution[12] =~ /testtarget2/) {
-                die "line 12 contains testtarget2!\n";
+
+            if(@distribution[8] =~ /testtarget2/) {
+                die "line 8 contains testtarget2!\n";
             } else {
-                print "line 12 does not contain testtarget2!\n";
+                print "line 8 does not contain testtarget2!\n";
             }
           '';
         };

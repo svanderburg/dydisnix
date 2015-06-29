@@ -55,10 +55,9 @@ let
               
               {
                 virtualisation.writableStore = true;
-                environment.systemPackages = [
-                  disnix dydisnix pkgs.stdenv
-                  pkgs.busybox pkgs.paxctl pkgs.gnumake pkgs.patchelf pkgs.gcc pkgs.perlPackages.ArchiveCpio # Required to build something in the VM
-                ];
+                virtualisation.pathsInNixDB = [ pkgs.stdenv pkgs.perlPackages.ArchiveCpio pkgs.busybox ];
+                
+                environment.systemPackages = [ disnix dydisnix pkgs.stdenv ];
               };
           };
           testScript = ''

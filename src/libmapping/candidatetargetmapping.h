@@ -10,20 +10,18 @@ typedef struct
     /** Name of a service */
     gchar *service;
     /** Array of target hosts */
-    GArray *targets;
+    GPtrArray *targets;
 }
 DistributionItem;
 
-GArray *create_candidate_target_array(const char *candidate_mapping_file);
+GPtrArray *create_candidate_target_array(const char *candidate_mapping_file);
 
-void delete_candidate_target_array(GArray *candidate_target_array);
+void delete_candidate_target_array(GPtrArray *candidate_target_array);
 
-void print_candidate_target_array(const GArray *candidate_target_array);
+void print_candidate_target_array(const GPtrArray *candidate_target_array);
 
-void print_expr_of_candidate_target_array(const GArray *candidate_target_array);
+void print_expr_of_candidate_target_array(const GPtrArray *candidate_target_array);
 
-gint distribution_item_index(GArray *candidate_target_array, gchar *service);
-
-DistributionItem *lookup_distribution_item(GArray *candidate_target_array, gchar *service);
+DistributionItem *find_distribution_item(GPtrArray *candidate_target_array, gchar *service);
 
 #endif

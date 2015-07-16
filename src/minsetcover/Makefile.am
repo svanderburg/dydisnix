@@ -1,5 +1,3 @@
-AM_CPPFLAGS = -ggdb
-
 bin_PROGRAMS = dydisnix-minsetcover
 noinst_HEADERS = minsetcover.h
 

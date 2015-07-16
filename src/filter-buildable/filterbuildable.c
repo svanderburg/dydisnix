@@ -20,23 +20,23 @@ static int instantiate(gchar *services_expr, gchar *infrastructure_expr, gchar *
     return WEXITSTATUS(status);
 }
 
-static void delete_filtered_target_array(GArray *filtered_target_array)
+static void delete_filtered_target_array(GPtrArray *filtered_target_array)
 {
     unsigned int i;
     
     for(i = 0; i < filtered_target_array->len; i++)
     {
-	DistributionItem *item = g_array_index(filtered_target_array, DistributionItem*, i);
+	DistributionItem *item = g_ptr_array_index(filtered_target_array, i);
 	g_free(item);
     }
     
-    g_array_free(filtered_target_array, TRUE);
+    g_ptr_array_free(filtered_target_array, TRUE);
 }
 
 int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, char *distribution_xml)
 {
     unsigned int i;
-    GArray *candidate_target_array = create_candidate_target_array(distribution_xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_xml);
 
     if(candidate_target_array == NULL)
     {
@@ -45,26 +45,26 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
     }
     else
     {
-	GArray *filtered_target_array = g_array_new(FALSE, FALSE, sizeof(DistributionItem*));
+	GPtrArray *filtered_target_array = g_ptr_array_new();
     
 	for(i = 0; i < candidate_target_array->len; i++)
 	{
 	    DistributionItem *filter_item = g_malloc(sizeof(DistributionItem));
-    	    DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
+    	    DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
 	    unsigned int j;
 	
 	    filter_item->service = item->service;
-	    filter_item->targets = g_array_new(FALSE, FALSE, sizeof(gchar*));
+	    filter_item->targets = g_ptr_array_new();
 	
 	    for(j = 0; j < item->targets->len; j++)
 	    {
-		gchar *target = g_array_index(item->targets, gchar*, j);
+		gchar *target = g_ptr_array_index(item->targets, j);
 	    
 		if(instantiate(services_expr, infrastructure_expr, distribution_expr, item->service, target) == 0)
-	    	    g_array_append_val(filter_item->targets, target);
+	    	    g_ptr_array_add(filter_item->targets, target);
 	    }
 	
-	    g_array_append_val(filtered_target_array, filter_item);
+	    g_ptr_array_add(filtered_target_array, filter_item);
 	}
     
 	/* Print resulting expression */

@@ -1,5 +1,3 @@
-AM_CPPFLAGS = -ggdb
-
 bin_PROGRAMS = dydisnix-divide
 noinst_HEADERS = divide.h
 

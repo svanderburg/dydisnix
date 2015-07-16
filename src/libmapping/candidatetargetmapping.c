@@ -1,13 +1,14 @@
 #include "candidatetargetmapping.h"
+#include <stdlib.h>
 #include <xmlutil.h>
 
-GArray *create_candidate_target_array(const char *candidate_mapping_file)
+GPtrArray *create_candidate_target_array(const char *candidate_mapping_file)
 {
-    /* Declarations */    
+    /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
     xmlXPathObjectPtr result;
-    GArray *candidate_target_array = NULL;
+    GPtrArray *candidate_target_array = NULL;
     
     /* Parse the XML document */
     
@@ -40,7 +41,7 @@ GArray *create_candidate_target_array(const char *candidate_mapping_file)
 	xmlNodeSetPtr nodeset = result->nodesetval;
 	
 	/* Create a candidate target array */
-        candidate_target_array = g_array_new(FALSE, FALSE, sizeof(DistributionItem*));
+        candidate_target_array = g_ptr_array_new();
 	
 	/* Iterate over all the distributionitem elements */
 	for(i = 0; i < nodeset->nodeNr; i++)
@@ -48,7 +49,7 @@ GArray *create_candidate_target_array(const char *candidate_mapping_file)
 	    xmlNodePtr distributionitem_children = nodeset->nodeTab[i]->children;
 	    DistributionItem *item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
 	    gchar *service = NULL;
-	    GArray *targets = NULL;
+	    GPtrArray *targets = NULL;
 	    
 	    /* Iterate over all the distributionitem children (derivation and target elements) */
 	    
@@ -59,7 +60,7 @@ GArray *create_candidate_target_array(const char *candidate_mapping_file)
 		else if(xmlStrcmp(distributionitem_children->name, (xmlChar*) "targets") == 0)
 		{
 		    xmlNodePtr targets_children = distributionitem_children->children;
-		    targets = g_array_new(FALSE, FALSE, sizeof(gchar*));
+		    targets = g_ptr_array_new();
 		    
 		    /* Iterate over the targets children */
 		    
@@ -68,7 +69,7 @@ GArray *create_candidate_target_array(const char *candidate_mapping_file)
 			if(xmlStrcmp(targets_children->name, (xmlChar*) "target") == 0) /* Only iterate over target nodes */
 			{
 			    gchar *target = g_strdup(targets_children->children->content);
-			    g_array_append_val(targets, target);
+			    g_ptr_array_add(targets, target);
 			}
 			
 			targets_children = targets_children->next;
@@ -82,8 +83,8 @@ GArray *create_candidate_target_array(const char *candidate_mapping_file)
 	    
 	    item->service = service;
 	    item->targets = targets;
-	    g_array_append_val(candidate_target_array, item);
-	}	
+	    g_ptr_array_add(candidate_target_array, item);
+	}
     }
     
     /* Cleanup */
@@ -95,13 +96,13 @@ GArray *create_candidate_target_array(const char *candidate_mapping_file)
     return candidate_target_array;
 }
 
-void delete_candidate_target_array(GArray *candidate_target_array)
+void delete_candidate_target_array(GPtrArray *candidate_target_array)
 {
     unsigned int i;
     
     for(i = 0; i < candidate_target_array->len; i++)
     {
-	DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
+	DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
 	unsigned int j;
 	
 	g_free(item->service);
@@ -110,25 +111,25 @@ void delete_candidate_target_array(GArray *candidate_target_array)
 	{
 	    for(j = 0; j < item->targets->len; j++)
 	    {
-		gchar *target = g_array_index(item->targets, gchar*, j);
-		g_free(target);	    
+		gchar *target = g_ptr_array_index(item->targets, j);
+		g_free(target);
 	    }
 	}
 	
-	g_array_free(item->targets, TRUE);
+	g_ptr_array_free(item->targets, TRUE);
 	g_free(item);
     }
     
-    g_array_free(candidate_target_array, TRUE);
+    g_ptr_array_free(candidate_target_array, TRUE);
 }
 
-void print_candidate_target_array(const GArray *candidate_target_array)
+void print_candidate_target_array(const GPtrArray *candidate_target_array)
 {
     unsigned int i;
     
     for(i = 0; i < candidate_target_array->len; i++)
     {
-	DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
+	DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
 	unsigned int j;
 	
 	g_print("service: %s\n", item->service);
@@ -136,14 +137,14 @@ void print_candidate_target_array(const GArray *candidate_target_array)
 	
 	for(j = 0; j < item->targets->len; j++)
 	{
-	    gchar *target = g_array_index(item->targets, gchar*, j);
+	    gchar *target = g_ptr_array_index(item->targets, j);
 	    
 	    g_print("  target: %s\n", target);
 	}
     }
 }
 
-void print_expr_of_candidate_target_array(const GArray *candidate_target_array)
+void print_expr_of_candidate_target_array(const GPtrArray *candidate_target_array)
 {
     unsigned int i;
     
@@ -151,14 +152,14 @@ void print_expr_of_candidate_target_array(const GArray *candidate_target_array)
     
     for(i = 0; i < candidate_target_array->len; i++)
     {
-	DistributionItem *item = g_array_index(candidate_target_array, DistributionItem*, i);
+	DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
 	unsigned int j;
 	
 	g_print("  %s = [\n", item->service);
 	
 	for(j = 0; j < item->targets->len; j++)
 	{
-	    gchar *target = g_array_index(item->targets, gchar*, j);
+	    gchar *target = g_ptr_array_index(item->targets, j);
 	    g_print("    \"%s\"\n", target);
 	}
 	
@@ -168,34 +169,25 @@ void print_expr_of_candidate_target_array(const GArray *candidate_target_array)
     g_print("}\n");
 }
 
-gint distribution_item_index(GArray *candidate_target_array, gchar *service)
+static gint compare_distribution_item_keys(const DistributionItem **l, const DistributionItem **r)
 {
-    gint left = 0;
-    gint right = candidate_target_array->len - 1;
+    const DistributionItem *left = *l;
+    const DistributionItem *right = *r;
     
-    while(left <= right)
-    {
-	gint mid = (left + right) / 2;
-	DistributionItem *mid_distribution_item = g_array_index(candidate_target_array, DistributionItem*, mid);
-        gint status = g_strcmp0(mid_distribution_item->service, service);
-	
-	if(status == 0)
-            return mid; /* Return index of the found service */
-	else if(status > 0)
-	    right = mid - 1;
-	else if(status < 0)
-	    left = mid + 1;
-    }
-    
-    return -1; /* service not found */
+    return g_strcmp0(left->service, right->service);
 }
 
-DistributionItem *lookup_distribution_item(GArray *candidate_target_array, gchar *service)
+DistributionItem *find_distribution_item(GPtrArray *candidate_target_array, gchar *service)
 {
-    gint index = distribution_item_index(candidate_target_array, service);
+    DistributionItem distributionItem;
+    DistributionItem *distributionItemPtr = &distributionItem, **ret;
     
-    if(index == -1)
-	return NULL;
+    distributionItemPtr->service = service;
+    
+    ret = bsearch(&distributionItemPtr, candidate_target_array->pdata, candidate_target_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_distribution_item_keys);
+
+    if(ret == NULL)
+        return NULL;
     else
-	return g_array_index(candidate_target_array, DistributionItem*, index);
+        return *ret;
 }

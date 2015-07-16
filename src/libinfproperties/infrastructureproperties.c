@@ -4,13 +4,13 @@
 
 #define BUFFER_SIZE 1024
 
-GArray *create_infrastructure_property_array(const gchar *infrastructure_xml_file)
+GPtrArray *create_infrastructure_property_array(const gchar *infrastructure_xml_file)
 {
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
     xmlXPathObjectPtr result;
-    GArray *infrastructure_property_array = NULL;
+    GPtrArray *infrastructure_property_array = NULL;
     
     /* Parse the XML document */
     
@@ -41,12 +41,12 @@ GArray *create_infrastructure_property_array(const gchar *infrastructure_xml_fil
     {
 	unsigned int i;
         xmlNodeSetPtr nodeset = result->nodesetval;
-        infrastructure_property_array = g_array_new(FALSE, FALSE, sizeof(Target*));
+        infrastructure_property_array = g_ptr_array_new();
 	
 	for(i = 0; i < nodeset->nodeNr; i++)
         {
 	    Target *target = (Target*)g_malloc(sizeof(Target));
-	    GArray *property = g_array_new(FALSE, FALSE, sizeof(InfrastructureProperty*));
+	    GPtrArray *property = g_ptr_array_new();
 	    xmlAttr *infrastructure_properties = nodeset->nodeTab[i]->properties;
 	    xmlNodePtr infrastructure_children = nodeset->nodeTab[i]->children;
 	    
@@ -78,13 +78,13 @@ GArray *create_infrastructure_property_array(const gchar *infrastructure_xml_fil
 		    else
 			infrastructure_property->value = g_strdup(infrastructure_children->children->content);
 			
-		    g_array_append_val(property, infrastructure_property);
+		    g_ptr_array_add(property, infrastructure_property);
 		}
 		
 		infrastructure_children = infrastructure_children->next;
 	    }
 	    
-	    g_array_append_val(infrastructure_property_array, target);
+	    g_ptr_array_add(infrastructure_property_array, target);
 	}
 	
 	xmlXPathFreeObject(result);
@@ -100,40 +100,40 @@ GArray *create_infrastructure_property_array(const gchar *infrastructure_xml_fil
     return infrastructure_property_array;
 }
 
-void delete_infrastructure_property_array(GArray *infrastructure_property_array)
+void delete_infrastructure_property_array(GPtrArray *infrastructure_property_array)
 {
     unsigned int i;
     
     for(i = 0; i < infrastructure_property_array->len; i++)
     {
-	Target *target = g_array_index(infrastructure_property_array, Target*, i);
+	Target *target = g_ptr_array_index(infrastructure_property_array, i);
 	unsigned int j;
 	
 	g_free(target->name);
 	
 	for(j = 0; j < target->property->len; j++)
 	{
-	    InfrastructureProperty *infrastructure_property = g_array_index(target->property, InfrastructureProperty*, j);
+	    InfrastructureProperty *infrastructure_property = g_ptr_array_index(target->property, j);
 	    
 	    g_free(infrastructure_property->name);
 	    g_free(infrastructure_property->value);
 	    g_free(infrastructure_property);
 	}
 	
-	g_array_free(target->property, TRUE);
+	g_ptr_array_free(target->property, TRUE);
 	g_free(target);
     }
     
-    g_array_free(infrastructure_property_array, TRUE);
+    g_ptr_array_free(infrastructure_property_array, TRUE);
 }
 
-void print_infrastructure_property_array(const GArray *infrastructure_property_array)
+void print_infrastructure_property_array(const GPtrArray *infrastructure_property_array)
 {
     unsigned int i;
     
     for(i = 0; i < infrastructure_property_array->len; i++)
     {
-	Target *target = g_array_index(infrastructure_property_array, Target*, i);
+	Target *target = g_ptr_array_index(infrastructure_property_array, i);
 	unsigned int j;
 	
 	g_print("Target name: %s\n", target->name);
@@ -141,83 +141,62 @@ void print_infrastructure_property_array(const GArray *infrastructure_property_a
 	
 	for(j = 0; j < target->property->len; j++)
 	{
-	    InfrastructureProperty *infrastructure_property = g_array_index(target->property, InfrastructureProperty*, j);
+	    InfrastructureProperty *infrastructure_property = g_ptr_array_index(target->property, j);
 	    g_print("  name: %s, value: %s\n", infrastructure_property->name, infrastructure_property->value);
 	}
     }
 }
 
-static gint infrastructure_index(GArray *infrastructure_property_array, gchar *name)
+static gint compare_target_keys(const Target **l, const Target **r)
 {
-    gint left = 0;
-    gint right = infrastructure_property_array->len - 1;
+    const Target *left = *l;
+    const Target *right = *r;
     
-    while(left <= right)
-    {
-	gint mid = (left + right) / 2;
-	Target *mid_target = g_array_index(infrastructure_property_array, Target*, mid);
-        gint status = g_strcmp0(mid_target->name, name);
-	
-	if(status == 0)
-            return mid; /* Return index of the found target */
-	else if(status > 0)
-	    right = mid - 1;
-	else if(status < 0)
-	    left = mid + 1;
-    }
-    
-    return -1; /* Target not found */
+    return g_strcmp0(left->name, right->name);
 }
 
-Target* lookup_target(GArray *infrastructure_property_array, gchar *name)
+Target *find_target(GPtrArray *target_array, gchar *name)
 {
-    gint index = infrastructure_index(infrastructure_property_array, name);
+    Target target;
+    Target **ret, *targetPtr = &target;
     
-    if(index == -1)
-	return NULL;
+    targetPtr->name = name;
+    
+    ret = bsearch(&targetPtr, target_array->pdata, target_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_target_keys);
+
+    if(ret == NULL)
+        return NULL;
     else
-	return g_array_index(infrastructure_property_array, Target*, index);
+        return *ret;
 }
 
-static gint infrastructure_property_index(Target *target, gchar *name)
+static gint compare_infrastructure_property_keys(const InfrastructureProperty **l, const InfrastructureProperty **r)
 {
-    GArray *property = target->property;
+    const InfrastructureProperty *left = *l;
+    const InfrastructureProperty *right = *r;
     
-    gint left = 0;
-    gint right = property->len - 1;
-    
-    while(left <= right)
-    {
-	gint mid = (left + right) / 2;
-	InfrastructureProperty *mid_property = g_array_index(property, InfrastructureProperty*, mid);
-        gint status = g_strcmp0(mid_property->name, name);
-	
-	if(status == 0)
-            return mid; /* Return index of the found target property */
-	else if(status > 0)
-	    right = mid - 1;
-	else if(status < 0)
-	    left = mid + 1;
-    }
-    
-    return -1; /* Target property not found */
+    return g_strcmp0(left->name, right->name);
 }
 
-InfrastructureProperty *lookup_infrastructure_property(Target *target, gchar *name)
+InfrastructureProperty *find_infrastructure_property(Target *target, gchar *name)
 {
-    gint index = infrastructure_property_index(target, name);
+    InfrastructureProperty prop;
+    InfrastructureProperty **ret, *propPtr = &prop;
     
-    if(index == -1)
-	return NULL;
+    propPtr->name = name;
+    
+    ret = bsearch(&propPtr, target->property->pdata, target->property->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_infrastructure_property_keys);
+
+    if(ret == NULL)
+        return NULL;
     else
-	return g_array_index(target->property, InfrastructureProperty*, index);
+        return *ret;
 }
 
 void substract_target_value(Target *target, gchar *property_name, int amount)
 {
     gchar buffer[BUFFER_SIZE];
-    int index = infrastructure_property_index(target, property_name);
-    InfrastructureProperty *property = g_array_index(target->property, InfrastructureProperty*, index);
+    InfrastructureProperty *property = find_infrastructure_property(target, property_name);
     int value = atoi(property->value) - amount;
     g_sprintf(buffer, "%d", value);
     g_free(property->value);

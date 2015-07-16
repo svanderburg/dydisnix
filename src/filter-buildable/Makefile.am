@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -ggdb -DDATADIR=\"$(datadir)\"
+AM_CPPFLAGS = -DDATADIR=\"$(datadir)\"
 
 bin_PROGRAMS = dydisnix-filter-buildable
 noinst_HEADERS = filterbuildable.h

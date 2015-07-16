@@ -14,20 +14,18 @@ typedef struct
 {
     gchar *name;
     
-    GArray *property;
+    GPtrArray *property;
 }
 Service;
 
-GArray *create_service_property_array(const gchar *services_xml_file);
+GPtrArray *create_service_property_array(const gchar *services_xml_file);
 
-void delete_service_property_array(GArray *service_property_array);
+void delete_service_property_array(GPtrArray *service_property_array);
 
-void print_service_property_array(const GArray *service_property_array);
+void print_service_property_array(const GPtrArray *service_property_array);
 
-gint service_index(GArray *service_property_array, gchar *name);
+Service *find_service(GPtrArray *service_array, gchar *name);
 
-Service *lookup_service(GArray *service_property_array, gchar *name);
-
-ServiceProperty *lookup_service_property(Service *service, gchar *name);
+ServiceProperty *find_service_property(Service *service, gchar *name);
 
 #endif

@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -ggdb -DDATADIR="\"$(prefix)/share/dydisnix\""
+AM_CPPFLAGS = -DDATADIR="\"$(prefix)/share/dydisnix\""
 
 pkglib_LTLIBRARIES = libservices.la
 pkginclude_HEADERS = serviceproperties.h

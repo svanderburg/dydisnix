@@ -14,20 +14,20 @@ typedef struct
 {
     gchar *name;
     
-    GArray *property;
+    GPtrArray *property;
 }
 Target;
 
-GArray *create_infrastructure_property_array(const gchar *infrastructure_xml_file);
+GPtrArray *create_infrastructure_property_array(const gchar *infrastructure_xml_file);
 
-void delete_infrastructure_property_array(GArray *infrastructure_property_array);
+void delete_infrastructure_property_array(GPtrArray *infrastructure_property_array);
 
-void print_infrastructure_property_array(const GArray *infrastructure_property_array);
+void print_infrastructure_property_array(const GPtrArray *infrastructure_property_array);
 
 void substract_target_value(Target *target, gchar *property_name, int amount);
 
-Target* lookup_target(GArray *infrastructure_property_array, gchar *name);
+Target *find_target(GPtrArray *target_array, gchar *name);
 
-InfrastructureProperty *lookup_infrastructure_property(Target *target, gchar *name);
+InfrastructureProperty *find_infrastructure_property(Target *target, gchar *name);
 
 #endif

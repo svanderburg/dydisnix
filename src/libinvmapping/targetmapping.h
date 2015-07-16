@@ -6,18 +6,20 @@ typedef struct
 {
     gchar *target;
     
-    GArray *services;
+    GPtrArray *services;
 }
 TargetMappingItem;
 
-GArray *create_target_mapping_array(GArray *candidate_target_array);
+GPtrArray *create_target_mapping_array(GPtrArray *candidate_target_array);
 
-void delete_target_mapping_array(GArray *target_mapping_array);
+void delete_target_mapping_array(GPtrArray *target_mapping_array);
 
-void print_target_mapping_array(GArray *target_mapping_array);
+void print_target_mapping_array(GPtrArray *target_mapping_array);
 
-int service_name_index(TargetMappingItem *item, gchar *service);
+gchar *find_service_name(TargetMappingItem *item, gchar *service);
 
 gint compare_target_mapping_item(const TargetMappingItem **l, const TargetMappingItem **r);
+
+TargetMappingItem *find_target_mapping_item(GPtrArray *target_mapping_array, gchar *target);
 
 #endif

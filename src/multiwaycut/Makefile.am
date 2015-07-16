@@ -1,5 +1,3 @@
-AM_CPPFLAGS = -ggdb
-
 bin_PROGRAMS = dydisnix-multiwaycut
 noinst_HEADERS = multiwaycut.h
 

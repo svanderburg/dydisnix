@@ -1,5 +1,3 @@
-AM_CPPFLAGS=-ggdb
-
 pkglib_LTLIBRARIES = libmapping.la
 pkginclude_HEADERS = candidatetargetmapping.h
 

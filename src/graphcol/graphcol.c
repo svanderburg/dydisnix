@@ -1,4 +1,5 @@
 #include "graphcol.h"
+#include <stdlib.h>
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
 
@@ -25,16 +26,39 @@ static int compare_service_degree(gconstpointer a, gconstpointer b)
 typedef struct
 {
     gchar *service;
-    GArray *adjacentServices;
+    GPtrArray *adjacentServices;
     gchar *target;
 }
 VertexAdjacency;
 
+static gint compare_vertex_adjacency_keys(const VertexAdjacency **l, const VertexAdjacency **r)
+{
+    const VertexAdjacency *left = *l;
+    const VertexAdjacency *right = *r;
+    
+    return g_strcmp0(left->service, right->service);
+}
+
+static VertexAdjacency *find_vertex_adjacency_item(GPtrArray *adjacency_array, gchar *service)
+{
+    VertexAdjacency vertexAdjacency;
+    VertexAdjacency **ret, *vertexAdjacencyPtr = &vertexAdjacency;
+    
+    vertexAdjacencyPtr->service = service;
+    
+    ret = bsearch(&vertexAdjacencyPtr, adjacency_array->pdata, adjacency_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_vertex_adjacency_keys);
+
+    if(ret == NULL)
+        return NULL;
+    else
+        return *ret;
+}
+
 int graphcol(const char *services_xml, const char *infrastructure_xml)
 {
-    GArray *service_property_array = create_service_property_array(services_xml);
-    GArray *infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
-    GArray *adjacency_array = g_array_new(FALSE, FALSE, sizeof(VertexAdjacency*));
+    GPtrArray *service_property_array = create_service_property_array(services_xml);
+    GPtrArray *infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
+    GPtrArray *adjacency_array = g_ptr_array_new();
     VertexAdjacency *max_adjacency = NULL;
     unsigned int i;
     
@@ -44,13 +68,13 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     
     for(i = 0; i < service_property_array->len; i++)
     {
-	Service *current_service = g_array_index(service_property_array, Service*, i);
-	ServiceProperty *dependsOn = lookup_service_property(current_service, "dependsOn");
+	Service *current_service = g_ptr_array_index(service_property_array, i);
+	ServiceProperty *dependsOn = find_service_property(current_service, "dependsOn");
 	
 	VertexAdjacency *vertex_adjacency = (VertexAdjacency*)g_malloc(sizeof(VertexAdjacency));
 
 	vertex_adjacency->service = current_service->name;
-	vertex_adjacency->adjacentServices = g_array_new(FALSE, FALSE, sizeof(gchar*));
+	vertex_adjacency->adjacentServices = g_ptr_array_new();
 	
 	if(dependsOn != NULL && dependsOn->value != NULL)
 	{
@@ -58,21 +82,21 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	    gchar **dependencies = g_strsplit(dependsOn->value, " ", 0);
 	
 	    for(j = 0; j < g_strv_length(dependencies) - 1; j++)
-	        g_array_append_val(vertex_adjacency->adjacentServices, dependencies[j]);
+	        g_ptr_array_add(vertex_adjacency->adjacentServices, dependencies[j]);
 	
 	    g_free(dependencies);
 	}
 	
 	vertex_adjacency->target = NULL;
 	
-	g_array_append_val(adjacency_array, vertex_adjacency);
+	g_ptr_array_add(adjacency_array, vertex_adjacency);
     }
     
     /* Add interdependent services on given service to the adjacency array */
     for(i = 0; i < service_property_array->len; i++)
     {
-	Service *current_service = g_array_index(service_property_array, Service*, i);
-	ServiceProperty *dependsOn = lookup_service_property(current_service, "dependsOn");
+	Service *current_service = g_ptr_array_index(service_property_array, i);
+	ServiceProperty *dependsOn = find_service_property(current_service, "dependsOn");
 	
 	if(dependsOn != NULL && dependsOn->value != NULL)
 	{
@@ -81,10 +105,8 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	    
 	    for(j = 0; j < g_strv_length(dependencies) - 1; j++)
 	    {
-		gint index = service_index(service_property_array, dependencies[j]);
-		VertexAdjacency *vertex_adjacency = g_array_index(adjacency_array, VertexAdjacency*, index);
-		
-		g_array_append_val(vertex_adjacency->adjacentServices, current_service->name);
+		VertexAdjacency *vertex_adjacency = find_vertex_adjacency_item(adjacency_array, dependencies[j]);
+		g_ptr_array_add(vertex_adjacency->adjacentServices, current_service->name);
 	    }
 	    
 	    g_free(dependencies);
@@ -95,7 +117,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     
     for(i = 0; i < adjacency_array->len; i++)
     {
-	VertexAdjacency *current_adjacency = g_array_index(adjacency_array, VertexAdjacency*, i);
+	VertexAdjacency *current_adjacency = g_ptr_array_index(adjacency_array, i);
 	
 	if((max_adjacency == NULL) || (current_adjacency->adjacentServices->len > max_adjacency->adjacentServices->len))
 	    max_adjacency = current_adjacency;
@@ -103,7 +125,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     
     /* Color the max degree vertex with the first color */
     
-    max_adjacency->target = (g_array_index(infrastructure_property_array, Target*, 0))->name;
+    max_adjacency->target = ((InfrastructureProperty*)g_ptr_array_index(infrastructure_property_array, 0))->name;
     colored_vertices++;
     
     while(colored_vertices < adjacency_array->len)
@@ -116,7 +138,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	
 	for(i = 0; i < adjacency_array->len; i++)
 	{
-	    VertexAdjacency *current_adjacency = g_array_index(adjacency_array, VertexAdjacency*, i);
+	    VertexAdjacency *current_adjacency = g_ptr_array_index(adjacency_array, i);
 	    unsigned int j;
 	    
 	    if(current_adjacency->target == NULL)
@@ -125,9 +147,8 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 		
 		for(j = 0; j < current_adjacency->adjacentServices->len; j++)
 		{
-		    gchar *adjacentServiceName = g_array_index(current_adjacency->adjacentServices, gchar*, j);
-		    int index = service_index(service_property_array, adjacentServiceName);
-		    VertexAdjacency *adjacentService = g_array_index(adjacency_array, VertexAdjacency*, index);
+		    gchar *adjacentServiceName = g_ptr_array_index(current_adjacency->adjacentServices, j);
+		    VertexAdjacency *adjacentService = find_vertex_adjacency_item(adjacency_array, adjacentServiceName);
 		
 		    if(adjacentService->target != NULL)
 			saturationDegree++;
@@ -145,16 +166,15 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	
 	/* Determine which colors are already used by the neighbours */
 	
-	GArray *used_targets = g_array_new(FALSE, FALSE, sizeof(gchar*));
+	GPtrArray *used_targets = g_ptr_array_new();
 	
 	for(i = 0; i < max_saturation_adjacency->adjacentServices->len; i++)
 	{
-	    gchar *adjacentServiceName = g_array_index(max_saturation_adjacency->adjacentServices, gchar*, i);
-	    int index = service_index(service_property_array, adjacentServiceName);
-	    VertexAdjacency *adjacentService = g_array_index(adjacency_array, VertexAdjacency*, index);
+	    gchar *adjacentServiceName = g_ptr_array_index(max_saturation_adjacency->adjacentServices, i);
+	    VertexAdjacency *adjacentService = find_vertex_adjacency_item(adjacency_array, adjacentServiceName);
 	    
 	    if(adjacentService->target != NULL)
-		g_array_append_val(used_targets, adjacentService->target);
+		g_ptr_array_add(used_targets, adjacentService->target);
 	}
 	
 	/* Look in the targets array for the first target that is not in used targets (which we mean by the lowest color) */
@@ -162,12 +182,12 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	for(i = 0; i < infrastructure_property_array->len; i++)
 	{
 	    unsigned int j;
-	    Target *current_target = g_array_index(infrastructure_property_array, Target*, i);
+	    Target *current_target = g_ptr_array_index(infrastructure_property_array, i);
 	    int exists = FALSE;
 	    
 	    for(j = 0; j < used_targets->len; j++)
 	    {
-		gchar *current_used_target = g_array_index(used_targets, gchar*, j);
+		gchar *current_used_target = g_ptr_array_index(used_targets, j);
 		
 		if(g_strcmp0(current_target->name, current_used_target) == 0)
 		{
@@ -183,7 +203,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	    }
 	}
 	
-	g_array_free(used_targets, TRUE);
+	g_ptr_array_free(used_targets, TRUE);
 	
 	if(pickTarget == NULL)
 	{
@@ -203,7 +223,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     
     for(i = 0; i < adjacency_array->len; i++)
     {
-	VertexAdjacency *current_adjacency = g_array_index(adjacency_array, VertexAdjacency*, i);
+	VertexAdjacency *current_adjacency = g_ptr_array_index(adjacency_array, i);
 	
 	if(current_adjacency->target == NULL)
 	    g_print("  %s = [];\n", current_adjacency->service);

@@ -1,13 +1,14 @@
 #include "serviceproperties.h"
+#include <stdlib.h>
 #include <xmlutil.h>
 
-GArray *create_service_property_array(const gchar *services_xml_file)
+GPtrArray *create_service_property_array(const gchar *services_xml_file)
 {
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
     xmlXPathObjectPtr result;
-    GArray *service_property_array = NULL;
+    GPtrArray *service_property_array = NULL;
 
     /* Parse the XML document */
     
@@ -38,12 +39,12 @@ GArray *create_service_property_array(const gchar *services_xml_file)
     {
         unsigned int i;
         xmlNodeSetPtr nodeset = result->nodesetval;
-	service_property_array = g_array_new(FALSE, FALSE, sizeof(Service*));
+	service_property_array = g_ptr_array_new();
 	
         for(i = 0; i < nodeset->nodeNr; i++)
         {
 	    Service *service = (Service*)g_malloc(sizeof(Service));
-	    GArray *property = g_array_new(FALSE, FALSE, sizeof(ServiceProperty*));
+	    GPtrArray *property = g_ptr_array_new();
 	    xmlAttr *service_properties = nodeset->nodeTab[i]->properties;
 	    xmlNodePtr service_children = nodeset->nodeTab[i]->children;
 	    
@@ -75,13 +76,13 @@ GArray *create_service_property_array(const gchar *services_xml_file)
 		    else
 			service_property->value = g_strdup(service_children->children->content);
 			
-		    g_array_append_val(property, service_property);
+		    g_ptr_array_add(property, service_property);
 		}
 	    
 		service_children = service_children->next;
 	    }
 	    
-	    g_array_append_val(service_property_array, service);
+	    g_ptr_array_add(service_property_array, service);
 	}
 	
 	xmlXPathFreeObject(result);
@@ -97,40 +98,40 @@ GArray *create_service_property_array(const gchar *services_xml_file)
     return service_property_array;
 }
 
-void delete_service_property_array(GArray *service_property_array)
+void delete_service_property_array(GPtrArray *service_property_array)
 {
     unsigned int i;
     
     for(i = 0; i < service_property_array->len; i++)
     {
-	Service *service = g_array_index(service_property_array, Service*, i);
+	Service *service = g_ptr_array_index(service_property_array, i);
 	unsigned int j;
 		
 	g_free(service->name);
 	
 	for(j = 0; j < service->property->len; j++)
 	{
-	    ServiceProperty *service_property = g_array_index(service->property, ServiceProperty*, j);
+	    ServiceProperty *service_property = g_ptr_array_index(service->property, j);
 	    
 	    g_free(service_property->name);
 	    g_free(service_property->value);
 	    g_free(service_property);
 	}
 	
-	g_array_free(service->property, TRUE);
+	g_ptr_array_free(service->property, TRUE);
 	g_free(service);
     }
     
-    g_array_free(service_property_array, TRUE);
+    g_ptr_array_free(service_property_array, TRUE);
 }
 
-void print_service_property_array(const GArray *service_property_array)
+void print_service_property_array(const GPtrArray *service_property_array)
 {
     unsigned int i;
     
     for(i = 0; i < service_property_array->len; i++)
     {
-	Service *service = g_array_index(service_property_array, Service*, i);
+	Service *service = g_ptr_array_index(service_property_array, i);
 	unsigned int j;
 	
 	g_print("Service name: %s\n", service->name);
@@ -138,74 +139,54 @@ void print_service_property_array(const GArray *service_property_array)
 	
 	for(j = 0; j < service->property->len; j++)
 	{
-	    ServiceProperty *service_property = g_array_index(service->property, ServiceProperty*, j);	    
+	    ServiceProperty *service_property = g_ptr_array_index(service->property, j);
 	    g_print("  name: %s, value: %s\n", service_property->name, service_property->value);
 	}
     }
 }
 
-gint service_index(GArray *service_property_array, gchar *name)
+static gint compare_service_keys(const Service **l, const Service **r)
 {
-    gint left = 0;
-    gint right = service_property_array->len - 1;
+    const Service *left = *l;
+    const Service *right = *r;
     
-    while(left <= right)
-    {
-	gint mid = (left + right) / 2;
-	Service *mid_service = g_array_index(service_property_array, Service*, mid);
-        gint status = g_strcmp0(mid_service->name, name);
-	
-	if(status == 0)
-            return mid; /* Return index of the found service */
-	else if(status > 0)
-	    right = mid - 1;
-	else if(status < 0)
-	    left = mid + 1;
-    }
-    
-    return -1; /* Service not found */
+    return g_strcmp0(left->name, right->name);
 }
 
-Service *lookup_service(GArray *service_property_array, gchar *name)
+Service *find_service(GPtrArray *service_array, gchar *name)
 {
-    gint index = service_index(service_property_array, name);
+    Service service;
+    Service **ret, *servicePtr = &service;
     
-    if(index == -1)
-	return NULL;
+    servicePtr->name = name;
+    
+    ret = bsearch(&servicePtr, service_array->pdata, service_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_service_keys);
+    
+    if(ret == NULL)
+        return NULL;
     else
-	return g_array_index(service_property_array, Service*, index);	
+        return *ret;
 }
 
-static gint service_property_index(Service *service, gchar *name)
+static gint compare_service_property_keys(const ServiceProperty **l, const ServiceProperty **r)
 {
-    GArray *property = service->property;
+    const ServiceProperty *left = *l;
+    const ServiceProperty *right = *r;
     
-    gint left = 0;
-    gint right = property->len - 1;
-    
-    while(left <= right)
-    {
-	gint mid = (left + right) / 2;
-	ServiceProperty *mid_property = g_array_index(property, ServiceProperty*, mid);
-        gint status = g_strcmp0(mid_property->name, name);
-	
-	if(status == 0)
-            return mid; /* Return index of the found service property */
-	else if(status > 0)
-	    right = mid - 1;
-	else if(status < 0)
-	    left = mid + 1;
-    }
-    
-    return -1; /* Service property not found */
+    return g_strcmp0(left->name, right->name);
 }
 
-ServiceProperty *lookup_service_property(Service *service, gchar *name)
+ServiceProperty *find_service_property(Service *service, gchar *name)
 {
-    gint index = service_property_index(service, name);
+    ServiceProperty serviceProperty;
+    ServiceProperty **ret, *servicePropertyPtr = &serviceProperty;
     
-    if(index == -1)
-	return NULL;
+    servicePropertyPtr->name = name;
+    
+    ret = bsearch(&servicePropertyPtr, service->property->pdata, service->property->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_service_property_keys);
+
+    if(ret == NULL)
+        return NULL;
     else
-	return g_array_index(service->property, ServiceProperty*, index);
+        return *ret;
 }

@@ -96,6 +96,8 @@ TargetMappingItem *find_target_mapping_item(GPtrArray *target_mapping_array, gch
     TargetMappingItem item;
     TargetMappingItem **ret, *itemPtr = &item;
     
+    itemPtr->target = target;
+    
     ret = bsearch(&itemPtr, target_mapping_array->pdata, target_mapping_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_target_mapping_item);
 
     if(ret == NULL)

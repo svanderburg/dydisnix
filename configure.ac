@@ -51,6 +51,7 @@ scripts/dydisnix-env
 scripts/dydisnix-gendist
 scripts/dydisnix-self-adapt
 scripts/dydisnix-augment-infra
+scripts/dydisnix-xml
 scripts/Makefile
 src/Makefile
 src/dydisnix.pc
@@ -59,6 +60,7 @@ src/divide/Makefile
 src/multiwaycut/Makefile
 src/minsetcover/Makefile
 src/graphcol/Makefile
+src/portassign/Makefile
 src/libmapping/Makefile
 src/libinvmapping/Makefile
 src/libservices/Makefile

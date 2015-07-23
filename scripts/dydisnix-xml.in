@@ -1,0 +1,86 @@
+#!/bin/bash -e
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    cat <<EOF
+Usage: $0 -s services_expr
+  or: $0 -i infrastructure_expr
+  or: $0 -d distribution_expr -i infrastructure_expr
+  
+Options:
+  -s, --services        Services Nix expression which describes all components of the distributed system
+  -i, --infrastructure  Infrastructure Nix expression which captures properties of machines in the network
+  -d, --distribution    Distribution Nix expression mapping services to machines
+  --no-out-link         Do not create a result symlink
+  -h, --help            Shows the usage of this command
+EOF
+}
+
+# Autoconf settings
+export prefix=@prefix@
+
+# Import checks
+source @DISNIX_PREFIX@/share/disnix/checks
+
+# Parse valid argument options
+
+PARAMS=`@getopt@ -n $0 -o s:i:d:h -l services:,infrastructure:,distribution:,no-out-link,help -- "$@"`
+
+if [ $? != 0 ]
+then
+    showUsage
+    exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -s|--services)
+            servicesFile=`readlink -f $2`
+            ;;
+        -i|--infrastructure)
+            infrastructureFile=`readlink -f $2`
+            ;;
+        -d|--distribution)
+            distributionFile=`readlink -f $2`
+            ;;
+        --no-out-link)
+            noOutLink="--no-out-link"
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+    esac
+    
+    shift
+done
+
+# Execute operation
+
+if [ "$servicesFile" != "" ]
+then
+    nix-build --arg servicesFile $servicesFile \
+        -A servicesToXML \
+        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+elif [ "$distributionFile" != "" ] && [ "$infrastructureFile" != "" ]
+then
+    nix-build --arg distributionFile $distributionFile \
+        --arg infrastructureFile $infrastructureFile \
+        -A distributionToXML \
+        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+elif [ "$infrastructureFile" != "" ]
+then
+    nix-build --arg infrastructureFile $infrastructureFile \
+        -A infrastructureToXML \
+        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+else
+    echo "Don't know how to generate XML from the given input files. Are all models correctly specified?" >&2
+    exit 1
+fi

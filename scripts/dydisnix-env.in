@@ -18,7 +18,6 @@ showUsage()
 }
 
 # Import checks
-
 source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options

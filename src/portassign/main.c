@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     char *services_xml = NULL;
     char *infrastructure_xml = NULL;
     char *distribution_xml = NULL;
-    char *service_property = "port";
+    char *service_property = "portAssign";
     
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "h", long_options, &option_index)) != -1)

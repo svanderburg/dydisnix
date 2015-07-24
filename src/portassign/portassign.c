@@ -32,7 +32,7 @@ int portassign(gchar *service_xml, gchar *infrastructure_xml, gchar *distributio
             Service *service = find_service(service_property_array, distribution_item->service);
             ServiceProperty *prop = find_service_property(service, service_property);
             
-            /* For each service that has a port property that is unassigned, assign a port */
+            /* For each service that wants a port number to be assigned, assign a port */
 
             if(prop != NULL)
             {

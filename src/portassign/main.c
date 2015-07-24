@@ -5,7 +5,7 @@
 static void print_usage(char *command)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --services-xml services.xml --infrastructure-xml infrastructure.xml --distribution-xml distribution.xml --ports-cfg ports.xml --service-property serviceProperty\n", command);
+    fprintf(stderr, "%s --services-xml services.xml --infrastructure-xml infrastructure.xml --distribution-xml distribution.xml --ports-xml ports.xml --service-property serviceProperty\n", command);
     fprintf(stderr, "%s {-h | --help}\n", command);
 }
 
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
         {"services-xml", required_argument, 0, 's'},
         {"infrastructure-xml", required_argument, 0, 'i'},
         {"distribution-xml", required_argument, 0, 'd'},
-        {"ports-cfg", required_argument, 0, 'p'},
+        {"ports-xml", required_argument, 0, 'p'},
         {"service-property", required_argument, 0, 'S'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}

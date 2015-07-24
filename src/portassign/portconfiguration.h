@@ -22,6 +22,8 @@ PortConfiguration;
 
 void init_port_configuration(PortConfiguration *port_configuration);
 
+void destroy_port_configuration(PortConfiguration *port_configuration);
+
 /**
  * If a port reservation has been made use that port number.
  * Otherwise assign a new one
@@ -31,5 +33,9 @@ void init_port_configuration(PortConfiguration *port_configuration);
  * @param service Name of the service to assign a port to
  */
 gint assign_or_reuse_port(PortConfiguration *port_configuration, gchar *target, gchar *service);
+
+void print_port_configuration(PortConfiguration *port_configuration);
+
+void clean_obsolete_reservations(PortConfiguration *port_configuration, GPtrArray *candidate_target_array);
 
 #endif

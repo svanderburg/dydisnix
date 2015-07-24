@@ -8,12 +8,14 @@ showUsage()
 Usage: $0 -s services_expr
   or: $0 -i infrastructure_expr
   or: $0 -d distribution_expr -i infrastructure_expr
+  or: $0 -p ports_expr
   
 Options:
   -s, --services        Services Nix expression which describes all components of the distributed system
   -i, --infrastructure  Infrastructure Nix expression which captures properties of machines in the network
   -d, --distribution    Distribution Nix expression mapping services to machines
-  --no-out-link         Do not create a result symlink
+  -p, --ports           Port assignment expression assigning port numbers to services
+      --no-out-link     Do not create a result symlink
   -h, --help            Shows the usage of this command
 EOF
 }
@@ -26,7 +28,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:d:h -l services:,infrastructure:,distribution:,no-out-link,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:d:p:h -l services:,infrastructure:,distribution:,ports:,no-out-link,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -49,6 +51,9 @@ do
             ;;
         -d|--distribution)
             distributionFile=`readlink -f $2`
+            ;;
+        -p|--ports)
+            portsFile=`readlink -f $2`
             ;;
         --no-out-link)
             noOutLink="--no-out-link"
@@ -79,6 +84,11 @@ elif [ "$infrastructureFile" != "" ]
 then
     nix-build --arg infrastructureFile $infrastructureFile \
         -A infrastructureToXML \
+        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+elif [ "$portsFile" != "" ]
+then
+    nix-build --arg portsFile $portsFile \
+        -A portsToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 else
     echo "Don't know how to generate XML from the given input files. Are all models correctly specified?" >&2

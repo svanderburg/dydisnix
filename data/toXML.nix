@@ -28,4 +28,10 @@ in
       ) distribution;
     in
     filters.generateDistributionXML mappings;
+
+  portsToXML = {portsFile}:
+    let
+      ports = import portsFile;
+    in
+    filters.generatePortsXML ports;
 }

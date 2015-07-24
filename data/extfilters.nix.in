@@ -54,6 +54,22 @@ rec {
       '';
     }
   ;
+  
+  generatePortsXML = ports:
+    let portsXSL = ./ports.xsl;
+    in
+    pkgs.stdenv.mkDerivation {
+      name = "ports.xml";
+      buildInputs = [ pkgs.libxslt ];
+      buildCommand = ''
+      (
+      cat << "EOF"
+      ${builtins.toXML ports}
+      EOF
+      ) | xsltproc ${portsXSL} - > $out
+      '';
+    }
+  ;
 
   generatePreviousDistribution = coordinatorProfile:
     let generateMappingXSL = ./generate-mapping.xsl;

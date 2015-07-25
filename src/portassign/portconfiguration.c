@@ -157,6 +157,8 @@ int open_port_configuration(PortConfiguration *port_configuration, const gchar *
         for(i = 0; i < nodeset->nodeNr; i++)
             port_configuration->global_config = parse_target_config(nodeset->nodeTab[i]);
     }
+    else
+        port_configuration->global_config = NULL;
     
     /* Query the target config properties */
     result = executeXPathQuery(doc, "/portConfiguration/targetConfigs");

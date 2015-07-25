@@ -3,12 +3,242 @@
 #include "infrastructureproperties.h"
 #include "candidatetargetmapping.h"
 #include "portconfiguration.h"
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
-int portassign(gchar *service_xml, gchar *infrastructure_xml, gchar *distribution_xml, gchar *ports_xml, gchar *service_property)
+#define BUFFER_SIZE 4096
+
+static gchar *generate_service_xml_from_expr(char *service_expr)
 {
-    GPtrArray *service_property_array = create_service_property_array(service_xml);
-    GPtrArray *infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_xml);
+    int pipefd[2];
+    
+    if(pipe(pipefd) == 0)
+    {
+        int status = fork();
+        
+        if(status == -1)
+        {
+            g_printerr("Error with forking dydisnix-xml process!\n");
+            return NULL;
+        }
+        else if(status == 0)
+        {
+            char *const args[] = { "dydisnix-xml", "-s", service_expr, NULL };
+            
+            close(pipefd[0]); /* Close read-end of pipe */
+            dup2(pipefd[1], 1);
+            execvp("dydisnix-xml", args);
+            _exit(1);
+        }
+        else
+        {
+            char line[BUFFER_SIZE];
+            ssize_t line_size;
+        
+            close(pipefd[1]); /* Close write-end of pipe */
+            
+            line_size = read(pipefd[0], line, BUFFER_SIZE - 1);
+            line[line_size - 1] = '\0'; /* Replace linefeed char with termination */
+
+            close(pipefd[0]);
+            
+            wait(&status);
+            
+            if(WEXITSTATUS(status) == 0)
+                return g_strdup(line);
+            else
+                return NULL;
+        }
+    }
+    else
+    {
+        g_printerr("Error with creating a pipe\n");
+        return NULL;
+    }
+}
+
+static gchar *generate_infrastructure_xml_from_expr(char *infrastructure_expr)
+{
+    int pipefd[2];
+    
+    if(pipe(pipefd) == 0)
+    {
+        int status = fork();
+        
+        if(status == -1)
+        {
+            g_printerr("Error with forking dydisnix-xml process!\n");
+            return NULL;
+        }
+        else if(status == 0)
+        {
+            char *const args[] = { "dydisnix-xml", "-i", infrastructure_expr, NULL };
+            
+            close(pipefd[0]); /* Close read-end of pipe */
+            dup2(pipefd[1], 1);
+            execvp("dydisnix-xml", args);
+            _exit(1);
+        }
+        else
+        {
+            char line[BUFFER_SIZE];
+            ssize_t line_size;
+        
+            close(pipefd[1]); /* Close write-end of pipe */
+            
+            line_size = read(pipefd[0], line, BUFFER_SIZE - 1);
+            line[line_size - 1] = '\0'; /* Replace linefeed char with termination */
+
+            close(pipefd[0]);
+            
+            wait(&status);
+            
+            if(WEXITSTATUS(status) == 0)
+                return g_strdup(line);
+            else
+                return NULL;
+        }
+    }
+    else
+    {
+        g_printerr("Error with creating a pipe\n");
+        return NULL;
+    }
+}
+
+static gchar *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr)
+{
+    int pipefd[2];
+    
+    if(pipe(pipefd) == 0)
+    {
+        int status = fork();
+        
+        if(status == -1)
+        {
+            g_printerr("Error with forking dydisnix-xml process!\n");
+            return NULL;
+        }
+        else if(status == 0)
+        {
+            char *const args[] = { "dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, NULL };
+            
+            close(pipefd[0]); /* Close read-end of pipe */
+            dup2(pipefd[1], 1);
+            execvp("dydisnix-xml", args);
+            _exit(1);
+        }
+        else
+        {
+            char line[BUFFER_SIZE];
+            ssize_t line_size;
+        
+            close(pipefd[1]); /* Close write-end of pipe */
+            
+            line_size = read(pipefd[0], line, BUFFER_SIZE - 1);
+            line[line_size - 1] = '\0'; /* Replace linefeed char with termination */
+
+            close(pipefd[0]);
+            
+            wait(&status);
+            
+            if(WEXITSTATUS(status) == 0)
+                return g_strdup(line);
+            else
+                return NULL;
+        }
+    }
+    else
+    {
+        g_printerr("Error with creating a pipe\n");
+        return NULL;
+    }
+}
+
+static gchar *generate_ports_xml_from_expr(char *ports_expr)
+{
+    int pipefd[2];
+    
+    if(pipe(pipefd) == 0)
+    {
+        int status = fork();
+        
+        if(status == -1)
+        {
+            g_printerr("Error with forking dydisnix-xml process!\n");
+            return NULL;
+        }
+        else if(status == 0)
+        {
+            char *const args[] = { "dydisnix-xml", "-p", ports_expr, NULL };
+            
+            close(pipefd[0]); /* Close read-end of pipe */
+            dup2(pipefd[1], 1);
+            execvp("dydisnix-xml", args);
+            _exit(1);
+        }
+        else
+        {
+            char line[BUFFER_SIZE];
+            ssize_t line_size;
+        
+            close(pipefd[1]); /* Close write-end of pipe */
+            
+            line_size = read(pipefd[0], line, BUFFER_SIZE - 1);
+            line[line_size - 1] = '\0'; /* Replace linefeed char with termination */
+
+            close(pipefd[0]);
+            
+            wait(&status);
+            
+            if(WEXITSTATUS(status) == 0)
+                return g_strdup(line);
+            else
+                return NULL;
+        }
+    }
+    else
+    {
+        g_printerr("Error with creating a pipe\n");
+        return NULL;
+    }
+}
+
+int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *ports, gchar *service_property, int xml)
+{
+    GPtrArray *service_property_array;
+    GPtrArray *infrastructure_property_array;
+    GPtrArray *candidate_target_array;
+    gchar *service_xml;
+    gchar *infrastructure_xml;
+    gchar *distribution_xml;
+    gchar *ports_xml;
+
+    if(xml)
+    {
+        service_xml = services;
+        infrastructure_xml = infrastructure;
+        distribution_xml = distribution;
+        ports_xml = ports;
+    }
+    else
+    {
+        /* Convert Nix expressions to XML */
+        service_xml = generate_service_xml_from_expr(services);
+        infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure);
+        distribution_xml = generate_distribution_xml_from_expr(distribution, infrastructure);
+        
+        if(ports == NULL)
+            ports_xml = NULL;
+        else
+            ports_xml = generate_ports_xml_from_expr(ports);
+    }
+
+    service_property_array = create_service_property_array(service_xml);
+    infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
+    candidate_target_array = create_candidate_target_array(distribution_xml);
     
     if(service_property_array == NULL || infrastructure_property_array == NULL || candidate_target_array == NULL)
     {
@@ -65,6 +295,14 @@ int portassign(gchar *service_xml, gchar *infrastructure_xml, gchar *distributio
         g_print("}\n");
         
         destroy_port_configuration(&port_configuration);
+        
+        if(xml)
+        {
+            g_free(service_xml);
+            g_free(infrastructure_xml);
+            g_free(distribution_xml);
+            g_free(ports_xml);
+        }
         
         return 0;
     }

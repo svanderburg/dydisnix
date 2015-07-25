@@ -5,7 +5,7 @@
 static void print_usage(char *command)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --services-xml services.xml --infrastructure-xml infrastructure.xml --distribution-xml distribution.xml --ports-xml ports.xml --service-property serviceProperty\n", command);
+    fprintf(stderr, "%s --services services_expr --infrastructure infrastructure_expr --distribution distribution_expr --ports ports_expr --xml --service-property serviceProperty [--xml]\n", command);
     fprintf(stderr, "%s {-h | --help}\n", command);
 }
 
@@ -20,34 +20,39 @@ int main(int argc, char *argv[])
         {"distribution-xml", required_argument, 0, 'd'},
         {"ports-xml", required_argument, 0, 'p'},
         {"service-property", required_argument, 0, 'S'},
+        {"xml", no_argument, 0, 'x'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
-    char *services_xml = NULL;
-    char *infrastructure_xml = NULL;
-    char *distribution_xml = NULL;
-    char *ports_xml = NULL;
+    char *services = NULL;
+    char *infrastructure = NULL;
+    char *distribution = NULL;
+    char *ports = NULL;
     char *service_property = "portAssign";
+    int xml = FALSE;
     
     /* Parse command-line options */
-    while((c = getopt_long(argc, argv, "h", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "s:i:d:p:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
             case 's':
-                services_xml = optarg;
+                services = optarg;
                 break;
             case 'i':
-                infrastructure_xml = optarg;
+                infrastructure = optarg;
                 break;
             case 'd':
-                distribution_xml = optarg;
+                distribution = optarg;
                 break;
             case 'p':
-                ports_xml = optarg;
+                ports = optarg;
                 break;
             case 'S':
                 service_property = optarg;
+                break;
+            case 'x':
+                xml = TRUE;
                 break;
             case 'h':
             case '?':
@@ -58,25 +63,25 @@ int main(int argc, char *argv[])
     
     /* Validate options */
     
-    if(services_xml == NULL)
+    if(services == NULL)
     {
-        fprintf(stderr, "A services XML file must be specified!\n");
+        fprintf(stderr, "A services model file must be specified!\n");
         return 1;
     }
     
-    if(infrastructure_xml == NULL)
+    if(infrastructure == NULL)
     {
-        fprintf(stderr, "An infrastructure XML file must be specified!\n");
+        fprintf(stderr, "An infrastructure model file must be specified!\n");
         return 1;
     }
     
-    if(distribution_xml == NULL)
+    if(distribution == NULL)
     {
-        fprintf(stderr, "A distribution XML file must be specified!\n");
+        fprintf(stderr, "A distribution model file must be specified!\n");
         return 1;
     }
     
     /* Execute operation */
-    portassign(services_xml, infrastructure_xml, distribution_xml, ports_xml, service_property);
+    portassign(services, infrastructure, distribution, ports, service_property, xml);
     return 0;
 }

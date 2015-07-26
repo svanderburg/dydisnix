@@ -256,7 +256,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
             open_port_configuration(&port_configuration, ports_xml); /* Otherwise, open the ports config */
         
         /* Clean obsolete reservations */
-        clean_obsolete_reservations(&port_configuration, candidate_target_array);
+        clean_obsolete_reservations(&port_configuration, candidate_target_array, service_property_array, service_property);
         
         g_print("{\n");
         g_print("  ports = {\n");

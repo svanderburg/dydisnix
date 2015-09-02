@@ -1,4 +1,4 @@
-{distribution, system, pkgs}:
+{system, pkgs, distribution, invDistribution}:
 
 let
   customPkgs = import ./pkgs { inherit pkgs system; };

@@ -14,7 +14,9 @@ let
   pkgs = lib.selectPkgs system;
   
   distribution = distributionFun { inherit infrastructure; };
-  services = servicesFun { inherit distribution system pkgs; };
+  invDistribution = lib.generateInverseDistribution services infrastructure distribution;
+  
+  services = servicesFun { inherit distribution invDistribution system pkgs; };
   
   servicesWithTargets = lib.augmentTargetsInDependsOn distribution services;
   target = getAttr targetName infrastructure;

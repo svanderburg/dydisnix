@@ -1,12 +1,19 @@
 { nixpkgs ? <nixpkgs>
 , systems ? [ "i686-linux" "x86_64-linux" ]
-, disnixJobset ? import ../disnix/release.nix { inherit nixpkgs systems officialRelease; }
 , dydisnix ? {outPath = ./.; rev = 1234;}
+, fetchDependenciesFromNixpkgs ? false
 , officialRelease ? false
 }:
 
 let
   pkgs = import nixpkgs {};
+  
+  # Refer either to disnix in the parent folder, or to the one in Nixpkgs
+  disnixJobset = if fetchDependenciesFromNixpkgs then {
+    build = pkgs.lib.genAttrs systems (system:
+      (import nixpkgs { inherit system; }).disnix
+    );
+  } else import ../disnix/release.nix { inherit nixpkgs systems officialRelease; };
   
   jobs = rec {
     tarball =

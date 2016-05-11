@@ -1,6 +1,7 @@
 #include "infrastructureproperties.h"
 #include <xmlutil.h>
 #include <stdlib.h>
+#include <glib/gprintf.h>
 
 #define BUFFER_SIZE 1024
 

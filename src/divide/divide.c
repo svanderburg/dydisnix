@@ -1,4 +1,5 @@
 #include "divide.h"
+#include <stdlib.h>
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
 #include "candidatetargetmapping.h"

@@ -7,11 +7,11 @@
 int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribution_xml, gchar *target_property)
 {
     GPtrArray *service_property_array = create_service_property_array(services_xml);
-    GPtrArray *infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
+    GPtrArray *targets_array = create_target_array_from_xml(infrastructure_xml);
     GPtrArray *candidate_target_array = create_candidate_target_array(distribution_xml);
     int exit_status = 0;
     
-    if(service_property_array == NULL || infrastructure_property_array == NULL || candidate_target_array == NULL)
+    if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");
 	exit_status = 1;
@@ -47,16 +47,16 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 	    for(i = 0; i < target_mapping_array->len; i++)
 	    {
 		TargetMappingItem *target_mapping = g_ptr_array_index(target_mapping_array, i);
-		Target *target = find_target(infrastructure_property_array, target_mapping->target);
-		InfrastructureProperty *infrastructure_prop = find_infrastructure_property(target, target_property);
+		Target *target = find_target_by_name(targets_array, target_mapping->target);
+		TargetProperty *target_prop = find_target_property(target, target_property);
 		
 		int count = 0;
 		double cost;
 		unsigned int j;
 	    
-		if(infrastructure_prop == NULL)
+		if(target_prop == NULL)
 		{
-		    g_printerr("Infrastructure property: %s not found!\n", target_property);
+		    g_printerr("Target property: %s not found!\n", target_property);
 		    exit_status = 1;
 		    break;
 		}
@@ -69,7 +69,7 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
 			count++;
 		}
 		
-		cost = atoi(infrastructure_prop->value) / (double)count;
+		cost = atoi(target_prop->value) / (double)count;
 	    
 		if(min_cost == -1 || cost < min_cost)
 		{
@@ -113,7 +113,7 @@ int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribut
     
     /* Cleanup */
     delete_candidate_target_array(candidate_target_array);
-    delete_infrastructure_property_array(infrastructure_property_array);
+    delete_target_array(targets_array);
     delete_service_property_array(service_property_array);
     
     return exit_status;

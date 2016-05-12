@@ -24,7 +24,7 @@ in
       infrastructure = import infrastructureFile;
       distribution = import distributionFile { inherit infrastructure; };
       mappings = pkgs.lib.mapAttrs (serviceName: targets: # Substitute targets in infrastructure model by their names
-        map (target: target.hostname) targets
+        map (target: target.properties.hostname) targets
       ) distribution;
     in
     filters.generateDistributionXML mappings;

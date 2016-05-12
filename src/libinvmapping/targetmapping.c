@@ -37,16 +37,19 @@ GPtrArray *create_target_mapping_array(GPtrArray *candidate_target_array)
 
 void delete_target_mapping_array(GPtrArray *target_mapping_array)
 {
-    unsigned int i;
-    
-    for(i = 0; i < target_mapping_array->len; i++)
+    if(target_mapping_array != NULL)
     {
-	TargetMappingItem *item = g_ptr_array_index(target_mapping_array, i);
-	g_ptr_array_free(item->services, TRUE);
-	g_free(item);
+        unsigned int i;
+        
+        for(i = 0; i < target_mapping_array->len; i++)
+        {
+            TargetMappingItem *item = g_ptr_array_index(target_mapping_array, i);
+            g_ptr_array_free(item->services, TRUE);
+            g_free(item);
+        }
+        
+        g_ptr_array_free(target_mapping_array, TRUE);
     }
-    
-    g_ptr_array_free(target_mapping_array, TRUE);
 }
 
 void print_target_mapping_array(GPtrArray *target_mapping_array)

@@ -100,48 +100,54 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
 
 void delete_service_property_array(GPtrArray *service_property_array)
 {
-    unsigned int i;
-    
-    for(i = 0; i < service_property_array->len; i++)
+    if(service_property_array != NULL)
     {
-	Service *service = g_ptr_array_index(service_property_array, i);
-	unsigned int j;
-		
-	g_free(service->name);
-	
-	for(j = 0; j < service->property->len; j++)
-	{
-	    ServiceProperty *service_property = g_ptr_array_index(service->property, j);
-	    
-	    g_free(service_property->name);
-	    g_free(service_property->value);
-	    g_free(service_property);
-	}
-	
-	g_ptr_array_free(service->property, TRUE);
-	g_free(service);
-    }
+        unsigned int i;
     
-    g_ptr_array_free(service_property_array, TRUE);
+        for(i = 0; i < service_property_array->len; i++)
+        {
+            Service *service = g_ptr_array_index(service_property_array, i);
+            unsigned int j;
+
+            g_free(service->name);
+
+            for(j = 0; j < service->property->len; j++)
+            {
+                ServiceProperty *service_property = g_ptr_array_index(service->property, j);
+                
+                g_free(service_property->name);
+                g_free(service_property->value);
+                g_free(service_property);
+            }
+
+            g_ptr_array_free(service->property, TRUE);
+            g_free(service);
+        }
+    
+        g_ptr_array_free(service_property_array, TRUE);
+    }
 }
 
 void print_service_property_array(const GPtrArray *service_property_array)
 {
-    unsigned int i;
-    
-    for(i = 0; i < service_property_array->len; i++)
+    if(service_property_array != NULL)
     {
-	Service *service = g_ptr_array_index(service_property_array, i);
-	unsigned int j;
-	
-	g_print("Service name: %s\n", service->name);
-	g_print("Properties:\n");
-	
-	for(j = 0; j < service->property->len; j++)
-	{
-	    ServiceProperty *service_property = g_ptr_array_index(service->property, j);
-	    g_print("  name: %s, value: %s\n", service_property->name, service_property->value);
-	}
+        unsigned int i;
+        
+        for(i = 0; i < service_property_array->len; i++)
+        {
+            Service *service = g_ptr_array_index(service_property_array, i);
+            unsigned int j;
+            
+            g_print("Service name: %s\n", service->name);
+            g_print("Properties:\n");
+
+            for(j = 0; j < service->property->len; j++)
+            {
+                ServiceProperty *service_property = g_ptr_array_index(service->property, j);
+                g_print("  name: %s, value: %s\n", service_property->name, service_property->value);
+            }
+        }
     }
 }
 

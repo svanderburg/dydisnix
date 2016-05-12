@@ -98,29 +98,32 @@ GPtrArray *create_candidate_target_array(const char *candidate_mapping_file)
 
 void delete_candidate_target_array(GPtrArray *candidate_target_array)
 {
-    unsigned int i;
-    
-    for(i = 0; i < candidate_target_array->len; i++)
+    if(candidate_target_array != NULL)
     {
-	DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
-	unsigned int j;
-	
-	g_free(item->service);
-	
-	if(item->targets != NULL)
-	{
-	    for(j = 0; j < item->targets->len; j++)
-	    {
-		gchar *target = g_ptr_array_index(item->targets, j);
-		g_free(target);
-	    }
-	}
-	
-	g_ptr_array_free(item->targets, TRUE);
-	g_free(item);
+        unsigned int i;
+        
+        for(i = 0; i < candidate_target_array->len; i++)
+        {
+            DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
+            unsigned int j;
+            
+            g_free(item->service);
+            
+            if(item->targets != NULL)
+            {
+                for(j = 0; j < item->targets->len; j++)
+                {
+                    gchar *target = g_ptr_array_index(item->targets, j);
+                    g_free(target);
+                }
+            }
+
+            g_ptr_array_free(item->targets, TRUE);
+            g_free(item);
+        }
+        
+        g_ptr_array_free(candidate_target_array, TRUE);
     }
-    
-    g_ptr_array_free(candidate_target_array, TRUE);
 }
 
 void print_candidate_target_array(const GPtrArray *candidate_target_array)

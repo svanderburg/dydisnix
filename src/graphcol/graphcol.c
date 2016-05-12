@@ -57,7 +57,7 @@ static VertexAdjacency *find_vertex_adjacency_item(GPtrArray *adjacency_array, g
 int graphcol(const char *services_xml, const char *infrastructure_xml)
 {
     GPtrArray *service_property_array = create_service_property_array(services_xml);
-    GPtrArray *infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
+    GPtrArray *targets_array = create_target_array_from_xml(infrastructure_xml);
     GPtrArray *adjacency_array = g_ptr_array_new();
     VertexAdjacency *max_adjacency = NULL;
     unsigned int i;
@@ -125,7 +125,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     
     /* Color the max degree vertex with the first color */
     
-    max_adjacency->target = ((InfrastructureProperty*)g_ptr_array_index(infrastructure_property_array, 0))->name;
+    max_adjacency->target = ((Target*)g_ptr_array_index(targets_array, 0))->name;
     colored_vertices++;
     
     while(colored_vertices < adjacency_array->len)
@@ -179,10 +179,10 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
 	
 	/* Look in the targets array for the first target that is not in used targets (which we mean by the lowest color) */
 	
-	for(i = 0; i < infrastructure_property_array->len; i++)
+	for(i = 0; i < targets_array->len; i++)
 	{
 	    unsigned int j;
-	    Target *current_target = g_ptr_array_index(infrastructure_property_array, i);
+	    Target *current_target = g_ptr_array_index(targets_array, i);
 	    int exists = FALSE;
 	    
 	    for(j = 0; j < used_targets->len; j++)
@@ -235,7 +235,7 @@ int graphcol(const char *services_xml, const char *infrastructure_xml)
     
     /* Cleanup */
     delete_service_property_array(service_property_array);
-    delete_infrastructure_property_array(infrastructure_property_array);
+    delete_target_array(targets_array);
     
     return 0;
 }

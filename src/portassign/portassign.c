@@ -209,7 +209,7 @@ static gchar *generate_ports_xml_from_expr(char *ports_expr)
 int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *ports, gchar *service_property, int xml)
 {
     GPtrArray *service_property_array;
-    GPtrArray *infrastructure_property_array;
+    GPtrArray *targets_array;
     GPtrArray *candidate_target_array;
     gchar *service_xml;
     gchar *infrastructure_xml;
@@ -237,10 +237,10 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
     }
 
     service_property_array = create_service_property_array(service_xml);
-    infrastructure_property_array = create_infrastructure_property_array(infrastructure_xml);
+    targets_array = create_target_array_from_xml(infrastructure_xml);
     candidate_target_array = create_candidate_target_array(distribution_xml);
     
-    if(service_property_array == NULL || infrastructure_property_array == NULL || candidate_target_array == NULL)
+    if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
     {
         g_printerr("Error with opening one of the models!\n");
         return 1;

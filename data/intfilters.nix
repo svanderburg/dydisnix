@@ -11,12 +11,12 @@ rec {
       in
       { name = serviceName;
         value = listToAttrs(map (propertyName:
-	          { name = propertyName;
-	            value = if propertyName == "dependsOn"
-	              then map (dependencyName: (getAttr dependencyName (service.dependsOn)).name) (attrNames (service.dependsOn))
-	              else getAttr propertyName service;
-	          } ) (filter (propertyName: propertyName != "pkg") (attrNames service)))
-		;
+                  { name = propertyName;
+                    value = if propertyName == "dependsOn"
+                      then map (dependencyName: (getAttr dependencyName (service.dependsOn)).name) (attrNames (service.dependsOn))
+                      else getAttr propertyName service;
+                  } ) (filter (propertyName: propertyName != "pkg") (attrNames service)))
+                ;
       }
     ) (attrNames services))
   ;
@@ -32,17 +32,17 @@ rec {
   mapAttrOnList = {distribution, services, infrastructure, serviceProperty, targetPropertyList}:
     listToAttrs (map (serviceName:
       { name = serviceName;
-        value = 
+        value =
           let
             servicePropertyValue = getAttr serviceProperty (getAttr serviceName services);
-	    targets = getAttr serviceName distribution;
+            targets = getAttr serviceName distribution;
           in
-          filter (targetName: 
+          filter (targetName:
             let
-	      target = getAttr targetName infrastructure;
-	      targetPropertyListValue = getAttr targetPropertyList target;
-	    in
-	      elem servicePropertyValue targetPropertyListValue
+              target = getAttr targetName infrastructure;
+              targetPropertyListValue = getAttr targetPropertyList target.properties;
+            in
+              elem servicePropertyValue targetPropertyListValue
           ) targets;
       }
     ) (attrNames distribution))
@@ -51,19 +51,19 @@ rec {
   mapListOnAttr = {distribution, services, infrastructure, servicePropertyList, targetProperty}:
     listToAttrs (map (serviceName:
       { name = serviceName;
-        value = 
-	  let
-	    targets = getAttr serviceName distribution;
-	    service = getAttr serviceName services;
-	    servicePropertyListValue = getAttr servicePropertyList service;
-	  in
-	  filter (targetName:
-	    let
-	      target = getAttr targetName infrastructure;
-	      targetPropertyValue = getAttr targetProperty target;
-	    in
-	      elem targetPropertyValue servicePropertyListValue
-	  ) targets;
+        value =
+          let
+            targets = getAttr serviceName distribution;
+            service = getAttr serviceName services;
+            servicePropertyListValue = getAttr servicePropertyList service;
+          in
+          filter (targetName:
+            let
+              target = getAttr targetName infrastructure;
+              targetPropertyValue = getAttr targetProperty target.properties;
+            in
+              elem targetPropertyValue servicePropertyListValue
+          ) targets;
       }
     ) (attrNames distribution))
   ;
@@ -72,16 +72,16 @@ rec {
     listToAttrs (map (serviceName:
       { name = serviceName;
         value =
-	  let
-	    servicePropertyValue = getAttr serviceProperty (getAttr serviceName services);
-	    targets = getAttr serviceName distribution;
-	  in
-	  filter (targetName:
-	    let
-	      targetPropertyValue = getAttr targetProperty (getAttr targetName infrastructure);
-	    in
-	    servicePropertyValue == targetPropertyValue
-	  ) targets;
+          let
+            servicePropertyValue = getAttr serviceProperty (getAttr serviceName services);
+            targets = getAttr serviceName distribution;
+          in
+          filter (targetName:
+            let
+              targetPropertyValue = getAttr targetProperty (getAttr targetName infrastructure).properties;
+            in
+            servicePropertyValue == targetPropertyValue
+          ) targets;
       }
     ) (attrNames distribution))
   ;
@@ -94,13 +94,13 @@ rec {
         value =
           let
             service = getAttr serviceName services;
-	    targets = getAttr serviceName distribution;
-	    previousTargets = if hasAttr serviceName previousDistribution then getAttr serviceName previousDistribution
-	                      else targets;
+            targets = getAttr serviceName distribution;
+            previousTargets = if hasAttr serviceName previousDistribution then getAttr serviceName previousDistribution
+                              else targets;
           in
           if service ? stateful && service.stateful then
-	    filter (targetName: elem targetName previousTargets) targets
-	  else targets;
+            filter (targetName: elem targetName previousTargets) targets
+          else targets;
       }
     ) (attrNames distribution))
   ;
@@ -109,10 +109,10 @@ rec {
     lib.mapAttrs (serviceName: mapping:
       lib.sort (targetAName: targetBName:
         let
-	  targetA = getAttr targetAName infrastructure;
-	  targetB = getAttr targetBName infrastructure;
-	in
-        lessThan (getAttr targetProperty targetA) (getAttr targetProperty targetB) ) mapping
+          targetA = getAttr targetAName infrastructure;
+          targetB = getAttr targetBName infrastructure;
+        in
+        lessThan (getAttr targetProperty targetA.properties) (getAttr targetProperty targetB.properties) ) mapping
     ) distribution
   ;
 }

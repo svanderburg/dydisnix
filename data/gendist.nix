@@ -19,7 +19,12 @@ let
   qosFun = import qosFile;
   
   # Evaluations
-  services = servicesFun { distribution = null; invDistribution = null; system = null; pkgs = null; };
+  services = servicesFun {
+    distribution = {};
+    invDistribution = {};
+    system = builtins.currentSystem;
+    inherit pkgs;
+  };
   
   serviceProperties = filters.filterDerivations services;
   

@@ -8,7 +8,12 @@ in
   servicesToXML = {servicesFile}:
     let
       servicesFun = import servicesFile;
-      services = servicesFun { distribution = null; invDistribution = null; system = null; pkgs = null; };
+      services = servicesFun {
+        distribution = {};
+        invDistribution = {};
+        system = builtins.currentSystem;
+        inherit pkgs;
+      };
       serviceProperties = filters.filterDerivations services;
     in
     filters.generateServicesXML serviceProperties;

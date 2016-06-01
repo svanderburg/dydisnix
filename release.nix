@@ -25,6 +25,8 @@ let
         version = builtins.readFile ./version;
         src = dydisnix;
         inherit officialRelease;
+        
+        CFLAGS = "-Wall";
 
         buildInputs = [ pkgs.pkgconfig pkgs.getopt pkgs.libxml2 pkgs.glib disnix ]
           ++ pkgs.lib.optional (!pkgs.stdenv.isLinux) pkgs.libiconv
@@ -40,6 +42,8 @@ let
       pkgs.releaseTools.nixBuild {
         name = "dydisnix";
         src = tarball;
+        
+        CFLAGS = "-Wall";
         
         buildInputs = [ pkgs.pkgconfig pkgs.getopt pkgs.libxml2 pkgs.glib disnix ]
           ++ pkgs.lib.optional (!pkgs.stdenv.isLinux) pkgs.libiconv

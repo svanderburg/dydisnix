@@ -265,7 +265,12 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
         {
             DistributionItem *distribution_item = g_ptr_array_index(candidate_target_array, i);
             Service *service = find_service(service_property_array, distribution_item->service);
-            ServiceProperty *prop = find_service_property(service, service_property);
+            ServiceProperty *prop;
+            
+            if(service == NULL)
+                prop = NULL;
+            else
+                prop = find_service_property(service, service_property);
             
             /* For each service that has a port property that is unassigned, assign a port */
 

@@ -10,19 +10,6 @@ typedef struct
 }
 ServiceDegree;
 
-static int compare_service_degree(gconstpointer a, gconstpointer b)
-{
-    const ServiceDegree *l = (ServiceDegree*)a;
-    const ServiceDegree *r = (ServiceDegree*)b;
-    
-    if(l->degree < r->degree)
-	return 1;
-    else if(l->degree > r->degree)
-	return -1;
-    else
-	return 0;
-}
-
 typedef struct
 {
     gchar *service;

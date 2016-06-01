@@ -151,9 +151,6 @@ int open_port_configuration(PortConfiguration *port_configuration, const gchar *
     {
         unsigned int i;
         xmlNodeSetPtr nodeset = result->nodesetval;
-        gint last_port = 0;
-        gint min_port = 0;
-        gint max_port = 0;
         
         for(i = 0; i < nodeset->nodeNr; i++)
             port_configuration->global_config = parse_target_config(nodeset->nodeTab[i]);
@@ -383,8 +380,6 @@ static gboolean remove_port_to_service_mapping(gpointer key, gpointer value, gpo
 
 static void clean_obsolete_services_to_ports(TargetConfig *target_config, GPtrArray *candidate_target_array, GPtrArray *service_property_array, gchar *service_property, gchar *service_property_value)
 {
-    GHashTableIter iter;
-    gpointer key, value;
     RemoveParams params;
     
     /* Remove obsolete service to port mappings */

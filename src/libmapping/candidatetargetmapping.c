@@ -56,7 +56,7 @@ GPtrArray *create_candidate_target_array(const char *candidate_mapping_file)
 	    while(distributionitem_children != NULL)
 	    {
 		if(xmlStrcmp(distributionitem_children->name, (xmlChar*) "service") == 0)
-		    service = g_strdup(distributionitem_children->children->content);
+		    service = g_strdup((gchar*)distributionitem_children->children->content);
 		else if(xmlStrcmp(distributionitem_children->name, (xmlChar*) "targets") == 0)
 		{
 		    xmlNodePtr targets_children = distributionitem_children->children;
@@ -68,7 +68,7 @@ GPtrArray *create_candidate_target_array(const char *candidate_mapping_file)
 		    {
 			if(xmlStrcmp(targets_children->name, (xmlChar*) "target") == 0) /* Only iterate over target nodes */
 			{
-			    gchar *target = g_strdup(targets_children->children->content);
+			    gchar *target = g_strdup((gchar*)targets_children->children->content);
 			    g_ptr_array_add(targets, target);
 			}
 			

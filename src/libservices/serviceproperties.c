@@ -56,7 +56,7 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
 	    while(service_properties != NULL)
 	    {
 		if(xmlStrcmp(service_properties->name, (const xmlChar*) "name") == 0)
-		    service->name = g_strdup(service_properties->children->content);
+		    service->name = g_strdup((gchar*)service_properties->children->content);
 	    
 		service_properties = service_properties->next;
 	    }
@@ -69,12 +69,12 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
 		
 		if(xmlStrcmp(service_children->name, (xmlChar*) "text") != 0)
 		{
-		    service_property->name = g_strdup(service_children->name);
+		    service_property->name = g_strdup((gchar*)service_children->name);
 		    
 		    if(service_children->children == NULL) /* !!! also support lists in the future */
 			service_property->value = NULL;
 		    else
-			service_property->value = g_strdup(service_children->children->content);
+			service_property->value = g_strdup((gchar*)service_children->children->content);
 			
 		    g_ptr_array_add(property, service_property);
 		}

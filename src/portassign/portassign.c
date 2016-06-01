@@ -285,7 +285,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
                         g_print("    %s = %d;\n", distribution_item->service, port);
                     }
                     else
-                        g_printerr("WARNING: %s is not distributed to any machine. Skipping port assignment...\n");
+                        g_printerr("WARNING: %s is not distributed to any machine. Skipping port assignment...\n", distribution_item->service);
                 }
             }
         }

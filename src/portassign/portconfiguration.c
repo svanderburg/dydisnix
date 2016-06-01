@@ -70,11 +70,11 @@ static TargetConfig *parse_target_config(xmlNodePtr config_node)
     while(config_node_children != NULL)
     {
         if(xmlStrcmp(config_node_children->name, (xmlChar*) "lastPort") == 0)
-            last_port = atoi(config_node_children->children->content);
+            last_port = atoi((char*)config_node_children->children->content);
         else if(xmlStrcmp(config_node_children->name, (xmlChar*) "minPort") == 0)
-            min_port = atoi(config_node_children->children->content);
+            min_port = atoi((char*)config_node_children->children->content);
         else if(xmlStrcmp(config_node_children->name, (xmlChar*) "maxPort") == 0)
-            max_port = atoi(config_node_children->children->content);
+            max_port = atoi((char*)config_node_children->children->content);
         else if(xmlStrcmp(config_node_children->name, (xmlChar*) "servicesToPorts") == 0)
         {
             xmlNodePtr service_to_ports_children = config_node_children->children;
@@ -87,12 +87,12 @@ static TargetConfig *parse_target_config(xmlNodePtr config_node)
                     gchar *service = NULL;
                     
                     xmlAttrPtr service_properties = service_to_ports_children->properties;
-                    *port = atoi(service_to_ports_children->children->content);
+                    *port = atoi((char*)service_to_ports_children->children->content);
                     
                     while(service_properties != NULL)
                     {
                         if(xmlStrcmp(service_properties->name, (xmlChar*) "name") == 0)
-                            service = g_strdup(service_properties->children->content);
+                            service = g_strdup((gchar*)service_properties->children->content);
                         
                         service_properties = service_properties->next;
                     }
@@ -177,10 +177,10 @@ int open_port_configuration(PortConfiguration *port_configuration, const gchar *
             
             while(target_node_children != NULL)
             {
-                if(xmlStrcmp(target_node_children->name, "text") != 0)
+                if(xmlStrcmp(target_node_children->name, (xmlChar *) "text") != 0)
                 {
                     TargetConfig *target_config = parse_target_config(target_node_children);
-                    gchar *target = g_strdup(target_node_children->name);
+                    gchar *target = g_strdup((gchar*)target_node_children->name);
                 
                     g_hash_table_insert(port_configuration->target_configs, target, target_config);
                 }
@@ -193,6 +193,8 @@ int open_port_configuration(PortConfiguration *port_configuration, const gchar *
     /* Cleanup */
     xmlFreeDoc(doc);
     xmlCleanupParser();
+    
+    return TRUE;
 }
 
 void destroy_port_configuration(PortConfiguration *port_configuration)

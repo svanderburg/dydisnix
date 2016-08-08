@@ -25,7 +25,7 @@ of the infrastructure:
 * A *discovery service* is responsible for discovering the machines in the
   network and their characteristics and generating an infrastructure model
 * The *infrastucture augmenter* adds privacy sensitive information to the
-  discovered infrastructure model that cannot be discovered
+  discovered infrastructure model that cannot be auto-discovered
 * The *distribution generator* computes a mapping of services to machines based
   on their technical requirements and non-functional requirements
 
@@ -63,6 +63,30 @@ produces a new infrastructure model with the properties augmented:
 
     $ dydisnix-augment-infra -i infrastructure-discovered -a augment.nix
 
+The first parameter refers to a Disnix infrastructure model that can be written
+by hand or generated through `disnix-capture-infra` or the
+[Dynamic Disnix Avahi client](http://github.com/svanderburg/dydisnix-avahi).
+
+An augmentation model could look as follows:
+
+```nix
+{infrastructure, lib}:
+
+lib.mapAttrs (targetName: target:
+  target // (if target ? containers && target ? containers ? mysql-database then {
+    containers.mysql-database.mysqlPassword = "secret";
+  } else {})
+) infrastructure
+```
+
+An augmentation model is a function in which `infrastructure` refers to the
+original infrastructure model and `lib` to the library function in Nixpkgs.
+In the body, a policy should be written that augments the infrastructure model
+with additional data.
+
+In the above example, we search for all machines that provide a MySQL DBMS as a
+container service, and we manually configure a password.
+
 Generating a distribution model
 -------------------------------
 We can generate a distribution model from a services model, infrastructure model
@@ -70,6 +94,81 @@ and quality of service (QoS) model in which the last model describes how to map
 services to machines based on their technical and non-functional properties:
 
     $ dydisnix-gendist -s services.nix -i infrastructure.nix -q qos.nix
+
+A QoS model is a Nix expression declaring a function that has the following
+header:
+
+```nix
+{services, infrastructure, initialDistribution, previousDistribution, filters}:
+```
+
+The parameters have the following properties:
+
+* The `services` parameter refers to a Disnix services model
+* The `infrastructure` parameter refers to a Disnix infrastructure model
+* The `initialDistribution` refers to a cartesian product mapping each service
+  in the services model to each machine in the infrastructure model
+* The `previousDistribution` refers to the distribution model of the previous
+  deployment, or `null` in case of an initial deployment
+* The `filters` parameters exposes a set of utility functions to dynamically
+  compose mappings
+
+A simple QoS model would be the following:
+
+```nix
+{services, infrastructure, initialDistribution, previousDistribution, filters}:
+
+filters.divide {
+  strategy = "greedy";
+
+  inherit services infrastructure;
+  distribution = initialDistribution;
+  
+  serviceProperty = "requireMem";
+  targetProperty = "mem";
+}
+```
+
+The above QoS model uses a greedy division method that takes the `mem` propery
+of each machine, representing the total amount of RAM that it provides, and
+divides services over them each having their own memory requirements (indicated
+by `requireMem`).
+
+We can also combine filter functions:
+
+```nix
+{services, infrastructure, initialDistribution, previousDistribution, filters}:
+
+filters.divide {
+  strategy = "greedy";
+  inherit services infrastructure;
+  
+  distribution = filters.mapAttrOnList {
+    inherit services infrastructure;
+    distribution = initialDistribution;
+    serviceProperty = "type";
+    targetPropertyList = "supportedTypes";
+  };
+  
+  serviceProperty = "requireMem";
+  targetProperty = "mem";
+}
+```
+
+In the above example, we first filter each service (that has a specific `type`)
+in such a way that that they are only mapped to machines that support them
+(through a list property named `supportedTypes` indicating which types of
+service the machine can run). Then we use the same division method as in the
+previous example to divide the services over the candidates.
+
+When implementing QoS policies, it is a good practice to divide them in to
+two phases -- the *candidate selection* phase determines which services a
+specific target can host, the *division phase* divides the services over the
+candidates according to some strategy,
+
+The Dynamic Disnix toolset provides a collection of algorithms described in the
+academic literature. For more information on filter functions, consult the API
+documentation of the `$PREFIX/share/dydisnix/filters.nix` module.
 
 Dynamically deploying a system
 ------------------------------
@@ -88,11 +187,107 @@ redeploying the machine if any change has been detected:
 
 Port assigner
 -------------
-Some services require unique TCP port assignments. The following tool can be
-used to generate them and to reuse previous port assignments to prevent
-unnecessary redeployments:
+Some services require unique TCP port assignments. We can automate this process
+by augmenting services in the Disnix services model with two properties:
+
+```nix
+{distribution, system, pkgs}:
+
+let
+  portsConfiguration = if builtins.pathExists ./ports.nix
+    then import ./ports.nix else {};
+  ...
+in
+rec {
+  roomservice = rec {
+    name = "roomservice";
+    pkg = customPkgs.roomservicewrapper { inherit port; };
+    dependsOn = {
+      inherit rooms;
+    };
+    type = "process";
+    portAssign = "private";
+    port = portsConfiguration.ports.roomservice or 0;
+  };
+
+  ...
+
+  stafftracker = rec {
+    name = "stafftracker";
+    pkg = customPkgs.stafftrackerwrapper { inherit port; };
+    dependsOn = {
+      inherit roomservice staffservice zipcodeservice;
+    };
+    type = "process";
+    portAssign = "shared";
+    port = portsConfiguration.ports.stafftracker or 0;
+    baseURL = "/";
+  };
+}
+```
+
+In the above services model, each services declares a `portAssign` property that
+can be `private` to indicate that a unique port should be assigned that applies
+to machine where it has been deployed and `shared` to indicate a port that is
+unique to the network.
+
+Each service has a `port` property that contains the actual port assignment
+value. This value is imported from the `ports.nix` expression and can be
+automatically generated 
+
+The following tool can be used to generate port assignments and to reuse
+previous port assignments to prevent unnecessary redeployments:
 
     $ dydisnix-port-assign -s services.nix -i infrastructure.nix -d distribution.nix -p ports.nix > ports2.nix
+
+The first three parameters refer to the Disnix service, infrastructure and
+distribution models in which the services model is augmented with `portAssign`
+properties. The last parameter `ports.nix` is a port specification expression
+that has the following structure:
+
+```nix
+{
+  ports = {
+    roomservice = 8001;
+    zipcodeservice = 3003;
+  };
+  portConfiguration = {
+    globalConfig = {
+      lastPort = 3003;
+      minPort = 3000;
+      maxPort = 4000;
+      servicesToPorts = {
+        stafftracker = 3002;
+      };
+    };
+    targetConfigs = {
+      test2 = {
+        lastPort = 8001;
+        minPort = 8000;
+        maxPort = 9000;
+        servicesToPorts = {
+          roomservice = 8001;
+        };
+      };
+    };
+  };
+}
+```
+
+The above configuration attribute set contains three properties:
+
+* The `ports` attribute contains the actual port numbers that have been assigned
+  to each service.
+* The `portConfiguration` attribute contains port configuration settings for the
+  network and each target machine. The `globalConfig` attribute defines a TCP
+  port range with ports that must be unique to the network. Besides the port
+  range it also stores the last assigned TCP port number and all global port
+  reservations.
+* The `targetConfigs` attribute contains port configuration settings and
+  reservations for each target machine.
+
+When running the port assigner, a new port assignment expression gets generated
+that contains updated mappings for the services.
 
 License
 =======

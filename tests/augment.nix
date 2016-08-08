@@ -2,6 +2,6 @@
 
 lib.mapAttrs (targetName: target:
   target // {
-    augment = "augment";
+    properties.augment = "augment";
   }
 ) infrastructure

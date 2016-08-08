@@ -455,6 +455,35 @@ let
                 print "line 8 does not contain testtarget2!\n";
             }
             
+            # Execute map bind service to previous test. We first deploy all
+            # services to test1. Then we deploy again and check whether all
+            # services will be bound to it again.
+            
+            $firstTargets = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-firsttargets.nix");
+            $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' disnix-manifest -s ${tests}/services.nix -i ${tests}/infrastructure.nix -d $firstTargets");
+            $machine->mustSucceed("nix-env -p /nix/var/nix/profiles/per-user/root/disnix-coordinator/default --set $result");
+            
+            $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapboundservicestoprevious.nix");
+            @distribution = split('\n', $machine->mustSucceed("cat $result"));
+            
+            if($distribution[7] =~ /testtarget1/) {
+                print "line 7 contains testtarget1!\n";
+            } else {
+                die "line 7 should contain testtarget1!\n";
+            }
+            
+            if($distribution[12] =~ /testtarget1/) {
+                print "line 12 contains testtarget1!\n";
+            } else {
+                die "line 12 should contain testtarget1!\n";
+            }
+            
+            if($distribution[17] =~ /testtarget1/) {
+                print "line 17 contains testtarget1!\n";
+            } else {
+                die "line 17 should contain testtarget1!\n";
+            }
+            
             # Execute port assignment test. First, we assign a unique port number
             # to each service using a shared ports pool among all machines.
             

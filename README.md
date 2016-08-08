@@ -1,7 +1,7 @@
 Dynamic Disnix
 ==============
-Dynamic Disnix is a prototype extension framework for Disnix supporting
-*dynamic* (re)deployment of service-oriented systems.
+Dynamic Disnix is a (very experimental!) prototype extension framework for
+Disnix supporting *dynamic* (re)deployment of service-oriented systems.
 
 The basic Disnix toolset implements models and mechanisms to execute the
 deployment of a service oriented system into a network of machines. The
@@ -74,15 +74,16 @@ An augmentation model could look as follows:
 
 lib.mapAttrs (targetName: target:
   target // (if target ? containers && target ? containers ? mysql-database then {
-    containers.mysql-database.mysqlPassword = "secret";
+    containers.mysql-database = target.containers.mysql-database //
+      { mysqlPassword = "secret"; };
   } else {})
 ) infrastructure
 ```
 
 An augmentation model is a function in which `infrastructure` refers to the
-original infrastructure model and `lib` to the library function in Nixpkgs.
-In the body, a policy should be written that augments the infrastructure model
-with additional data.
+original infrastructure model and `lib` to the set of library functions in
+Nixpkgs. In the body, a policy should be written that augments the
+infrastructure model with additional data.
 
 In the above example, we search for all machines that provide a MySQL DBMS as a
 container service, and we manually configure a password.
@@ -110,7 +111,7 @@ The parameters have the following properties:
   in the services model to each machine in the infrastructure model
 * The `previousDistribution` refers to the distribution model of the previous
   deployment, or `null` in case of an initial deployment
-* The `filters` parameters exposes a set of utility functions to dynamically
+* The `filters` parameter exposes a set of utility functions to dynamically
   compose mappings
 
 A simple QoS model would be the following:
@@ -233,7 +234,7 @@ unique to the network.
 
 Each service has a `port` property that contains the actual port assignment
 value. This value is imported from the `ports.nix` expression and can be
-automatically generated 
+automatically generated.
 
 The following tool can be used to generate port assignments and to reuse
 previous port assignments to prevent unnecessary redeployments:

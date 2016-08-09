@@ -1,4 +1,4 @@
-{services, infrastructure, initialDistribution, previousDistribution, filters}:
+{services, infrastructure, initialDistribution, previousDistribution, filters, lib}:
 
 builtins.listToAttrs (map (serviceName:
   let targets = builtins.getAttr serviceName initialDistribution;

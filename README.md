@@ -100,7 +100,7 @@ A QoS model is a Nix expression declaring a function that has the following
 header:
 
 ```nix
-{services, infrastructure, initialDistribution, previousDistribution, filters}:
+{services, infrastructure, initialDistribution, previousDistribution, filters, lib}:
 ```
 
 The parameters have the following properties:
@@ -113,11 +113,12 @@ The parameters have the following properties:
   deployment, or `null` in case of an initial deployment
 * The `filters` parameter exposes a set of utility functions to dynamically
   compose mappings
+* The `lib` parameter exposes the utility functions from Nixpkgs
 
 A simple QoS model would be the following:
 
 ```nix
-{services, infrastructure, initialDistribution, previousDistribution, filters}:
+{services, infrastructure, initialDistribution, previousDistribution, filters, lib}:
 
 filters.divide {
   strategy = "greedy";
@@ -138,7 +139,7 @@ by `requireMem`).
 We can also combine filter functions:
 
 ```nix
-{services, infrastructure, initialDistribution, previousDistribution, filters}:
+{services, infrastructure, initialDistribution, previousDistribution, filters, lib}:
 
 filters.divide {
   strategy = "greedy";
@@ -167,7 +168,7 @@ transformation step on the candidate distribution, we nest one indentation level
 deeper. A better practice would be to write a QoS model as follows:
 
 ```nix
-{services, infrastructure, initialDistribution, previousDistribution, filters}:
+{services, infrastructure, initialDistribution, previousDistribution, filters, lib}:
 
 let
   # Filter the candidate distribution by types.

@@ -1,4 +1,4 @@
-{services, infrastructure, initialDistribution, previousDistribution, filters}:
+{services, infrastructure, initialDistribution, previousDistribution, filters, lib}:
 
 filters.divide {
   strategy = "greedy";

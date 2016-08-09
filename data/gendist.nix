@@ -28,18 +28,27 @@ let
   
   serviceProperties = filters.filterDerivations services;
   
-  initialDistribution = 
-    if distributionFile == null then filters.createCartesianProduct { services = serviceProperties; inherit infrastructure; }
-    else import distributionFile
-  ;
+  initialDistribution =
+    if distributionFile == null then
+      filters.createCartesianProduct {
+        services = serviceProperties;
+        inherit infrastructure;
+      }
+    else
+      import distributionFile;
   
   previousDistribution =
     if coordinatorProfile == null then null
     else
-      filters.generatePreviousDistribution coordinatorProfile
-  ;
+      filters.generatePreviousDistribution coordinatorProfile;
   
-  qos = if qosFile == null then initialDistribution else qosFun { services = serviceProperties; inherit infrastructure initialDistribution previousDistribution filters; };
+  qos = if qosFile == null then
+    initialDistribution
+  else qosFun {
+    services = serviceProperties;
+    inherit infrastructure initialDistribution previousDistribution filters;
+    inherit (pkgs) lib;
+  };
 in
 pkgs.stdenv.mkDerivation {
   name = "distribution.${if outputExpr then "nix" else "xml"}";

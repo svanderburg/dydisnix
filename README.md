@@ -162,6 +162,44 @@ in such a way that that they are only mapped to machines that support them
 service the machine can run). Then we use the same division method as in the
 previous example to divide the services over the candidates.
 
+The notation used in the above example is a bit inconvenient as for each
+transformation step on the candidate distribution, we nest one indentation level
+deeper. A better practice would be to write a QoS model as follows:
+
+```nix
+{services, infrastructure, initialDistribution, previousDistribution, filters}:
+
+let
+  # Filter the candidate distribution by types.
+  # This prevents services of a type to get distributed to a machine that is
+  # incapable of activating it.
+  
+  distribution1 = filters.mapAttrOnList {
+    inherit services infrastructure;
+    distribution = initialDistribution;
+    serviceProperty = "type";
+    targetPropertyList = "supportedTypes";
+  };
+  
+  # Divide the services over the candidates based on their memory constraints
+  # using the greedy division method.
+  
+  distribution2 = filters.divide {
+    strategy = "greedy";
+    inherit services infrastructure;
+    distribution = distribution1;
+    serviceProperty = "requireMem";
+    targetProperty = "mem";
+  };
+in
+distribution2
+```
+
+In the revised example shown above, we compose a let-block in which each
+attribute composes a new candidate distribution, using the previous candidate
+distribution as an input. Each transformation step can be done on the same
+indentation level.
+
 When implementing QoS policies, it is a good practice to divide them in to
 two phases -- the *candidate selection* phase determines which services a
 specific target can host, the *division phase* divides the services over the

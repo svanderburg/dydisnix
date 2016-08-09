@@ -83,6 +83,28 @@ rec {
     })}"
   ;
 
+  /**
+   * Uses a one-dimensional configuration strategy to divide services over
+   * candidate target machines.
+   *
+   * Parameters:
+   * strategy: Should be one of the following: 'greedy', 'highest-bidder',
+   *   'lowest-bidder'. Greedy distributes services to machines in linear order
+   *   and keeps distributing them to a machine until its capacity limit has
+   *   been reached. Highest bidder distributes for each selection step a
+   *   service to a machine with the most available capacity left. Lowest bidder
+   *   distributes for each selection step a service to a machine with the least
+   *   available capacity (that is still capable of hosting the service).
+   * services: Services model
+   * infrastructure: Infrastructure model
+   * distribution: A candidate target mapping in which each key refers to a service and each value to a list of machine names
+   * serviceProperty: Name of the property of a service. This value is supposed to be numeric and gets deducted from the machine's total capacity
+   * targetProperty: Name of the property of a target machine. This value is supposed to be numeric and represents the total amount of capacity a machine provides
+   *
+   * Returns:
+   * A candidate target mapping in which each key refers to a service and each
+   * value to a list of machine names
+   */
   divide = {strategy, services, infrastructure, distribution, serviceProperty, targetProperty}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
@@ -99,7 +121,18 @@ rec {
           > $out
       '';
     })}";
-
+  
+  /**
+   * Distributes services to candidates using an approximation algorithm for the
+   * multiway cut problem.
+   *
+   * Parameters:
+   * distribution: A candidate target mapping in which each key refers to a service and each value to a list of machine names
+   *
+   * Returns:
+   * A candidate target mapping in which each key refers to a service and each
+   * value to a list of machine names
+   */
   multiwaycut = {distribution}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
@@ -110,6 +143,20 @@ rec {
       '';
     })}";
 
+  /**
+   * Distributes services to candidates using an approximation algorithm for the
+   * minimum set cover problem.
+   *
+   * Parameters:
+   * services: Services model
+   * infrastructure: Infrastructure model
+   * distribution: A candidate target mapping in which each key refers to a service and each value to a list of machine names
+   * targetProperty: Name of the property of a target machine. This value is supposed to be numeric and represents the total amount of capacity a machine provides
+   *
+   * Returns:
+   * A candidate target mapping in which each key refers to a service and each
+   * value to a list of machine names
+   */
   minsetcover = {services, infrastructure, distribution, targetProperty}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
@@ -125,6 +172,18 @@ rec {
       '';
     })}";
 
+  /**
+   * Distributes services to candidates using an approximation algorithm for the
+   * graph coloring problem.
+   *
+   * Parameters:
+   * services: Services model
+   * infrastructure: Infrastructure model
+   *
+   * Returns:
+   * A candidate target mapping in which each key refers to a service and each
+   * value to a list of machine names
+   */
   graphcol = {services, infrastructure}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";

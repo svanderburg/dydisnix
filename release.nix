@@ -86,16 +86,28 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist --filter-buildable -s ${tests}/services.nix -i ${tests}/infrastructure.nix");
             my @distribution = split('\n', $machine->mustSucceed("cat $result"));
           
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
           
-            if($distribution[8] =~ /testtarget2/) {
-                print "line 8 contains testtarget2!\n";
+            if($distribution[6] =~ /testtarget2/) {
+                print "line 6 contains testtarget2!\n";
             } else {
-                die "line 8 should contain testtarget2!\n";
+                die "line 6 should contain testtarget2!\n";
+            }
+            
+            if($distribution[9] =~ /testtarget1/) {
+                print "line 9 contains testtarget1!\n";
+            } else {
+                die "line 9 should contain testtarget1!\n";
+            }
+          
+            if($distribution[10] =~ /testtarget2/) {
+                print "line 10 contains testtarget2!\n";
+            } else {
+                die "line 10 should contain testtarget2!\n";
             }
             
             if($distribution[13] =~ /testtarget1/) {
@@ -109,18 +121,6 @@ let
             } else {
                 die "line 14 should contain testtarget2!\n";
             }
-            
-            if($distribution[19] =~ /testtarget1/) {
-                print "line 19 contains testtarget1!\n";
-            } else {
-                die "line 19 should contain testtarget1!\n";
-            }
-          
-            if($distribution[20] =~ /testtarget2/) {
-                print "line 20 contains testtarget2!\n";
-            } else {
-                die "line 20 should contain testtarget2!\n";
-            }
           
             # Execute filter buildable. In this situation a build exception is
             # thrown for testService1B rendering it undeployable.
@@ -129,10 +129,10 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist --filter-buildable -s ${tests}/services-error.nix -i ${tests}/infrastructure.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
           
-            if($distribution[7] =~ /testtarget1/) {
-                die "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                die "line 5 contains testtarget1!\n";
             } else {
-                print "line 7 should contain testtarget1!\n";
+                print "line 5 should contain testtarget1!\n";
             }
           
             # Execute the mapAttrOnAttr method to map requireZone onto zone.
@@ -143,22 +143,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapattronattr.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget2/) {
-                print "line 17 contains testtarget2!\n";
+            if($distribution[11] =~ /testtarget2/) {
+                print "line 11 contains testtarget2!\n";
             } else {
-                die "line 17 should contain testtarget2!\n";
+                die "line 11 should contain testtarget2!\n";
             }
           
             # Execute the mapAttrOnList method to map types onto supportedTypes.
@@ -168,16 +168,28 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapattronlist.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[8] =~ /testtarget2/) {
-                print "line 8 contains testtarget2!\n";
+            if($distribution[6] =~ /testtarget2/) {
+                print "line 6 contains testtarget2!\n";
             } else {
-                die "line 8 should contain testtarget2!\n";
+                die "line 6 should contain testtarget2!\n";
+            }
+            
+            if($distribution[9] =~ /testtarget1/) {
+                print "line 9 contains testtarget1!\n";
+            } else {
+                die "line 9 should contain testtarget1!\n";
+            }
+            
+            if($distribution[10] =~ /testtarget2/) {
+                print "line 10 contains testtarget1!\n";
+            } else {
+                die "line 10 should contain testtarget1!\n";
             }
             
             if($distribution[13] =~ /testtarget1/) {
@@ -187,21 +199,9 @@ let
             }
             
             if($distribution[14] =~ /testtarget2/) {
-                print "line 14 contains testtarget1!\n";
+                print "line 14 contains testtarget2!\n";
             } else {
-                die "line 14 should contain testtarget1!\n";
-            }
-            
-            if($distribution[19] =~ /testtarget1/) {
-                print "line 19 contains testtarget1!\n";
-            } else {
-                die "line 19 should contain testtarget1!\n";
-            }
-            
-            if($distribution[20] =~ /testtarget2/) {
-                print "line 20 contains testtarget2!\n";
-            } else {
-                die "line 20 should contain testtarget2!\n";
+                die "line 14 should contain testtarget2!\n";
             }
           
             # Execute the mapListOnAttr method to map requiredZones onto zones.
@@ -212,28 +212,28 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-maplistonattr.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
+            }
+            
+            if($distribution[8] =~ /testtarget2/) {
+                print "line 8 contains testtarget2!\n";
+            } else {
+                die "line 8 should contain testtarget2!\n";
+            }
+          
+            if($distribution[11] =~ /testtarget1/) {
+                print "line 11 contains testtarget1!\n";
+            } else {
+                die "line 11 should contain testtarget1!\n";
             }
             
             if($distribution[12] =~ /testtarget2/) {
                 print "line 12 contains testtarget2!\n";
             } else {
                 die "line 12 should contain testtarget2!\n";
-            }
-          
-            if($distribution[17] =~ /testtarget1/) {
-                print "line 17 contains testtarget1!\n";
-            } else {
-                die "line 17 should contain testtarget1!\n";
-            }
-            
-            if($distribution[18] =~ /testtarget2/) {
-                print "line 18 contains testtarget2!\n";
-            } else {
-                die "line 18 should contain testtarget2!\n";
             }
           
             # Execute the greedy division method. testService1 and testService2
@@ -243,22 +243,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-greedy.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget2/) {
-                print "line 17 contains testtarget2!\n";
+            if($distribution[11] =~ /testtarget2/) {
+                print "line 11 contains testtarget2!\n";
             } else {
-                die "line 17 should contain testtarget2!\n";
+                die "line 11 should contain testtarget2!\n";
             }
             
             # Execute order. The targets are order by looking to the priority
@@ -268,16 +268,16 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-order.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget2/) {
-                print "line 7 contains testtarget2!\n";
+            if($distribution[5] =~ /testtarget2/) {
+                print "line 5 contains testtarget2!\n";
             } else {
-                die "line 7 should contain testtarget2!\n";
+                die "line 5 should contain testtarget2!\n";
             }
             
-            if($distribution[8] =~ /testtarget1/) {
-                print "line 8 contains testtarget1!\n";
+            if($distribution[6] =~ /testtarget1/) {
+                print "line 6 contains testtarget1!\n";
             } else {
-                die "line 8 should contain testtarget1!\n";
+                die "line 6 should contain testtarget1!\n";
             }
             # Execute the highest bidder method. testService1 should be
             # assigned to testtarget2. testService2 should be assigned to
@@ -287,22 +287,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-highest-bidder.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget2/) {
-                print "line 7 contains testtarget2!\n";
+            if($distribution[5] =~ /testtarget2/) {
+                print "line 5 contains testtarget2!\n";
             } else {
-                die "line 7 should contain testtarget2!\n";
+                die "line 5 should contain testtarget2!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget2/) {
-                print "line 17 contains testtarget2!\n";
+            if($distribution[11] =~ /testtarget2/) {
+                print "line 11 contains testtarget2!\n";
             } else {
-                die "line 17 should contain testtarget2!\n";
+                die "line 11 should contain testtarget2!\n";
             }
             
             # Execute the lowest bidder method. testService1 and testService2
@@ -312,22 +312,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-lowest-bidder.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget2/) {
-                print "line 17 contains testtarget2!\n";
+            if($distribution[11] =~ /testtarget2/) {
+                print "line 11 contains testtarget2!\n";
             } else {
-                die "line 17 should contain testtarget2!\n";
+                die "line 11 should contain testtarget2!\n";
             }
             
             # Execute minimum set cover approximation method, by looking to the
@@ -337,22 +337,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget1/) {
-                print "line 17 contains testtarget1!\n";
+            if($distribution[11] =~ /testtarget1/) {
+                print "line 11 contains testtarget1!\n";
             } else {
-                die "line 17 should contain testtarget1!\n";
+                die "line 11 should contain testtarget1!\n";
             }
             
             # Execute minimum set cover approximation method, by looking to the
@@ -363,22 +363,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-minsetcover2.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget2/) {
-                print "line 17 contains testtarget2!\n";
+            if($distribution[11] =~ /testtarget2/) {
+                print "line 11 contains testtarget2!\n";
             } else {
-                die "line 17 should contain testtarget2!\n";
+                die "line 11 should contain testtarget2!\n";
             }
             
             # Execute multiway cut approximation method.
@@ -388,22 +388,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-multiwaycut.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget1/) {
-                print "line 17 contains testtarget1!\n";
+            if($distribution[11] =~ /testtarget1/) {
+                print "line 11 contains testtarget1!\n";
             } else {
-                die "line 17 should contain testtarget1!\n";
+                die "line 11 should contain testtarget1!\n";
             }
             
             # Execute graph coloring test. Each service should be mapped to a different machine.
@@ -411,22 +411,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure-3.nix -q ${tests}/qos/qos-graphcol.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget2/) {
-                print "line 12 contains testtarget2!\n";
+            if($distribution[8] =~ /testtarget2/) {
+                print "line 8 contains testtarget2!\n";
             } else {
-                die "line 12 should contain testtarget2!\n";
+                die "line 8 should contain testtarget2!\n";
             }
             
-            if($distribution[17] =~ /testtarget3/) {
-                print "line 17 contains testtarget3!\n";
+            if($distribution[11] =~ /testtarget3/) {
+                print "line 11 contains testtarget3!\n";
             } else {
-                die "line 17 should contain testtarget3!\n";
+                die "line 11 should contain testtarget3!\n";
             }
             
             # Execute map stateful to previous test. First, all services are
@@ -443,16 +443,16 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapstatefultoprevious.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
 
-            if($distribution[8] =~ /testtarget2/) {
-                die "line 8 contains testtarget2!\n";
+            if($distribution[6] =~ /testtarget2/) {
+                die "line 6 contains testtarget2!\n";
             } else {
-                print "line 8 does not contain testtarget2!\n";
+                print "line 6 does not contain testtarget2!\n";
             }
             
             # Execute map bind service to previous test. We first deploy all
@@ -466,22 +466,22 @@ let
             $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-mapboundservicestoprevious.nix");
             @distribution = split('\n', $machine->mustSucceed("cat $result"));
             
-            if($distribution[7] =~ /testtarget1/) {
-                print "line 7 contains testtarget1!\n";
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
             } else {
-                die "line 7 should contain testtarget1!\n";
+                die "line 5 should contain testtarget1!\n";
             }
             
-            if($distribution[12] =~ /testtarget1/) {
-                print "line 12 contains testtarget1!\n";
+            if($distribution[8] =~ /testtarget1/) {
+                print "line 8 contains testtarget1!\n";
             } else {
-                die "line 12 should contain testtarget1!\n";
+                die "line 8 should contain testtarget1!\n";
             }
             
-            if($distribution[17] =~ /testtarget1/) {
-                print "line 17 contains testtarget1!\n";
+            if($distribution[11] =~ /testtarget1/) {
+                print "line 11 contains testtarget1!\n";
             } else {
-                die "line 17 should contain testtarget1!\n";
+                die "line 11 should contain testtarget1!\n";
             }
             
             # Execute port assignment test. First, we assign a unique port number

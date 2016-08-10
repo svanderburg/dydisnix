@@ -1,4 +1,6 @@
-{ nixpkgs ? <nixpkgs> }:
+{ nixpkgs ? <nixpkgs> 
+, targetProperty
+}:
 
 let
   pkgs = import nixpkgs {};
@@ -29,7 +31,11 @@ in
       infrastructure = import infrastructureFile;
       distribution = import distributionFile { inherit infrastructure; };
       mappings = pkgs.lib.mapAttrs (serviceName: targets: # Substitute targets in infrastructure model by their names
-        map (target: target.properties.hostname) targets
+        map (target:
+          let
+            actualTargetProperty = if target ? targetProperty then target.targetProperty else targetProperty;
+          in
+          builtins.getAttr actualTargetProperty target.properties) targets
       ) distribution;
     in
     filters.generateDistributionXML mappings;

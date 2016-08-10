@@ -17,6 +17,11 @@ Options:
   -p, --ports           Port assignment expression assigning port numbers to services
       --no-out-link     Do not create a result symlink
   -h, --help            Shows the usage of this command
+
+Environment:
+  DISNIX_TARGET_PROPERTY  Sets the target property of an infrastructure model,
+                          that specifies how to connect to the remote Disnix
+                          interface. (Defaults to: hostname)
 EOF
 }
 
@@ -67,27 +72,33 @@ do
     shift
 done
 
+checkTargetProperty
+
 # Execute operation
 
 if [ "$servicesFile" != "" ]
 then
     nix-build --arg servicesFile $servicesFile \
+        --argstr targetProperty $targetProperty \
         -A servicesToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$distributionFile" != "" ] && [ "$infrastructureFile" != "" ]
 then
     nix-build --arg distributionFile $distributionFile \
         --arg infrastructureFile $infrastructureFile \
+        --argstr targetProperty $targetProperty \
         -A distributionToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$infrastructureFile" != "" ]
 then
     nix-build --arg infrastructureFile $infrastructureFile \
+        --argstr targetProperty $targetProperty \
         -A infrastructureToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$portsFile" != "" ]
 then
     nix-build --arg portsFile $portsFile \
+        --argstr targetProperty $targetProperty \
         -A portsToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 else

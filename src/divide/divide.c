@@ -80,6 +80,7 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 		    if(atoi(service_prop->value) <= atoi(target_prop->value))
 		    {
 			substract_target_value(target, target_property, atoi(service_prop->value));
+			select_target = target;
 			g_ptr_array_add(result_item->targets, target_name);
 			break;
 		    }
@@ -114,6 +115,12 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 			    select_target = target;
 		    }
 		}
+	    }
+	    
+	    if(select_target == NULL)
+	    {
+	        g_printerr("Unable to select a target machine for service: %s, because none of them has sufficient resources left!\n", item->service);
+	        exit_status = 1;
 	    }
 	
 	    if(strategy == STRATEGY_HIGHEST_BIDDER || strategy == STRATEGY_LOWEST_BIDDER)

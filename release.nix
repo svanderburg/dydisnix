@@ -236,6 +236,25 @@ let
                 die "line 12 should contain testtarget2!\n";
             }
           
+            # Execute order. The targets are order by looking to the priority
+            # attribute. The order of the targets should be reversed.
+            # This test should succeed.
+            
+            $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-order.nix");
+            @distribution = split('\n', $machine->mustSucceed("cat $result"));
+            
+            if($distribution[5] =~ /testtarget2/) {
+                print "line 5 contains testtarget2!\n";
+            } else {
+                die "line 5 should contain testtarget2!\n";
+            }
+            
+            if($distribution[6] =~ /testtarget1/) {
+                print "line 6 contains testtarget1!\n";
+            } else {
+                die "line 6 should contain testtarget1!\n";
+            }
+            
             # Execute the greedy division method. testService1 and testService2
             # should be assigned to testtarget2. testService3 should be assigned
             # to testtarget1. This test should succeed.
@@ -261,24 +280,9 @@ let
                 die "line 11 should contain testtarget2!\n";
             }
             
-            # Execute order. The targets are order by looking to the priority
-            # attribute. The order of the targets should be reversed.
-            # This test should succeed.
+            # Execute the same division method again. It should fail because the machines cannot provide its required capacity.
+            $machine->mustFail("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure-undercapacity.nix -q ${tests}/qos/qos-greedy.nix");
             
-            $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-order.nix");
-            @distribution = split('\n', $machine->mustSucceed("cat $result"));
-            
-            if($distribution[5] =~ /testtarget2/) {
-                print "line 5 contains testtarget2!\n";
-            } else {
-                die "line 5 should contain testtarget2!\n";
-            }
-            
-            if($distribution[6] =~ /testtarget1/) {
-                print "line 6 contains testtarget1!\n";
-            } else {
-                die "line 6 should contain testtarget1!\n";
-            }
             # Execute the highest bidder method. testService1 should be
             # assigned to testtarget2. testService2 should be assigned to
             # targettarget1. testService3 should be assigned to testtarget2.
@@ -305,6 +309,9 @@ let
                 die "line 11 should contain testtarget2!\n";
             }
             
+            # Execute the same division method again. It should fail because the machines cannot provide its required capacity.
+            $machine->mustFail("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure-undercapacity.nix -q ${tests}/qos/qos-highest-bidder.nix");
+            
             # Execute the lowest bidder method. testService1 and testService2
             # should be assigned to testtarget1. testService3 should be assinged
             # to testtarget2. This test should succeed.
@@ -329,6 +336,9 @@ let
             } else {
                 die "line 11 should contain testtarget2!\n";
             }
+            
+            # Execute the same division method again. It should fail because the machines cannot provide its required capacity.
+            $machine->mustFail("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure-undercapacity.nix -q ${tests}/qos/qos-lowest-bidder.nix");
             
             # Execute minimum set cover approximation method, by looking to the
             # cost attribute in the infrastructure model. All services should

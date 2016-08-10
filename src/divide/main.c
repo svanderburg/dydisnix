@@ -105,6 +105,5 @@ int main(int argc, char *argv[])
     }
     
     /* Execute operation */
-    divide(strategy, services_xml, infrastructure_xml, distribution_xml, service_property, target_property);
-    return 0;
+    return divide(strategy, services_xml, infrastructure_xml, distribution_xml, service_property, target_property);
 }

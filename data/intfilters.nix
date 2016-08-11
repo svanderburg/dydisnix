@@ -1,7 +1,7 @@
 {lib}:
 
 rec {
-  inherit (builtins) listToAttrs attrNames getAttr hasAttr lessThan;
+  inherit (builtins) listToAttrs attrNames getAttr hasAttr lessThan head tail length;
   inherit (lib) filter elem;
 
   filterDerivations = services:
@@ -145,9 +145,9 @@ rec {
   ;
   
   /**
-   * Maps each service in the services model that have been been marked as
-   * stateful to its previous targets, or to the given candidates if
-   * it has not been distribution previously.
+   * Maps each service in the that have been been marked as stateful to its
+   * previous targets, or to the given candidates if it has not been
+   * distribution previously.
    *
    * Parameters:
    * services: Services model
@@ -178,9 +178,9 @@ rec {
   ;
   
   /**
-   * Maps each service in the services model that have been distributed to
-   * target machines in a previous distributions to its original locations. It
-   * maps new services to the given candidates.
+   * Maps each service that have been distributed to target machines in a
+   * previous distributions to its original locations. It maps new services to
+   * the given candidates.
    *
    * Parameters:
    * services: Services model
@@ -204,6 +204,61 @@ rec {
           if hasAttr serviceName previousDistribution then getAttr serviceName previousDistribution else targets;
       }
     ) (attrNames distribution))
+  ;
+  
+  findSuccessor = {targets, previousTarget, allTargets}:
+    if head targets == previousTarget then
+      if length targets == 1 then head allTargets
+      else head (tail targets)
+    else findSuccessor {
+      targets = tail targets;
+      inherit previousTarget allTargets;
+    }
+  ;
+  
+  findNextTarget = {targets, previousTarget}:
+    if targets == [] then throw "Cannot find a target machine!"
+    else if length targets == 1 then head targets
+    else if elem previousTarget targets then findSuccessor { inherit targets previousTarget; allTargets = targets; }
+    else head targets
+  ;
+  
+  generateRoundRobinDistribution = {serviceNames, distribution, previousTarget}:
+    if serviceNames == [] then []
+    else
+      let
+        serviceName = head serviceNames;
+        targets = getAttr serviceName distribution;
+        
+        target = if previousTarget == null then head targets
+          else findNextTarget { inherit targets previousTarget; };
+      in
+      [ { name = serviceName; value = [ target ]; } ]
+      ++ generateRoundRobinDistribution {
+        serviceNames = tail serviceNames;
+        inherit distribution;
+        previousTarget = target;
+      }
+  ;
+  
+  /**
+   * Maps each service to a target machine in the candidate target list using
+   * the round robin strategy. In other words: it distributes services in equal
+   * proportions to each candidate target in circular order.
+   *
+   * Parameters:
+   * distribution: A candidate target mapping in which each key refers to a service and each value to a list of machine names
+   *
+   * Returns:
+   * A candidate target mapping in which each key refers to a service and each
+   * value to a list of machine names
+   */
+  divideRoundRobin = {distribution}:
+    listToAttrs (generateRoundRobinDistribution {
+      serviceNames = attrNames distribution;
+      inherit distribution;
+      previousTarget = null;
+    })
   ;
   
   /**

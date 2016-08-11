@@ -73,9 +73,13 @@ An augmentation model could look as follows:
 {infrastructure, lib}:
 
 lib.mapAttrs (targetName: target:
-  target // (if target ? containers && target ? containers ? mysql-database then {
-    containers.mysql-database = target.containers.mysql-database //
-      { mysqlPassword = "secret"; };
+  target // (if target ? containers && target.containers ? mysql-database then {
+    containers = target.containers // {
+      mysql-database = target.containers.mysql-database //
+        { mysqlUsername = "root";
+          mysqlPassword = "secret";
+        };
+    };
   } else {})
 ) infrastructure
 ```

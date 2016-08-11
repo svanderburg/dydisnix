@@ -340,6 +340,28 @@ let
             # Execute the same division method again. It should fail because the machines cannot provide its required capacity.
             $machine->mustFail("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure-undercapacity.nix -q ${tests}/qos/qos-lowest-bidder.nix");
             
+            # Execute round robin division method.
+            $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -q ${tests}/qos/qos-roundrobin.nix");
+            @distribution = split('\n', $machine->mustSucceed("cat $result"));
+            
+            if($distribution[5] =~ /testtarget1/) {
+                print "line 5 contains testtarget1!\n";
+            } else {
+                die "line 5 should contain testtarget1!\n";
+            }
+            
+            if($distribution[8] =~ /testtarget2/) {
+                print "line 8 contains testtarget2!\n";
+            } else {
+                die "line 8 should contain testtarget2!\n";
+            }
+            
+            if($distribution[11] =~ /testtarget1/) {
+                print "line 11 contains testtarget1!\n";
+            } else {
+                die "line 11 should contain testtarget1!\n";
+            }
+            
             # Execute minimum set cover approximation method, by looking to the
             # cost attribute in the infrastructure model. All services should
             # be distributed to testtarget1.

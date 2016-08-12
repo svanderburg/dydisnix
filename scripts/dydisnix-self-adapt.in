@@ -12,7 +12,7 @@ showUsage()
     echo "-a,--augment                Nix epxression which augments additional attributes into the infrastructure model"
     echo "-p,--profile                Name of the profile that is used for this system. Defaults to: default"
     echo "--coordinator-profile-path  Path where to store the coordinator profile generations"
-    echo "--interval                  Sleep interval (defaults to 1)"
+    echo "--interval                  Sleep interval (defaults to 5)"
     echo "--geninfra                  Path to the infrastructure generator"
     echo "-h,--help                   Shows the usage of this command"
 }
@@ -38,7 +38,7 @@ eval set -- "$PARAMS"
 while [ "$1" != "--" ]
 do
     case "$1" in
-        -s|--services)	    
+        -s|--services)
 	    servicesFile=`readlink -f $2`
 	    ;;
 	-q|--qos)
@@ -80,7 +80,7 @@ fi
 
 if [ "$interval" = "" ]
 then
-    interval=1
+    interval=5
 fi
 
 if [ "$geninfra" = "" ]
@@ -90,7 +90,7 @@ then
 	echo "ERROR: An infrastructure generator must be specified!" >&2
 	exit 1
     else
-	geninfra=$DYDISNIX_GENINFRA
+	geninfra="$DYDISNIX_GENINFRA"
     fi
 fi
 
@@ -100,20 +100,28 @@ checkTmpDir
 
 while true
 do
-    $geninfra > $TMPDIR/infrastructure.nix
+    # Capture the infrastructure configuration
+    infrastructureFile="$TMPDIR/infrastructure_captured.nix"
+    $geninfra > $infrastructureFile
     
+    # Augment the infrastructure, if needed
     if [ "$augmentFile" != "" ]
     then
 	infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile`
-	mv $infrastructureFile $TMPDIR/infrastructure.nix
     fi
     
-    if [ ! -f $TMPDIR/previous_infrastructure.nix ] || [ "$(cat $TMPDIR/previous_infrastructure.nix | sha256sum -)" != "$(cat $TMPDIR/infrastructure.nix | sha256sum -)" ]
+    # Compute the hash of the evaluated infrastructure, so that changes can be detected by comparing hashes
+    hash=$(nix-instantiate --eval-only --strict --xml $infrastructureFile | sha256sum -)
+    
+    # If a change has been detected, do a redeployment
+    if [ "$hash" != "$previousHash" ]
     then
-	distribution=`dydisnix-gendist --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --qos $qosFile $profileArg $coordinatorProfilePathArg`
-	disnix-env --services $servicesFile --infrastructure $TMPDIR/infrastructure.nix --distribution $distribution $profileArg $coordinatorProfilePathArg
-	mv $TMPDIR/infrastructure.nix $TMPDIR/previous_infrastructure.nix
+	distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg`
+	disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg
+	previousHash="$hash"
     fi
-        
+    
+    # Wait for a while, and then check again
+    echo "Waiting for $interval seconds..." >&2
     sleep $interval
 done

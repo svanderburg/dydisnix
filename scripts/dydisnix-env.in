@@ -16,6 +16,7 @@ showUsage()
     echo "-p,--profile                Name of the profile that is used for this system. Defaults to: default"
     echo "--coordinator-profile-path  Path where to store the coordinator profile generations"
     echo "--geninfra                  Path to the infrastructure generator"
+    echo "--show-trace                Shows a trace of the output"
     echo "-h,--help                   Shows the usage of this command"
 }
 
@@ -24,7 +25,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,geninfra:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,geninfra:,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -65,6 +66,9 @@ do
 	    ;;
 	--geninfra)
 	    geninfra=$2
+	    ;;
+	--show-trace)
+	    showTraceArg="--show-trace"
 	    ;;
 	-h|--help)
 	    showUsage
@@ -111,7 +115,7 @@ then
     infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile $profileArg $coordinatorProfilePathArg`
 fi
 
-distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg`
+distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg $showTraceArg`
 
 if [ "$portsFile" != "" ]
 then
@@ -119,4 +123,4 @@ then
     mv $TMPDIR/ports.nix $portsFile
 fi
 
-disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg
+disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $showTraceArg

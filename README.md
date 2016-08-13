@@ -214,21 +214,6 @@ The Dynamic Disnix toolset provides a collection of algorithms described in the
 academic literature. For more information on filter functions, consult the API
 documentation of the `$PREFIX/share/dydisnix/filters.nix` module.
 
-Dynamically deploying a system
-------------------------------
-The following command deploys a service-oriented system in which the
-infrastructure is dynamically discovered, and the distribution dynamically
-generated:
-
-    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix
-
-Self adaptive deployment of a system
-------------------------------------
-We can also run a basic feedback loop regularly checking for changes and
-redeploying the machine if any change has been detected:
-
-    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix
-
 Port assigner
 -------------
 Some services require unique TCP port assignments. We can automate this process
@@ -332,6 +317,31 @@ The above configuration attribute set contains three properties:
 
 When running the port assigner, a new port assignment expression gets generated
 that contains updated mappings for the services.
+
+Dynamically deploying a system
+------------------------------
+The following command deploys a service-oriented system in which the
+infrastructure is dynamically discovered, and the distribution dynamically
+generated:
+
+    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix
+
+When adding a ports parameter, it will also automatically assign ports as part
+of the deployment process:
+
+    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix --ports ports.nix
+
+Self adaptive deployment of a system
+------------------------------------
+We can also run a basic feedback loop regularly checking for changes and
+redeploying the machine if any change has been detected:
+
+    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix
+
+When adding a ports parameter, it will also automatically assign ports as part
+of the deployment process:
+
+    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix --ports ports.nix
 
 License
 =======

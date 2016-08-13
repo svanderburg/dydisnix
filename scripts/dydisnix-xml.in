@@ -16,6 +16,7 @@ Options:
   -d, --distribution    Distribution Nix expression mapping services to machines
   -p, --ports           Port assignment expression assigning port numbers to services
       --no-out-link     Do not create a result symlink
+      --show-trace      Shows a trace of the output
   -h, --help            Shows the usage of this command
 
 Environment:
@@ -33,7 +34,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:d:p:h -l services:,infrastructure:,distribution:,ports:,no-out-link,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:d:p:h -l services:,infrastructure:,distribution:,ports:,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -63,6 +64,9 @@ do
         --no-out-link)
             noOutLink="--no-out-link"
             ;;
+        --show-trace)
+            showTraceArg="--show-trace"
+            ;;
         -h|--help)
             showUsage
             exit 0
@@ -78,26 +82,26 @@ checkTargetProperty
 
 if [ "$servicesFile" != "" ]
 then
-    nix-build --arg servicesFile $servicesFile \
+    nix-build $showTraceArg --arg servicesFile $servicesFile \
         --argstr targetProperty $targetProperty \
         -A servicesToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$distributionFile" != "" ] && [ "$infrastructureFile" != "" ]
 then
-    nix-build --arg distributionFile $distributionFile \
+    nix-build $showTraceArg --arg distributionFile $distributionFile \
         --arg infrastructureFile $infrastructureFile \
         --argstr targetProperty $targetProperty \
         -A distributionToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$infrastructureFile" != "" ]
 then
-    nix-build --arg infrastructureFile $infrastructureFile \
+    nix-build $showTraceArg --arg infrastructureFile $infrastructureFile \
         --argstr targetProperty $targetProperty \
         -A infrastructureToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$portsFile" != "" ]
 then
-    nix-build --arg portsFile $portsFile \
+    nix-build $showTraceArg --arg portsFile $portsFile \
         --argstr targetProperty $targetProperty \
         -A portsToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)

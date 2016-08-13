@@ -5,7 +5,7 @@
 static void print_usage(char *command)
 {
     fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --services services_expr --infrastructure infrastructure_expr --distribution distribution_expr --ports ports_expr --xml --service-property serviceProperty [--xml]\n", command);
+    fprintf(stderr, "%s --services services_expr --infrastructure infrastructure_expr --distribution distribution_expr --ports ports_expr --service-property serviceProperty [--xml]\n", command);
     fprintf(stderr, "%s {-h | --help}\n", command);
 }
 

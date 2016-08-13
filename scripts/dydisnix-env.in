@@ -11,6 +11,8 @@ showUsage()
     echo "-q,--qos                    Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
     echo "-i,--infrastructure         Infrastructure Nix expression which captures properties of machines in the network"
     echo "-a,--augment                Nix epxression which augments additional attributes into the infrastructure model"
+    echo "--ports                     Filename of a ports expression containing port assignments. It will be updated when a deployment changes. If not provided, no port assignment will be done"
+    echo "--ports-service-property    The name of the attribute that indicates the port assign type (defaults to: portAssign)"
     echo "-p,--profile                Name of the profile that is used for this system. Defaults to: default"
     echo "--coordinator-profile-path  Path where to store the coordinator profile generations"
     echo "--geninfra                  Path to the infrastructure generator"
@@ -22,7 +24,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:h -l services:,infrastructure:,qos:,augment:,profile:,coordinator-profile-path:,geninfra:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,geninfra:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -37,7 +39,7 @@ eval set -- "$PARAMS"
 while [ "$1" != "--" ]
 do
     case "$1" in
-        -s|--services)	    
+        -s|--services)
 	    servicesFile=`readlink -f $2`
 	    ;;
 	-q|--qos)
@@ -48,6 +50,12 @@ do
 	    ;;
 	-a|--augment)
 	    augmentFile=`readlink -f $2`
+	    ;;
+	--ports)
+	    portsFile=`readlink -f $2`
+	    ;;
+	--ports-service-property)
+	    portsServicePropertyArg="--service-property $2"
 	    ;;
 	-p|--profile)
 	    profileArg="--profile $2"
@@ -104,4 +112,11 @@ then
 fi
 
 distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg`
+
+if [ "$portsFile" != "" ]
+then
+    dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $portsServicePropertyArg > $TMPDIR/ports.nix
+    mv $TMPDIR/ports.nix $portsFile
+fi
+
 disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg

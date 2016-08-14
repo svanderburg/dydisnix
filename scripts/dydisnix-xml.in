@@ -9,7 +9,10 @@ Usage: $0 -s services_expr
   or: $0 -i infrastructure_expr
   or: $0 -d distribution_expr -i infrastructure_expr
   or: $0 -p ports_expr
-  
+
+The command `dydisnix-xml` generates XML representations of the Disnix models
+so that they can be used by external tools.
+
 Options:
   -s, --services        Services Nix expression which describes all components
                         of the distributed system

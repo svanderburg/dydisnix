@@ -7,6 +7,13 @@ showUsage()
     cat <<EOF
 Usage: $0 -s services_expr -q qos_expr [-i infrastructure_expr] [options]
 
+The command `dydisnix-env' is a wrapper around the `disnix-env' command that
+automatically deploys a service-oriented system. The major difference between
+this command and `disnix-env' is that it automatically discovers and augments
+an infrastructure model if needed, and uses a QoS policy expression to
+automatically map services to machines based on their technical and
+non-functional properties.
+
 Options:
   -s, --services                      Services Nix expression which describes
                                       all components of the distributed system

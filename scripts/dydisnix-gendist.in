@@ -7,6 +7,10 @@ showUsage()
     cat <<EOF
 Usage: $0 -s services_expr -i infrastructure_expr [-q qos_expr] [options]
 
+The command `dydisnix-gendist` automatically generates a distribution model
+using properties in the service model and infrastructure model. A QoS policy
+expression can be used to program a strategy that maps services to machines.
+
 Options:
   -s, --services                  Services Nix expression which describes all
                                   components of the distributed system

@@ -11,10 +11,13 @@ Usage: $0 -s services_expr
   or: $0 -p ports_expr
   
 Options:
-  -s, --services        Services Nix expression which describes all components of the distributed system
-  -i, --infrastructure  Infrastructure Nix expression which captures properties of machines in the network
+  -s, --services        Services Nix expression which describes all components
+                        of the distributed system
+  -i, --infrastructure  Infrastructure Nix expression which captures properties
+                        of machines in the network
   -d, --distribution    Distribution Nix expression mapping services to machines
-  -p, --ports           Port assignment expression assigning port numbers to services
+  -p, --ports           Port assignment expression assigning port numbers to
+                        services
       --no-out-link     Do not create a result symlink
       --show-trace      Shows a trace of the output
   -h, --help            Shows the usage of this command

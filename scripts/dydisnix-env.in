@@ -4,20 +4,46 @@
 
 showUsage()
 {
-    echo "Usage: $0 -s services_expr -q qos_expr [-i infrastructure_expr] [options]"
-    echo "Options:"
-    echo
-    echo "-s,--services               Services Nix expression which describes all components of the distributed system"
-    echo "-q,--qos                    Quality of service Nix expression which describes how to devide services onto targets based on quality of service attributes"
-    echo "-i,--infrastructure         Infrastructure Nix expression which captures properties of machines in the network"
-    echo "-a,--augment                Nix epxression which augments additional attributes into the infrastructure model"
-    echo "--ports                     Filename of a ports expression containing port assignments. It will be updated when a deployment changes. If not provided, no port assignment will be done"
-    echo "--ports-service-property    The name of the attribute that indicates the port assign type (defaults to: portAssign)"
-    echo "-p,--profile                Name of the profile that is used for this system. Defaults to: default"
-    echo "--coordinator-profile-path  Path where to store the coordinator profile generations"
-    echo "--geninfra                  Path to the infrastructure generator"
-    echo "--show-trace                Shows a trace of the output"
-    echo "-h,--help                   Shows the usage of this command"
+    cat <<EOF
+Usage: $0 -s services_expr -q qos_expr [-i infrastructure_expr] [options]
+
+Options:
+  -s, --services                      Services Nix expression which describes
+                                      all components of the distributed system
+  -q, --qos                           Quality of service Nix expression which
+                                      describes how to devide services onto
+                                      targets based on quality of service
+                                      attributes
+  -i, --infrastructure                Infrastructure Nix expression which
+                                      captures properties of machines in the network
+  -a, --augment                       Nix epxression which augments additional
+                                      attributes into the infrastructure model
+      --ports                         Filename of a ports expression containing
+                                      port assignments. It will be updated when
+                                      a deployment changes. If not provided, no
+                                      port assignment will be done
+      --ports-service-property        The name of the attribute that indicates
+                                      the port assign type (defaults to:
+                                      portAssign)
+  -p, --profile                       Name of the profile that is used for this
+                                      system. Defaults to: default
+      --coordinator-profile-path      Path where to store the coordinator
+                                      profile generations
+  -m, --max-concurrent-transfers=NUM  Maximum amount of concurrent closure
+                                      transfers. Defauls to: 2
+      --no-migration                  Do not migrate the state of services from
+                                      one machine to another, even if they have
+                                      been annotated as such
+      --no-delete-state               Do not remove the state of deactivated
+                                      services
+      --geninfra                      Path to the infrastructure generator
+      --show-trace                    Shows a trace of the output
+  -h, --help                          Shows the usage of this command
+
+Environment:
+  DYDISNIX_GENINFRA    Executable to invoke to dynamically capture an
+                       infrastructure model
+EOF
 }
 
 # Import checks
@@ -25,7 +51,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,geninfra:,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:m:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,no-delete-state,geninfra:,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -63,6 +89,15 @@ do
 	    ;;
 	--coordinator-profile-path)
 	    coordinatorProfilePathArg="--coordinator-profile-path $2"
+	    ;;
+	-m|--max-concurrent-transfers)
+	    maxConcurrentTransfersArg="-m $2"
+	    ;;
+	--no-migration)
+	    noMigrationArg="--no-migration"
+	    ;;
+	--no-delete-state)
+	    noDeleteStateArg="--no-delete-state"
 	    ;;
 	--geninfra)
 	    geninfra=$2
@@ -106,21 +141,28 @@ checkTmpDir
 
 if [ "$infrastructureFile" = "" ]
 then
+    echo "[coordinator]: Capturing infrastructure..." >&2
     $geninfra > $TMPDIR/infrastructure.nix
     infrastructureFile=$TMPDIR/infrastructure.nix
+else
+    echo "[coordinator]: Using infrastructure model: $infrastructureFile" >&2
 fi
 
 if [ "$augmentFile" != "" ]
 then
+    echo "[coordinator]: Augmenting the captured infrastructure..." >&2
     infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile $profileArg $coordinatorProfilePathArg`
 fi
 
+echo "[coordinator]: Generating a distribution model..." >&2
 distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg $showTraceArg`
 
 if [ "$portsFile" != "" ]
 then
+    echo "[coordinator]: Updating the port assignments..." >&2
     dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $portsServicePropertyArg > $TMPDIR/ports.nix
     mv $TMPDIR/ports.nix $portsFile
 fi
 
-disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $showTraceArg
+echo "[coordinator]: Redeploying the system..." >&2
+disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrateStateArg $noDeleteStateArg $showTraceArg

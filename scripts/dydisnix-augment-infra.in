@@ -4,12 +4,16 @@
 
 showUsage()
 {
-    echo "Usage: $0 -i infrastructure_expr --augment augment_expr"
-    echo "Options:"
-    echo
-    echo "-i,--infrastructure Infrastructure Nix expression which captures properties of machines in the network"
-    echo "-a,--augment        Nix expression which augments additional properties into the infrastructure model"
-    echo "-h,--help           Shows the usage of this command"
+    cat <<EOF
+Usage: $0 -i infrastructure_expr --augment augment_expr
+
+Options:
+  -i, --infrastructure Infrastructure Nix expression which captures properties
+                       of machines in the network
+  -a, --augment        Nix expression which augments additional properties into
+                       the infrastructure model
+  -h, --help           Shows the usage of this command
+EOF
 }
 
 # Autoconf settings

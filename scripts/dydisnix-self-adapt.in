@@ -7,7 +7,7 @@ showUsage()
     cat <<EOF
 Usage: $0 -s services_expr -q qos_expr [options]
 
-The command `dysinix-self-adapt' continuously monitors for changes in the
+The command \`dysinix-self-adapt' continuously monitors for changes in the
 infrastructure model and automatically reconfigures and redeploys a system when
 a change has been detected.
 

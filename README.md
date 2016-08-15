@@ -343,6 +343,12 @@ of the deployment process:
 
     $ dydisnix-env -s services.nix -a augment.nix -q qos.nix --ports ports.nix
 
+We can also preemtively take snapshots of all stateful services, so that if
+any of the machines disappears, a service's state can be restored when it is
+redeployed elsewhere:
+
+    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix --snapshot
+
 License
 =======
 Disnix is free software; you can redistribute it and/or modify it under the terms

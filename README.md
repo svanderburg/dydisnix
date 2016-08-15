@@ -212,7 +212,19 @@ candidates according to some strategy,
 
 The Dynamic Disnix toolset provides a collection of algorithms described in the
 academic literature. For more information on filter functions, consult the API
-documentation of the `$PREFIX/share/dydisnix/filters.nix` module.
+documentation of the `$PREFIX/share/dydisnix/filters.nix` module. Currently, the
+following algorithms are provided:
+
+* A collection of service to target machine mapping functions that filters
+  candidate mappings on relationships, e.g. one to many, many to one, one to
+  one.
+* A round robin division method.
+* A function that orders candidate target machines on priority
+* A one dimensional division method, using a `greedy`, `lowest-bidder` or
+  `highest-bidder` strategy
+* An approximation alogrithm for the subset sum problem.
+* An approximation algorithm for the multiway cut problem.
+* An approximation algorithm for the graph coloring problem.
 
 Port assigner
 -------------
@@ -341,13 +353,13 @@ redeploying the machine if any change has been detected:
 When adding a ports parameter, it will also automatically assign ports as part
 of the deployment process:
 
-    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix --ports ports.nix
+    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --ports ports.nix
 
-We can also preemtively take snapshots of all stateful services, so that if
-any of the machines disappears, a service's state can be restored when it is
-redeployed elsewhere:
+We can also preemtively take snapshots of all stateful services by providing the
+`--snapshot` parameter, so that if any of the machines disappears, a service's
+state can be restored when it is redeployed elsewhere:
 
-    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix --snapshot
+    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --snapshot
 
 License
 =======

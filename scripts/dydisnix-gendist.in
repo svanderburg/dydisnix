@@ -5,27 +5,29 @@
 showUsage()
 {
     cat <<EOF
-Usage: $0 -s services_expr -i infrastructure_expr [-q qos_expr] [options]
+Usage: $0 -s services_nix -i infrastructure_nix [-q qos_nix] [OPTION]
 
 The command \`dydisnix-gendist' automatically generates a distribution model
 using properties in the service model and infrastructure model. A QoS policy
 expression can be used to program a strategy that maps services to machines.
 
 Options:
-  -s, --services                  Services Nix expression which describes all
+  -s, --services=services_nix     Services Nix expression which describes all
                                   components of the distributed system
-  -i, --infrastructure            Infrastructure Nix expression which captures
+  -i, --infrastructure=infrastructure_nix
+                                  Infrastructure Nix expression which captures
                                   properties of machines in the network
-  -q, --qos                       Quality of service Nix expression which
+  -q, --qos=qos_nix               Quality of service Nix expression which
                                   describes how to devide services onto targets
                                   based on quality of service attributes
       --filter-buildable          Checks for each combination whether the
                                   service can be built (may take some time)
       --xml                       Output XML version of the distribution instea
                                   of a Nix expression
-  -p, --profile                   Name of the profile that is used for this
+  -p, --profile=PROFILE           Name of the profile that is used for this
                                   system. Defaults to: default
-      --coordinator-profile-path  Path where to store the coordinator profile
+      --coordinator-profile-path=PATH
+                                  Path where to store the coordinator profile
                                   generations
       --no-out-link               Do not create a 'result' symlink
       --show-trace                Shows a trace of the output

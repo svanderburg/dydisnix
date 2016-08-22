@@ -5,25 +5,27 @@
 showUsage()
 {
     cat <<EOF
-Usage: $0 -s services_expr
-  or: $0 -i infrastructure_expr
-  or: $0 -d distribution_expr -i infrastructure_expr
-  or: $0 -p ports_expr
+Usage: $0 -s services_nix [OPTION]
+  or: $0 -i infrastructure_nix [OPTION]
+  or: $0 -d distribution_nix -i infrastructure_nix [OPTION]
+  or: $0 -p ports_nix [OPTION]
 
 The command \`dydisnix-xml' generates XML representations of the Disnix models
 so that they can be used by external tools.
 
 Options:
-  -s, --services        Services Nix expression which describes all components
-                        of the distributed system
-  -i, --infrastructure  Infrastructure Nix expression which captures properties
-                        of machines in the network
-  -d, --distribution    Distribution Nix expression mapping services to machines
-  -p, --ports           Port assignment expression assigning port numbers to
-                        services
-      --no-out-link     Do not create a result symlink
-      --show-trace      Shows a trace of the output
-  -h, --help            Shows the usage of this command
+  -s, --services=services_nix  Services Nix expression which describes all components
+                               of the distributed system
+  -i, --infrastructure=infrastructure_nix
+                               Infrastructure Nix expression which captures properties
+                               of machines in the network
+  -d, --distribution=distribution_nix
+                               Distribution Nix expression mapping services to machines
+  -p, --ports=ports_nix        Port assignment expression assigning port numbers to
+                               services
+      --no-out-link            Do not create a result symlink
+      --show-trace             Shows a trace of the output
+  -h, --help                   Shows the usage of this command
 
 Environment:
   DISNIX_TARGET_PROPERTY  Sets the target property of an infrastructure model,

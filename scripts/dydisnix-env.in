@@ -5,7 +5,7 @@
 showUsage()
 {
     cat <<EOF
-Usage: $0 -s services_expr -q qos_expr [-i infrastructure_expr] [options]
+Usage: $0 -s services_nix -q qos_nix [-i infrastructure_nix] [OPTION]
 
 The command \`dydisnix-env' is a wrapper around the \`disnix-env' command that
 automatically deploys a service-oriented system. The major difference between
@@ -15,26 +15,27 @@ automatically map services to machines based on their technical and
 non-functional properties.
 
 Options:
-  -s, --services                      Services Nix expression which describes
+  -s, --services=services_nix         Services Nix expression which describes
                                       all components of the distributed system
-  -q, --qos                           Quality of service Nix expression which
+  -q, --qos=qos_nix                   Quality of service Nix expression which
                                       describes how to devide services onto
                                       targets based on quality of service
                                       attributes
-  -i, --infrastructure                Infrastructure Nix expression which
+  -i, --infrastructure=infrastructure_nix
+                                      Infrastructure Nix expression which
                                       captures properties of machines in the network
-  -a, --augment                       Nix epxression which augments additional
+  -a, --augment=augment_nix           Nix epxression which augments additional
                                       attributes into the infrastructure model
-      --ports                         Filename of a ports expression containing
+      --ports=ports_nix               Filename of a ports expression containing
                                       port assignments. It will be updated when
                                       a deployment changes. If not provided, no
                                       port assignment will be done
-      --ports-service-property        The name of the attribute that indicates
+      --ports-service-property=PROP   The name of the attribute that indicates
                                       the port assign type (defaults to:
                                       portAssign)
-  -p, --profile                       Name of the profile that is used for this
+  -p, --profile=PROFILE               Name of the profile that is used for this
                                       system. Defaults to: default
-      --coordinator-profile-path      Path where to store the coordinator
+      --coordinator-profile-path=PATH Path where to store the coordinator
                                       profile generations
   -m, --max-concurrent-transfers=NUM  Maximum amount of concurrent closure
                                       transfers. Defauls to: 2
@@ -43,7 +44,7 @@ Options:
                                       been annotated as such
       --no-delete-state               Do not remove the state of deactivated
                                       services
-      --geninfra                      Path to the infrastructure generator
+      --geninfra=PATH                 Path to the infrastructure generator
       --show-trace                    Shows a trace of the output
   -h, --help                          Shows the usage of this command
 

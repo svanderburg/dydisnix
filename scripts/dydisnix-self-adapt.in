@@ -5,41 +5,41 @@
 showUsage()
 {
     cat <<EOF
-Usage: $0 -s services_expr -q qos_expr [options]
+Usage: $0 -s services_nix -q qos_nix [OPTION]
 
 The command \`dydisnix-self-adapt' continuously monitors for changes in the
 infrastructure model and automatically reconfigures and redeploys a system when
 a change has been detected.
 
 Options:
-  -s, --services                      Services Nix expression which describes
+  -s, --services=services_nix         Services Nix expression which describes
                                       all components of the distributed system
-  -q, --qos                           Quality of service Nix expression which
+  -q, --qos=qos_nix                   Quality of service Nix expression which
                                       describes how to devide services onto
                                       targets based on quality of service
                                       attributes
-  -a, --augment                       Nix epxression which augments additional
+  -a, --augment=augment_nix           Nix epxression which augments additional
                                       attributes into the infrastructure model
-      --ports                         Filename of a ports expression containing
+      --ports=ports_nix               Filename of a ports expression containing
                                       port assignments. It will be updated when
                                       a deployment changes. If not provided, no
                                       port assignment will be done
-      --ports-service-property        The name of the attribute that indicates
+      --ports-service-property=PROP   The name of the attribute that indicates
                                       the port assign type (defaults to:
                                       portAssign)
-  -p, --profile                       Name of the profile that is used for this
+  -p, --profile=PROFILE               Name of the profile that is used for this
                                       system. Defaults to: default
-      --coordinator-profile-path      Path where to store the coordinator
+      --coordinator-profile-path=PATH Path where to store the coordinator
                                       profile generations
   -m, --max-concurrent-transfers=NUM  Maximum amount of concurrent closure
                                       transfers. Defauls to: 2
-      --interval                      Sleep interval (defaults to 5)
+      --interval=NUM                  Sleep interval (defaults to 5)
       --no-migration                  Do not migrate the state of services from
                                       one machine to another, even if they have
                                       been annotated as such
       --no-delete-state               Do not remove the state of deactivated
                                       services
-      --geninfra                      Path to the infrastructure generator
+      --geninfra=PATH                 Path to the infrastructure generator
       --snapshot                      Regularly snapshot the state of every
                                       stateful service
       --show-trace                    Shows a trace of the output

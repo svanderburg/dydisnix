@@ -28,6 +28,8 @@ of the infrastructure:
   discovered infrastructure model that cannot be auto-discovered
 * The *distribution generator* computes a mapping of services to machines based
   on their technical requirements and non-functional requirements
+* The *port assigner* automatically assigns unique TCP ports to services that
+  require them
 
 Prerequisites
 =============

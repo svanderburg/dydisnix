@@ -160,6 +160,7 @@ do
     echo "[coordinator]: Capturing infrastructure..." >&2
     infrastructureFile="$TMPDIR/infrastructure_captured.nix"
     $geninfra > $infrastructureFile
+    echo "[coordinator]: Captured infrastructure file: $infrastructureFile" >&2
     
     # Augment the infrastructure, if needed
     if [ "$augmentFile" != "" ]
@@ -167,6 +168,8 @@ do
 	echo "[coordinator]: Augmenting the captured infrastructure..." >&2
 	infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile`
     fi
+    
+    echo "[coordinator]: Using infrastructure model: $infrastructureFile" >&2
     
     # If requested, take a snapshot of the entire environment
     if [ "$snapshot" = "1" ]
@@ -184,6 +187,7 @@ do
 	echo "[coordinator]: A change in the infrastructure has been detected!" >&2
 	echo "[coordinator]: Generating a new distribution model..." >&2
 	distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg $showTraceArg`
+	echo "[coordinator]: Using generated distribution model: $distribution" >&2
 	
 	if [ "$portsFile" != "" ]
 	then

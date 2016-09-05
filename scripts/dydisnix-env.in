@@ -152,8 +152,7 @@ then
     echo "[coordinator]: Capturing infrastructure..." >&2
     $geninfra > $TMPDIR/infrastructure.nix
     infrastructureFile=$TMPDIR/infrastructure.nix
-else
-    echo "[coordinator]: Using infrastructure model: $infrastructureFile" >&2
+    echo "[coordinator]: Captured infrastructure file: $infrastructureFile" >&2
 fi
 
 if [ "$augmentFile" != "" ]
@@ -162,8 +161,11 @@ then
     infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile $profileArg $coordinatorProfilePathArg`
 fi
 
+echo "[coordinator]: Using infrastructure model: $infrastructureFile" >&2
+
 echo "[coordinator]: Generating a distribution model..." >&2
 distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg $showTraceArg`
+echo "[coordinator]: Using generated distribution model: $distribution" >&2
 
 if [ "$portsFile" != "" ]
 then
@@ -172,5 +174,5 @@ then
     mv $TMPDIR/ports.nix $portsFile
 fi
 
-echo "[coordinator]: Redeploying the system..." >&2
+echo "[coordinator]: Deploying the system..." >&2
 disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrateStateArg $noDeleteStateArg $showTraceArg

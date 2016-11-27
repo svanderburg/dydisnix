@@ -68,7 +68,7 @@ let
                 virtualisation.writableStore = true;
                 virtualisation.pathsInNixDB = [ pkgs.stdenv pkgs.perlPackages.ArchiveCpio pkgs.busybox ];
                 
-                environment.systemPackages = [ disnix dydisnix pkgs.stdenv ];
+                environment.systemPackages = [ disnix dydisnix pkgs.stdenv ] ++ pkgs.libxml2.all ++ pkgs.libxslt.all;
               };
           };
           testScript = ''

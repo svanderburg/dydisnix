@@ -42,6 +42,11 @@ Options:
       --geninfra=PATH                 Path to the infrastructure generator
       --snapshot                      Regularly snapshot the state of every
                                       stateful service
+      --depth-first                   Snapshots components depth-first as
+                                      opposed to breadth-first. This approach is
+                                      more space efficient, but slower.
+      --keep=NUM                      Amount of snapshot generations to keep.
+                                      Defaults to: 1
       --show-trace                    Shows a trace of the output
   -h, --help                          Shows the usage of this command
 
@@ -57,7 +62,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:q:a:p:m:h -l services:,qos:,augment:,ports:,ports-service-property:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,no-delete-state,geninfra:,snapshot,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:q:a:p:m:h -l services:,qos:,augment:,ports:,ports-service-property:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,no-delete-state,geninfra:,snapshot,depth-first,keep:,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -73,51 +78,57 @@ while [ "$1" != "--" ]
 do
     case "$1" in
         -s|--services)
-	    servicesFile=`readlink -f $2`
-	    ;;
-	-q|--qos)
-	    qosFile=`readlink -f $2`
-	    ;;
-	-a|--augment)
-	    augmentFile=`readlink -f $2`
-	    ;;
-	--ports)
-	    portsFile=`readlink -f $2`
-	    ;;
-	--ports-service-property)
-	    portsServicePropertyArg="--service-property $2"
-	    ;;
-	--interval)
-	    interval=$2
-	    ;;
-	-p|--profile)
-	    profileArg="--profile $2"
-	    ;;
-	--coordinator-profile-path)
-	    coordinatorProfilePathArg="--coordinator-profile-path $2"
-	    ;;
-	-m|--max-concurrent-transfers)
-	    maxConcurrentTransfersArg="-m $2"
-	    ;;
-	--no-migration)
-	    noMigrationArg="--no-migration"
-	    ;;
-	--no-delete-state)
-	    noDeleteStateArg="--no-delete-state"
-	    ;;
-	--geninfra)
-	    geninfra=$2
-	    ;;
-	--snapshot)
-	    snapshot=1
-	    ;;
-	--show-trace)
-	    showTraceArg="--show-trace"
-	    ;;
-	-h|--help)
-	    showUsage
-	    exit 0
-	    ;;
+            servicesFile=`readlink -f $2`
+            ;;
+        -q|--qos)
+            qosFile=`readlink -f $2`
+            ;;
+        -a|--augment)
+            augmentFile=`readlink -f $2`
+            ;;
+        --ports)
+            portsFile=`readlink -f $2`
+            ;;
+        --ports-service-property)
+            portsServicePropertyArg="--service-property $2"
+            ;;
+        --interval)
+            interval=$2
+            ;;
+        -p|--profile)
+            profileArg="--profile $2"
+            ;;
+        --coordinator-profile-path)
+            coordinatorProfilePathArg="--coordinator-profile-path $2"
+            ;;
+        -m|--max-concurrent-transfers)
+            maxConcurrentTransfersArg="-m $2"
+            ;;
+        --no-migration)
+            noMigrationArg="--no-migration"
+            ;;
+        --no-delete-state)
+            noDeleteStateArg="--no-delete-state"
+            ;;
+        --geninfra)
+            geninfra=$2
+            ;;
+        --snapshot)
+            snapshot=1
+            ;;
+        --depth-first)
+            depthFirstArg="--depth-first"
+            ;;
+        --keep)
+            keepArg="--keep $2"
+            ;;
+        --show-trace)
+            showTraceArg="--show-trace"
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
     esac
     
     shift
@@ -142,10 +153,10 @@ if [ "$geninfra" = "" ]
 then
     if [ "$DYDISNIX_GENINFRA" = "" ]
     then
-	echo "ERROR: An infrastructure generator must be specified!" >&2
-	exit 1
+        echo "ERROR: An infrastructure generator must be specified!" >&2
+        exit 1
     else
-	geninfra="$DYDISNIX_GENINFRA"
+        geninfra="$DYDISNIX_GENINFRA"
     fi
 fi
 
@@ -165,8 +176,8 @@ do
     # Augment the infrastructure, if needed
     if [ "$augmentFile" != "" ]
     then
-	echo "[coordinator]: Augmenting the captured infrastructure..." >&2
-	infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile`
+        echo "[coordinator]: Augmenting the captured infrastructure..." >&2
+        infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile`
     fi
     
     echo "[coordinator]: Using infrastructure model: $infrastructureFile" >&2
@@ -184,21 +195,21 @@ do
     # If a change has been detected, do a redeployment
     if [ "$hash" != "$previousHash" ]
     then
-	echo "[coordinator]: A change in the infrastructure has been detected!" >&2
-	echo "[coordinator]: Generating a new distribution model..." >&2
-	distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg $showTraceArg`
-	echo "[coordinator]: Using generated distribution model: $distribution" >&2
-	
-	if [ "$portsFile" != "" ]
-	then
-	    echo "[coordinator]: Updating the port assignments..." >&2
-	    dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $portsServicePropertyArg > $TMPDIR/ports.nix
-	    mv $TMPDIR/ports.nix $portsFile
-	fi
-	
-	echo "[coordinator]: Redeploying the system..." >&2
-	disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrationArg $noDeleteStateArg $showTraceArg
-	previousHash="$hash"
+        echo "[coordinator]: A change in the infrastructure has been detected!" >&2
+        echo "[coordinator]: Generating a new distribution model..." >&2
+        distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg $showTraceArg`
+        echo "[coordinator]: Using generated distribution model: $distribution" >&2
+        
+        if [ "$portsFile" != "" ]
+        then
+            echo "[coordinator]: Updating the port assignments..." >&2
+            dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $portsServicePropertyArg > $TMPDIR/ports.nix
+            mv $TMPDIR/ports.nix $portsFile
+        fi
+        
+        echo "[coordinator]: Redeploying the system..." >&2
+        disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrationArg $noDeleteStateArg $depthFirstArg $keepArg $showTraceArg
+        previousHash="$hash"
     fi
     
     # Wait for a while, and then check again

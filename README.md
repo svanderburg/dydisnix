@@ -363,6 +363,13 @@ state can be restored when it is redeployed elsewhere:
 
     $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --snapshot
 
+Finally, it may also happen that a machine with an existing deployment
+configuration gets added to a network. In order to be able to manage them, their
+deployment configurations must be reconstructed. This can be done by adding the
+`--reconstruct` parameter:
+
+    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --reconstruct
+
 License
 =======
 Disnix is free software; you can redistribute it and/or modify it under the terms

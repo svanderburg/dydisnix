@@ -206,11 +206,11 @@ do
         if [ "$reconstruct" = "1" ]
         then
             echo "[coordinator]: Reconstructing manifest..." >&2
-            disnix-reconstruct $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $showTraceArg $infrastructureFile || true
+            disnix-reconstruct $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $showTraceArg $infrastructureFile
         fi
         
         echo "[coordinator]: Generating a new distribution model..." >&2
-        distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile $profileArg $coordinatorProfilePathArg $showTraceArg`
+        distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $coordinatorProfilePathArg $showTraceArg`
         echo "[coordinator]: Using generated distribution model: $distribution" >&2
         
         if [ "$portsFile" != "" ]

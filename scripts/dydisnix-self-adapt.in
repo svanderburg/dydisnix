@@ -37,7 +37,7 @@ Options:
       --no-migration                  Do not migrate the state of services from
                                       one machine to another, even if they have
                                       been annotated as such
-      --no-delete-state               Do not remove the state of deactivated
+      --delete-state                  Removes the obsolete state of deactivated
                                       services
       --geninfra=PATH                 Path to the infrastructure generator
       --snapshot                      Regularly snapshot the state of every
@@ -65,7 +65,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:q:a:p:m:h -l services:,qos:,augment:,ports:,ports-service-property:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,no-delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:q:a:p:m:h -l services:,qos:,augment:,ports:,ports-service-property:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -110,8 +110,8 @@ do
         --no-migration)
             noMigrationArg="--no-migration"
             ;;
-        --no-delete-state)
-            noDeleteStateArg="--no-delete-state"
+        --delete-state)
+            deleteStateArg="--delete-state"
             ;;
         --geninfra)
             geninfra=$2
@@ -221,7 +221,7 @@ do
         fi
         
         echo "[coordinator]: Redeploying the system..." >&2
-        disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrationArg $noDeleteStateArg $depthFirstArg $keepArg $showTraceArg
+        disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrationArg $deleteStateArg $depthFirstArg $keepArg $showTraceArg
         previousHash="$hash"
     fi
     

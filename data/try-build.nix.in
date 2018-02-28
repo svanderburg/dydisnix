@@ -18,7 +18,7 @@ let
   
   services = servicesFun { inherit distribution invDistribution system pkgs; };
   
-  servicesWithTargets = lib.augmentTargetsInDependsOn distribution services;
+  servicesWithTargets = lib.augmentTargetsInInterDependencies distribution services;
   target = getAttr targetName infrastructure;
   system = if target ? system then target.system else builtins.currentSystem;
   

@@ -55,9 +55,11 @@ int main(int argc, char *argv[])
                 xml = TRUE;
                 break;
             case 'h':
-            case '?':
                 print_usage(argv[0]);
                 return 0;
+            case '?':
+                print_usage(argv[0]);
+                return 1;
         }
     }
     

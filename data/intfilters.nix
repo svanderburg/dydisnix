@@ -1,9 +1,15 @@
 {lib}:
 
-rec {
+let
   inherit (builtins) listToAttrs attrNames getAttr hasAttr lessThan head tail length;
   inherit (lib) filter elem;
 
+  translateDependencyReferencesToNames = {services, dependencies}:
+    map (dependencyName: (getAttr dependencyName dependencies).name) (attrNames dependencies)
+  ;
+in
+rec {
+  # Filter out the pkg attribute (because that implies building), and replace dependency references by names
   filterDerivations = services:
     listToAttrs (map (serviceName:
       let
@@ -12,8 +18,9 @@ rec {
       { name = serviceName;
         value = listToAttrs(map (propertyName:
           { name = propertyName;
-            value = if propertyName == "dependsOn"
-              then map (dependencyName: (getAttr dependencyName (service.dependsOn)).name) (attrNames (service.dependsOn))
+            # Replace dependency references by their names
+            value = if propertyName == "dependsOn" then translateDependencyReferencesToNames { inherit services; dependencies = service.dependsOn; }
+              else if propertyName == "connectsTo" then translateDependencyReferencesToNames { inherit services; dependencies = service.connectsTo; }
               else getAttr propertyName service;
           } ) (filter (propertyName: propertyName != "pkg") (attrNames service)))
         ;

@@ -51,6 +51,8 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
 	    /* Assign values */
 	    service->name = NULL;
 	    service->property = property;
+	    service->connects_to = g_ptr_array_new();
+	    service->depends_on = g_ptr_array_new();
 	    
 	    /* Read name attribute */
 	    while(service_properties != NULL)
@@ -65,20 +67,52 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
 	    
 	    while(service_children != NULL)
 	    {
-		ServiceProperty *service_property = (ServiceProperty*)g_malloc(sizeof(ServiceProperty));
-		
-		if(xmlStrcmp(service_children->name, (xmlChar*) "text") != 0)
+		if(xmlStrcmp(service_children->name, (const xmlChar*) "connectsTo") == 0)
 		{
-		    service_property->name = g_strdup((gchar*)service_children->name);
-		    
-		    if(service_children->children == NULL) /* !!! also support lists in the future */
-			service_property->value = NULL;
-		    else
-			service_property->value = g_strdup((gchar*)service_children->children->content);
-			
-		    g_ptr_array_add(property, service_property);
+		    xmlNodePtr connects_to_children = service_children->children;
+
+		    while(connects_to_children != NULL)
+		    {
+			gchar *dependency = g_strdup((gchar*)connects_to_children->children->content);
+			g_ptr_array_add(service->connects_to, dependency);
+			connects_to_children = connects_to_children->next;
+		    }
 		}
-	    
+		else if(xmlStrcmp(service_children->name, (const xmlChar*) "dependsOn") == 0)
+		{
+		    xmlNodePtr depends_on_children = service_children->children;
+
+		    while(depends_on_children != NULL)
+		    {
+			gchar *dependency = g_strdup((gchar*)depends_on_children->children->content);
+			g_ptr_array_add(service->depends_on, dependency);
+			depends_on_children = depends_on_children->next;
+		    }
+		}
+		else if(xmlStrcmp(service_children->name, (const xmlChar*) "properties") == 0)
+		{
+		    xmlNodePtr properties_children = service_children->children;
+
+		    while(properties_children != NULL)
+		    {
+			ServiceProperty *service_property = (ServiceProperty*)g_malloc(sizeof(ServiceProperty));
+
+			if(xmlStrcmp(properties_children->name, (const xmlChar*) "text") != 0)
+			{
+			    service_property->name = g_strdup((gchar*)properties_children->name);
+
+			    if(properties_children->children == NULL) /* !!! also support lists in the future */
+				service_property->value = NULL;
+			    else
+				service_property->value = g_strdup((gchar*)properties_children->children->content);
+			
+			    g_ptr_array_add(property, service_property);
+			}
+
+			properties_children = properties_children->next;
+		    }
+		}
+
 		service_children = service_children->next;
 	    }
 	    
@@ -114,16 +148,33 @@ void delete_service_property_array(GPtrArray *service_property_array)
             for(j = 0; j < service->property->len; j++)
             {
                 ServiceProperty *service_property = g_ptr_array_index(service->property, j);
-                
+
                 g_free(service_property->name);
                 g_free(service_property->value);
                 g_free(service_property);
             }
 
             g_ptr_array_free(service->property, TRUE);
+
+            for(j = 0; j < service->connects_to->len; j++)
+            {
+                gchar *dependency = g_ptr_array_index(service->connects_to, j);
+                g_free(dependency);
+            }
+
+            g_ptr_array_free(service->connects_to, TRUE);
+
+            for(j = 0; j < service->depends_on->len; j++)
+            {
+                gchar *dependency = g_ptr_array_index(service->depends_on, j);
+                g_free(dependency);
+            }
+
+            g_ptr_array_free(service->depends_on, TRUE);
+
             g_free(service);
         }
-    
+
         g_ptr_array_free(service_property_array, TRUE);
     }
 }
@@ -182,7 +233,7 @@ static gint compare_service_property_keys(const ServiceProperty **l, const Servi
     return g_strcmp0(left->name, right->name);
 }
 
-ServiceProperty *find_service_property(Service *service, gchar *name)
+ServiceProperty *find_service_property(const Service *service, gchar *name)
 {
     ServiceProperty serviceProperty;
     ServiceProperty **ret, *servicePropertyPtr = &serviceProperty;

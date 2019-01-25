@@ -5,14 +5,30 @@
 		<services>
 			<xsl:for-each select="attr">
 				<service name="{@name}">
-					<xsl:for-each select="attrs/attr">
-						<xsl:element name="{@name}">
-							<xsl:value-of select="*/@value" />
+					<dependsOn>
+						<xsl:for-each select="attrs/attr[@name='dependsOn']">
 							<xsl:for-each select="list/*">
-								<xsl:value-of select="@value" /><xsl:text>&#x20;</xsl:text>
+								<dependency><xsl:value-of select="@value" /></dependency>
 							</xsl:for-each>
-						</xsl:element>
-					</xsl:for-each>
+						</xsl:for-each>
+					</dependsOn>
+					<connectsTo>
+						<xsl:for-each select="attrs/attr[@name='connectsTo']">
+							<xsl:for-each select="list/*">
+								<dependency><xsl:value-of select="@value" /></dependency>
+							</xsl:for-each>
+						</xsl:for-each>
+					</connectsTo>
+					<properties>
+						<xsl:for-each select="attrs/attr[not(@name='dependsOn' or @name='connectsTo')]">
+							<xsl:element name="{@name}">
+								<xsl:value-of select="*/@value" />
+								<xsl:for-each select="list/*">
+									<xsl:value-of select="@value" /><xsl:text>&#x20;</xsl:text>
+								</xsl:for-each>
+							</xsl:element>
+						</xsl:for-each>
+					</properties>
 				</service>
 			</xsl:for-each>
 		</services>

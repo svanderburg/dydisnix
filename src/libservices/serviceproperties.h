@@ -5,7 +5,7 @@
 typedef struct
 {
     gchar *name;
-    
+
     gchar *value;
 }
 ServiceProperty;
@@ -13,8 +13,12 @@ ServiceProperty;
 typedef struct
 {
     gchar *name;
-    
+
     GPtrArray *property;
+
+    GPtrArray *connects_to;
+
+    GPtrArray *depends_on;
 }
 Service;
 
@@ -26,6 +30,6 @@ void print_service_property_array(const GPtrArray *service_property_array);
 
 Service *find_service(GPtrArray *service_array, gchar *name);
 
-ServiceProperty *find_service_property(Service *service, gchar *name);
+ServiceProperty *find_service_property(const Service *service, gchar *name);
 
 #endif

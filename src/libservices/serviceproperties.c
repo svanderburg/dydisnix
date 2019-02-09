@@ -53,7 +53,8 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
 	    service->property = property;
 	    service->connects_to = g_ptr_array_new();
 	    service->depends_on = g_ptr_array_new();
-	    
+	    service->group_node = FALSE;
+
 	    /* Read name attribute */
 	    while(service_properties != NULL)
 	    {
@@ -132,47 +133,52 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
     return service_property_array;
 }
 
+void delete_service(Service *service)
+{
+    unsigned int i;
+
+    g_free(service->name);
+
+    for(i = 0; i < service->property->len; i++)
+    {
+        ServiceProperty *service_property = g_ptr_array_index(service->property, i);
+
+        g_free(service_property->name);
+        g_free(service_property->value);
+        g_free(service_property);
+    }
+
+    g_ptr_array_free(service->property, TRUE);
+
+    for(i = 0; i < service->connects_to->len; i++)
+    {
+        gchar *dependency = g_ptr_array_index(service->connects_to, i);
+        g_free(dependency);
+    }
+
+    g_ptr_array_free(service->connects_to, TRUE);
+
+    for(i = 0; i < service->depends_on->len; i++)
+    {
+        gchar *dependency = g_ptr_array_index(service->depends_on, i);
+        g_free(dependency);
+    }
+
+    g_ptr_array_free(service->depends_on, TRUE);
+
+    g_free(service);
+}
+
 void delete_service_property_array(GPtrArray *service_property_array)
 {
     if(service_property_array != NULL)
     {
         unsigned int i;
-    
+
         for(i = 0; i < service_property_array->len; i++)
         {
             Service *service = g_ptr_array_index(service_property_array, i);
-            unsigned int j;
-
-            g_free(service->name);
-
-            for(j = 0; j < service->property->len; j++)
-            {
-                ServiceProperty *service_property = g_ptr_array_index(service->property, j);
-
-                g_free(service_property->name);
-                g_free(service_property->value);
-                g_free(service_property);
-            }
-
-            g_ptr_array_free(service->property, TRUE);
-
-            for(j = 0; j < service->connects_to->len; j++)
-            {
-                gchar *dependency = g_ptr_array_index(service->connects_to, j);
-                g_free(dependency);
-            }
-
-            g_ptr_array_free(service->connects_to, TRUE);
-
-            for(j = 0; j < service->depends_on->len; j++)
-            {
-                gchar *dependency = g_ptr_array_index(service->depends_on, j);
-                g_free(dependency);
-            }
-
-            g_ptr_array_free(service->depends_on, TRUE);
-
-            g_free(service);
+            delete_service(service);
         }
 
         g_ptr_array_free(service_property_array, TRUE);
@@ -246,4 +252,14 @@ ServiceProperty *find_service_property(const Service *service, gchar *name)
         return NULL;
     else
         return *ret;
+}
+
+gchar *find_service_property_value(const Service *service, gchar *name)
+{
+    ServiceProperty *prop = find_service_property(service, name);
+
+    if(prop == NULL)
+        return NULL;
+    else
+        return prop->value;
 }

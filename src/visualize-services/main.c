@@ -2,11 +2,26 @@
 #include <getopt.h>
 #include "visualize-services.h"
 
-static void print_usage(char *command)
+static void print_usage(const char *command)
 {
-    fprintf(stderr, "Usage:\n");
-    fprintf(stderr, "%s --services services_expr [--xml] [--group GROUP] [--group-subservices]\n", command);
-    fprintf(stderr, "%s {-h | --help}\n", command);
+    printf("Usage: %s --services services_expr [OPTION]\n\n", command);
+
+    puts(
+    "Creates a visualization of the services model, in which services are generated\n"
+    "as nodes and inter-dependencies as arrows. The output is generated in dot format\n"
+    "and can be converted to an image by using the `dot' tool.\n\n"
+
+    "Options:\n"
+    "  -s, --services=services_expr Services configuration which describes all\n"
+    "                               components of the distributed system\n"
+    "      --xml                    Specifies that the configurations are in XML not\n"
+    "                               the Nix expression language.\n"
+    "      --group                  Only displays services and dependencies belonging\n"
+    "                               to a group\n"
+    "      --group-subservices      Merges all services belonging to a sub group into\n"
+    "                               a single node\n"
+    "  -h, --help                   Shows the usage of this command to the user\n"
+    );
 }
 
 int main(int argc, char *argv[])

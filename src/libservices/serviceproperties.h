@@ -24,6 +24,8 @@ typedef struct
 }
 Service;
 
+gchar *generate_service_xml_from_expr(char *service_expr);
+
 GPtrArray *create_service_property_array(const gchar *services_xml_file);
 
 void delete_service(Service *service);

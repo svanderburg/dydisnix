@@ -14,6 +14,8 @@ typedef struct
 }
 DistributionItem;
 
+gchar *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr);
+
 GPtrArray *create_candidate_target_array(const char *candidate_mapping_file);
 
 void delete_candidate_target_array(GPtrArray *candidate_target_array);

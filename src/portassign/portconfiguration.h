@@ -20,6 +20,8 @@ typedef struct
 }
 PortConfiguration;
 
+gchar *generate_ports_xml_from_expr(char *ports_expr);
+
 void init_port_configuration(PortConfiguration *port_configuration);
 
 int open_port_configuration(PortConfiguration *port_configuration, const gchar *port_configuration_file);

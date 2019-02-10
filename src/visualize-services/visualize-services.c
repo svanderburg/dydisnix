@@ -1,58 +1,5 @@
 #include "visualize-services.h"
-#include <unistd.h>
-#include <sys/types.h>
-#include <wait.h>
 #include <serviceproperties.h>
-#define BUFFER_SIZE 4096
-
-static gchar *generate_service_xml_from_expr(char *service_expr)
-{
-    int pipefd[2];
-    
-    if(pipe(pipefd) == 0)
-    {
-        int status = fork();
-        
-        if(status == -1)
-        {
-            g_printerr("Error with forking dydisnix-xml process!\n");
-            return NULL;
-        }
-        else if(status == 0)
-        {
-            char *const args[] = { "dydisnix-xml", "-s", service_expr, NULL };
-            
-            close(pipefd[0]); /* Close read-end of pipe */
-            dup2(pipefd[1], 1);
-            execvp("dydisnix-xml", args);
-            _exit(1);
-        }
-        else
-        {
-            char line[BUFFER_SIZE];
-            ssize_t line_size;
-        
-            close(pipefd[1]); /* Close write-end of pipe */
-            
-            line_size = read(pipefd[0], line, BUFFER_SIZE - 1);
-            line[line_size - 1] = '\0'; /* Replace linefeed char with termination */
-
-            close(pipefd[0]);
-            
-            wait(&status);
-            
-            if(WEXITSTATUS(status) == 0)
-                return g_strdup(line);
-            else
-                return NULL;
-        }
-    }
-    else
-    {
-        g_printerr("Error with creating a pipe\n");
-        return NULL;
-    }
-}
 
 static void print_type(const Service *service)
 {

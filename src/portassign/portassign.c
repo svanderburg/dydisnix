@@ -11,10 +11,10 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
     GPtrArray *service_property_array;
     GPtrArray *targets_array;
     GPtrArray *candidate_target_array;
-    gchar *service_xml;
-    gchar *infrastructure_xml;
-    gchar *distribution_xml;
-    gchar *ports_xml;
+    char *service_xml;
+    char *infrastructure_xml;
+    char *distribution_xml;
+    char *ports_xml;
 
     if(xml)
     {
@@ -103,10 +103,10 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
         
         if(xml)
         {
-            g_free(service_xml);
-            g_free(infrastructure_xml);
-            g_free(distribution_xml);
-            g_free(ports_xml);
+            free(service_xml);
+            free(infrastructure_xml);
+            free(distribution_xml);
+            free(ports_xml);
         }
         
         return 0;

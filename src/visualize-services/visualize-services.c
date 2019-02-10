@@ -402,13 +402,13 @@ int visualize_services(gchar *services, int xml, int group_subservices, gchar *g
     GPtrArray *service_property_array;
 
     if(xml)
-        services_xml = g_strdup(services);
+        services_xml = strdup(services);
     else
         services_xml = generate_service_xml_from_expr(services);
 
     service_property_array = create_service_property_array(services_xml);
 
-    g_free(services_xml);
+    free(services_xml);
 
     if(service_property_array == NULL)
     {

@@ -3,7 +3,7 @@
 #include <glib.h>
 #include <infrastructure.h>
 
-gchar *generate_infrastructure_xml_from_expr(char *infrastructure_expr);
+char *generate_infrastructure_xml_from_expr(char *infrastructure_expr);
 
 GPtrArray *create_target_array_from_xml(const gchar *infrastructure_xml_file);
 

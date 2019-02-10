@@ -1,59 +1,30 @@
 #include "candidatetargetmapping.h"
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <xmlutil.h>
+#include <procreact_future.h>
 
-#define BUFFER_SIZE 4096
-
-gchar *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr)
+static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribution_expr, char *infrastructure_expr)
 {
-    int pipefd[2];
-    
-    if(pipe(pipefd) == 0)
-    {
-        int status = fork();
-        
-        if(status == -1)
-        {
-            g_printerr("Error with forking dydisnix-xml process!\n");
-            return NULL;
-        }
-        else if(status == 0)
-        {
-            char *const args[] = { "dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, NULL };
-            
-            close(pipefd[0]); /* Close read-end of pipe */
-            dup2(pipefd[1], 1);
-            execvp("dydisnix-xml", args);
-            _exit(1);
-        }
-        else
-        {
-            char line[BUFFER_SIZE];
-            ssize_t line_size;
-        
-            close(pipefd[1]); /* Close write-end of pipe */
-            
-            line_size = read(pipefd[0], line, BUFFER_SIZE - 1);
-            line[line_size - 1] = '\0'; /* Replace linefeed char with termination */
+    ProcReact_Future future = procreact_initialize_future(procreact_create_string_type());
 
-            close(pipefd[0]);
-            
-            wait(&status);
-            
-            if(WEXITSTATUS(status) == 0)
-                return g_strdup(line);
-            else
-                return NULL;
-        }
-    }
-    else
+    if(future.pid == 0)
     {
-        g_printerr("Error with creating a pipe\n");
-        return NULL;
+        char *const args[] = {"dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, NULL};
+        dup2(future.fd, 1); /* Attach write-end to stdout */
+        execvp(args[0], args);
+        _exit(1);
     }
+
+    return future;
+}
+
+char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr)
+{
+    ProcReact_Status status;
+    ProcReact_Future future = generate_distribution_xml_from_expr_async(distribution_expr, infrastructure_expr);
+    char *path = procreact_future_get(&future, &status);
+    path[strlen(path) - 1] = '\0';
+    return path;
 }
 
 GPtrArray *create_candidate_target_array(const char *candidate_mapping_file)

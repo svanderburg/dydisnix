@@ -4,7 +4,8 @@
 
 static void print_usage(const char *command)
 {
-    printf("Usage: %s --services services_expr [OPTION]\n\n", command);
+    printf("Usage: %s --services services_expr [OPTION]\n", command);
+    printf(" or: %s --batch --services services_expr --output-dir [OPTION]\n\n", command);
 
     puts(
     "Creates a visualization of the services model, in which services are generated\n"
@@ -20,6 +21,8 @@ static void print_usage(const char *command)
     "                               to a group\n"
     "      --group-subservices      Merges all services belonging to a sub group into\n"
     "                               a single node\n"
+    "      --output-dir             Specifies directory in which the batch mode\n"
+    "                               outputs are stored (default to current directory)\n"
     "  -h, --help                   Shows the usage of this command to the user\n"
     );
 }
@@ -30,10 +33,12 @@ int main(int argc, char *argv[])
     int c, option_index = 0;
     struct option long_options[] =
     {
+        {"batch", no_argument, 0, 'b'},
         {"services", required_argument, 0, 's'},
         {"xml", no_argument, 0, 'x'},
         {"group-subservices", no_argument, 0, 'G'},
         {"group", required_argument, 0, 'g'},
+        {"output-dir", required_argument, 0, 'o'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
@@ -41,12 +46,17 @@ int main(int argc, char *argv[])
     int xml = FALSE;
     int group_subservices = FALSE;
     char *group = "";
+    int batch = FALSE;
+    char *output_dir = ".";
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "s:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
+            case 'b':
+                batch = TRUE;
+                break;
             case 's':
                 services = optarg;
                 break;
@@ -58,6 +68,9 @@ int main(int argc, char *argv[])
                 break;
             case 'g':
                 group = optarg;
+                break;
+            case 'o':
+                output_dir = optarg;
                 break;
             case 'h':
                 print_usage(argv[0]);
@@ -77,5 +90,8 @@ int main(int argc, char *argv[])
     }
 
     /* Execute visualize operation */
-    return visualize_services(services, xml, group_subservices, group);
+    if(batch)
+        return visualize_services_batch(services, xml, group_subservices, output_dir);
+    else
+        return visualize_services(services, xml, group_subservices, group);
 }

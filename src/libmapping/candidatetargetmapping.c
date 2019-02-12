@@ -9,7 +9,7 @@ static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribu
 
     if(future.pid == 0)
     {
-        char *const args[] = {"dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, NULL};
+        char *const args[] = {"dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, "--no-out-link", NULL};
         dup2(future.fd, 1); /* Attach write-end to stdout */
         execvp(args[0], args);
         _exit(1);

@@ -70,7 +70,7 @@ do
             portsFile=`readlink -f $2`
             ;;
         --no-out-link)
-            noOutLink="--no-out-link"
+            noOutLinkArg="--no-out-link"
             ;;
         --show-trace)
             showTraceArg="--show-trace"
@@ -92,6 +92,7 @@ if [ "$servicesFile" != "" ]
 then
     nix-build $showTraceArg --arg servicesFile $servicesFile \
         --argstr targetProperty $targetProperty \
+        $noOutLinkArg $showTraceArg \
         -A servicesToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$distributionFile" != "" ] && [ "$infrastructureFile" != "" ]
@@ -99,6 +100,7 @@ then
     nix-build $showTraceArg --arg distributionFile $distributionFile \
         --arg infrastructureFile $infrastructureFile \
         --argstr targetProperty $targetProperty \
+        $noOutLinkArg $showTraceArg \
         -A distributionToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$infrastructureFile" != "" ]
@@ -106,11 +108,13 @@ then
     nix-build $showTraceArg --arg infrastructureFile $infrastructureFile \
         --argstr targetProperty $targetProperty \
         -A infrastructureToXML \
+        $noOutLinkArg $showTraceArg \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$portsFile" != "" ]
 then
     nix-build $showTraceArg --arg portsFile $portsFile \
         --argstr targetProperty $targetProperty \
+        $noOutLinkArg $showTraceArg \
         -A portsToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 else

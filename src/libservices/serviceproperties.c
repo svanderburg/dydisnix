@@ -10,7 +10,7 @@ static ProcReact_Future generate_service_xml_from_expr_async(char *service_expr)
 
     if(future.pid == 0)
     {
-        char *const args[] = {"dydisnix-xml", "-s", service_expr, NULL};
+        char *const args[] = {"dydisnix-xml", "-s", service_expr, "--no-out-link", NULL};
         dup2(future.fd, 1); /* Attach write-end to stdout */
         execvp(args[0], args);
         _exit(1);

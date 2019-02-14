@@ -28,7 +28,7 @@ char *generate_service_xml_from_expr(char *service_expr)
     return path;
 }
 
-GPtrArray *create_service_property_array(const gchar *services_xml_file)
+GPtrArray *create_service_property_array_from_xml(const gchar *services_xml_file)
 {
     /* Declarations */
     xmlDocPtr doc;
@@ -157,6 +157,22 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file)
 
     /* Return the service property array */
     return service_property_array;
+}
+
+GPtrArray *create_service_property_array_from_nix(gchar *services_nix)
+{
+    gchar *services_xml = generate_service_xml_from_expr(services_nix);
+    GPtrArray *service_property_array = create_service_property_array_from_xml(services_xml);
+    g_free(services_xml);
+    return service_property_array;
+}
+
+GPtrArray *create_service_property_array(gchar *services, const int xml)
+{
+    if(xml)
+        return create_service_property_array_from_xml(services);
+    else
+        return create_service_property_array_from_nix(services);
 }
 
 void delete_service(Service *service)

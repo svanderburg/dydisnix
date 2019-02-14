@@ -6,9 +6,9 @@
 
 int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribution_xml, gchar *target_property)
 {
-    GPtrArray *service_property_array = create_service_property_array(services_xml);
-    GPtrArray *targets_array = create_target_array_from_xml(infrastructure_xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_xml);
+    GPtrArray *service_property_array = create_service_property_array_from_xml(services_xml);
+    GPtrArray *targets_array = create_target_property_array_from_xml(infrastructure_xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
     int exit_status = 0;
     
     if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)

@@ -30,7 +30,7 @@ char *generate_infrastructure_xml_from_expr(char *infrastructure_expr)
     return path;
 }
 
-GPtrArray *create_target_array_from_xml(const gchar *infrastructure_xml_file)
+GPtrArray *create_target_property_array_from_xml(const gchar *infrastructure_xml_file)
 {
     GPtrArray *targets_array;
     xmlDocPtr doc;
@@ -53,6 +53,22 @@ GPtrArray *create_target_array_from_xml(const gchar *infrastructure_xml_file)
     
     /* Return the target array */
     return targets_array;
+}
+
+GPtrArray *create_target_property_array_from_nix(gchar *infrastructure_nix)
+{
+    gchar *infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure_nix);
+    GPtrArray *target_array = create_target_array_from_xml(infrastructure_xml);
+    g_free(infrastructure_xml);
+    return target_array;
+}
+
+GPtrArray *create_target_property_array(gchar *infrastructure, const int xml)
+{
+    if(xml)
+        return create_target_property_array_from_xml(infrastructure);
+    else
+        return create_target_property_array_from_nix(infrastructure);
 }
 
 static gint compare_target_names(const Target **l, const Target **r)

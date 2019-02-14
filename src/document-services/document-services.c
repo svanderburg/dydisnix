@@ -14,17 +14,7 @@ static void display_property(Service *service, gchar *name)
 
 int document_services(gchar *services, gchar *group, int xml, int group_subservices)
 {
-    gchar *services_xml;
-    GPtrArray *service_property_array;
-
-    if(xml)
-        services_xml = strdup(services);
-    else
-        services_xml = generate_service_xml_from_expr(services);
-
-    service_property_array = create_service_property_array(services_xml);
-
-    free(services_xml);
+    GPtrArray *service_property_array = create_service_property_array(services, xml);
 
     if(service_property_array == NULL)
     {
@@ -55,8 +45,8 @@ int document_services(gchar *services, gchar *group, int xml, int group_subservi
         g_print("    <head>\n");
         g_print("        <title>Documentation</title>\n");
         g_print("    </head>\n");
-        g_print("    <body>\n");
 
+        g_print("    <body>\n");
         g_print("        <h2>Services</h2>\n");
         g_print("        <table>\n");
         g_print("            <tr>\n");

@@ -66,8 +66,8 @@ static void add_interdependent_services_to_adjacency_array(GPtrArray *dependenci
 
 int graphcol(const char *services_xml, const char *infrastructure_xml)
 {
-    GPtrArray *service_property_array = create_service_property_array(services_xml);
-    GPtrArray *targets_array = create_target_array_from_xml(infrastructure_xml);
+    GPtrArray *service_property_array = create_service_property_array_from_xml(services_xml);
+    GPtrArray *targets_array = create_target_property_array_from_xml(infrastructure_xml);
     GPtrArray *adjacency_array = g_ptr_array_new();
     VertexAdjacency *max_adjacency = NULL;
     unsigned int i;

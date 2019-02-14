@@ -36,9 +36,9 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
             ports_xml = generate_ports_xml_from_expr(ports);
     }
 
-    service_property_array = create_service_property_array(service_xml);
-    targets_array = create_target_array_from_xml(infrastructure_xml);
-    candidate_target_array = create_candidate_target_array(distribution_xml);
+    service_property_array = create_service_property_array_from_xml(service_xml);
+    targets_array = create_target_property_array_from_xml(infrastructure_xml);
+    candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
     
     if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
     {

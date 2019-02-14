@@ -214,17 +214,7 @@ static GHashTable *query_services_in_group_with_context(GPtrArray *service_prope
 
 int visualize_services(gchar *services, int xml, int group_subservices, gchar *group)
 {
-    gchar *services_xml;
-    GPtrArray *service_property_array;
-
-    if(xml)
-        services_xml = strdup(services);
-    else
-        services_xml = generate_service_xml_from_expr(services);
-
-    service_property_array = create_service_property_array(services_xml);
-
-    free(services_xml);
+    GPtrArray *service_property_array = create_service_property_array(services, xml);
 
     if(service_property_array == NULL)
     {
@@ -332,17 +322,7 @@ static void render_group(GPtrArray *service_property_array, gchar *group, gchar 
 
 int visualize_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir)
 {
-    gchar *services_xml;
-    GPtrArray *service_property_array;
-
-    if(xml)
-        services_xml = strdup(services);
-    else
-        services_xml = generate_service_xml_from_expr(services);
-
-    service_property_array = create_service_property_array(services_xml);
-
-    free(services_xml);
+    GPtrArray *service_property_array = create_service_property_array(services, xml);
 
     if(service_property_array == NULL)
     {

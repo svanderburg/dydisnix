@@ -123,7 +123,7 @@ static void fix_unmapped_services(GPtrArray *initial_candidate_target_array, GPt
 
 int multiwaycut(gchar *distribution_xml)
 {
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
     
     if(candidate_target_array == NULL)
     {

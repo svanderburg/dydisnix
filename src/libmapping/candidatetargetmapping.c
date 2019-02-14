@@ -27,7 +27,7 @@ char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrast
     return path;
 }
 
-GPtrArray *create_candidate_target_array(const char *candidate_mapping_file)
+GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_file)
 {
     /* Declarations */
     xmlDocPtr doc;
@@ -118,6 +118,14 @@ GPtrArray *create_candidate_target_array(const char *candidate_mapping_file)
     xmlCleanupParser();
     
     /* Return the candidate host array */
+    return candidate_target_array;
+}
+
+GPtrArray *create_candidate_target_array_from_nix(gchar *distribution_expr, gchar *infrastructure_expr)
+{
+    gchar *distribution_xml = generate_distribution_xml_from_expr(distribution_expr, infrastructure_expr);
+    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
+    g_free(distribution_xml);
     return candidate_target_array;
 }
 

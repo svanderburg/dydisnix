@@ -36,7 +36,7 @@ static void delete_filtered_target_array(GPtrArray *filtered_target_array)
 int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, char *distribution_xml)
 {
     unsigned int i;
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
 
     if(candidate_target_array == NULL)
     {

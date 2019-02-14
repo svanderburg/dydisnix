@@ -22,9 +22,9 @@ int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gch
 {
     unsigned int i;
     int exit_status = 0;
-    GPtrArray *service_property_array = create_service_property_array(service_xml);
-    GPtrArray *targets_array = create_target_array_from_xml(infrastructure_xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_xml);
+    GPtrArray *service_property_array = create_service_property_array_from_xml(service_xml);
+    GPtrArray *targets_array = create_target_property_array_from_xml(infrastructure_xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
     
     if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
     {

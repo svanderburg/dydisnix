@@ -16,7 +16,9 @@ DistributionItem;
 
 char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr);
 
-GPtrArray *create_candidate_target_array(const char *candidate_mapping_file);
+GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_file);
+
+GPtrArray *create_candidate_target_array_from_nix(gchar *distribution_expr, gchar *infrastructure_expr);
 
 void delete_candidate_target_array(GPtrArray *candidate_target_array);
 

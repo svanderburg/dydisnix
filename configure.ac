@@ -66,6 +66,7 @@ src/libinvmapping/Makefile
 src/libservices/Makefile
 src/libinfproperties/Makefile
 src/visualize-services/Makefile
+src/document-services/Makefile
 data/extfilters.nix
 data/try-build.nix
 data/Makefile

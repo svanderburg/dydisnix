@@ -30,6 +30,10 @@ GPtrArray *create_service_property_array(const gchar *services_xml_file);
 
 void delete_service(Service *service);
 
+GPtrArray *copy_properties(GPtrArray *properties);
+
+Service *copy_service(const Service *service);
+
 void delete_service_property_array(GPtrArray *service_property_array);
 
 void print_service_property_array(const GPtrArray *service_property_array);

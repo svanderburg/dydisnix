@@ -195,6 +195,50 @@ void delete_service(Service *service)
     g_free(service);
 }
 
+static GPtrArray *copy_dependencies(GPtrArray *dependencies)
+{
+    unsigned int i;
+    GPtrArray *copy_array = g_ptr_array_new();
+
+    for(i = 0; i < dependencies->len; i++)
+    {
+        gchar *dependency = g_ptr_array_index(dependencies, i);
+        g_ptr_array_add(copy_array, g_strdup(dependency));
+    }
+
+    return copy_array;
+}
+
+GPtrArray *copy_properties(GPtrArray *properties)
+{
+    unsigned int i;
+    GPtrArray *copy_array = g_ptr_array_new();
+
+    for(i = 0; i < properties->len; i++)
+    {
+        ServiceProperty *prop = g_ptr_array_index(properties, i);
+        ServiceProperty *copy_prop = (ServiceProperty*)g_malloc(sizeof(ServiceProperty));
+        copy_prop->name = g_strdup(prop->name);
+        copy_prop->value = g_strdup(prop->value);
+
+        g_ptr_array_add(copy_array, copy_prop);
+    }
+
+    return copy_array;
+}
+
+Service *copy_service(const Service *service)
+{
+    Service *new_service = (Service*)g_malloc(sizeof(Service));
+    new_service->name = g_strdup(service->name);
+    new_service->property = copy_properties(service->property);
+    new_service->depends_on = copy_dependencies(service->depends_on);
+    new_service->connects_to = copy_dependencies(service->connects_to);
+    new_service->group_node = service->group_node;
+
+    return new_service;
+}
+
 void delete_service_property_array(GPtrArray *service_property_array)
 {
     if(service_property_array != NULL)

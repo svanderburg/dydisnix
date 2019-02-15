@@ -143,7 +143,7 @@ static TargetConfig *parse_target_config(xmlNodePtr config_node)
     return target_config;
 }
 
-int open_port_configuration(PortConfiguration *port_configuration, const gchar *port_configuration_file)
+int open_port_configuration_from_xml(PortConfiguration *port_configuration, const gchar *port_configuration_file)
 {
     /* Declarations */
     xmlDocPtr doc;
@@ -218,6 +218,22 @@ int open_port_configuration(PortConfiguration *port_configuration, const gchar *
     xmlCleanupParser();
     
     return TRUE;
+}
+
+int open_port_configuration_from_nix(PortConfiguration *port_configuration, gchar *port_configuration_file)
+{
+    char *ports_xml = generate_ports_xml_from_expr(port_configuration_file);
+    int status = open_port_configuration_from_xml(port_configuration, ports_xml);
+    free(ports_xml);
+    return status;
+}
+
+int open_port_configuration(PortConfiguration *port_configuration, gchar *port_configuration_file, int xml)
+{
+    if(xml)
+        return open_port_configuration_from_xml(port_configuration, port_configuration_file);
+    else
+        return open_port_configuration_from_nix(port_configuration, port_configuration_file);
 }
 
 void destroy_port_configuration(PortConfiguration *port_configuration)

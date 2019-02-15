@@ -60,38 +60,38 @@ eval set -- "$PARAMS"
 while [ "$1" != "--" ]
 do
     case "$1" in
-        -s|--services)	    
-	    servicesFile=`readlink -f $2`
-	    ;;
-	-i|--infrastructure)
-	    infrastructureFile=`readlink -f $2`
-	    ;;
-	-q|--qos)
-	    qosFile=`readlink -f $2`
-	    qosArg="--argstr qosFile $(readlink -f $qosFile)"
-	    ;;
-	--filter-buildable)
-	    filterBuildable=1
-	    ;;
-	--xml)
-	    exprArg="--arg outputExpr false"
-	    ;;
-	-p|--profile)
-	    profile=$2
-	    ;;
-	--coordinator-profile-path)
-	    coordinatorProfilePath=$2
-	    ;;
-	--no-out-link)
-	    noOutLink=1
-	    ;;
-	--show-trace)
-	    showTrace=1
-	    ;;
-	-h|--help)
-	    showUsage
-	    exit 0
-	    ;;
+        -s|--services)
+            servicesFile=`readlink -f $2`
+            ;;
+        -i|--infrastructure)
+            infrastructureFile=`readlink -f $2`
+            ;;
+        -q|--qos)
+            qosFile=`readlink -f $2`
+            qosArg="--argstr qosFile $(readlink -f $qosFile)"
+            ;;
+        --filter-buildable)
+            filterBuildable=1
+            ;;
+        --xml)
+            exprArg="--arg outputExpr false"
+            ;;
+        -p|--profile)
+            profile=$2
+            ;;
+        --coordinator-profile-path)
+            coordinatorProfilePath=$2
+            ;;
+        --no-out-link)
+            noOutLink=1
+            ;;
+        --show-trace)
+            showTrace=1
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
     esac
     
     shift
@@ -130,18 +130,18 @@ then
     initialDistribution=`$0 --services $servicesFile --infrastructure $infrastructureFile`
     initialDistributionXML=`$0 --services $servicesFile --infrastructure $infrastructureFile --xml`
     filteredDistribution=`mktemp -p $TMPDIR`
-    dydisnix-filter-buildable --services $servicesFile --infrastructure $infrastructureFile --distribution $initialDistribution --distribution-xml $initialDistributionXML > $filteredDistribution
+    dydisnix-filter-buildable --services $servicesFile --infrastructure $infrastructureFile --distribution $initialDistribution > $filteredDistribution
     initialDistributionArg="--argstr distributionFile $filteredDistribution"
 fi
 
 nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
           --argstr infrastructureFile "$(readlink -f $infrastructureFile)" \
-	  $initialDistributionArg \
-	  $qosArg \
-	  $exprArg \
-	  $coordinatorProfileArg \
-	  $noOutLinkArg \
-	  $showTraceArg \
+          $initialDistributionArg \
+          $qosArg \
+          $exprArg \
+          $coordinatorProfileArg \
+          $noOutLinkArg \
+          $showTraceArg \
           "$(readlink -f @datadir@/@PACKAGE@/gendist.nix)"
 
 if [ "$filterBuildable" = "1" ]

@@ -24,7 +24,11 @@ char *generate_ports_xml_from_expr(char *ports_expr);
 
 void init_port_configuration(PortConfiguration *port_configuration);
 
-int open_port_configuration(PortConfiguration *port_configuration, const gchar *port_configuration_file);
+int open_port_configuration_from_xml(PortConfiguration *port_configuration, const gchar *port_configuration_file);
+
+int open_port_configuration_from_nix(PortConfiguration *port_configuration, gchar *port_configuration_file);
+
+int open_port_configuration(PortConfiguration *port_configuration, gchar *port_configuration_file, int xml);
 
 void destroy_port_configuration(PortConfiguration *port_configuration);
 

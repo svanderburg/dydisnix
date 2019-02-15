@@ -57,9 +57,9 @@ GPtrArray *create_target_property_array_from_xml(const gchar *infrastructure_xml
 
 GPtrArray *create_target_property_array_from_nix(gchar *infrastructure_nix)
 {
-    gchar *infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure_nix);
+    char *infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure_nix);
     GPtrArray *target_array = create_target_array_from_xml(infrastructure_xml);
-    g_free(infrastructure_xml);
+    free(infrastructure_xml);
     return target_array;
 }
 

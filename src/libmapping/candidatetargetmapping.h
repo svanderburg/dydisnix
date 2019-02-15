@@ -20,6 +20,8 @@ GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_
 
 GPtrArray *create_candidate_target_array_from_nix(gchar *distribution_expr, gchar *infrastructure_expr);
 
+GPtrArray *create_candidate_target_array(gchar *distribution_expr, gchar *infrastructure_expr, int xml);
+
 void delete_candidate_target_array(GPtrArray *candidate_target_array);
 
 void print_candidate_target_array(const GPtrArray *candidate_target_array);

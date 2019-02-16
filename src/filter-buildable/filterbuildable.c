@@ -1,23 +1,32 @@
 #include "candidatetargetmapping.h"
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
+#include <procreact_pid.h>
+
+static int instantiate_async(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName)
+{
+    pid_t pid = fork();
+
+    if(pid == 0)
+    {
+        char *const args[] = {"nix-instantiate", "--argstr", "servicesFile", services_expr, "--argstr", "infrastructureFile", infrastructure_expr, "--argstr", "distributionFile", distribution_expr, "--argstr", "serviceName", serviceName, "--argstr", "targetName", targetName, DATADIR "/dydisnix/try-build.nix", NULL};
+        dup2(2, 1);
+        execvp("nix-instantiate", args);
+        _exit(1);
+    }
+
+    return pid;
+}
 
 static int instantiate(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName)
 {
-    int status = fork();
-    
-    if(status == 0)
-    {
-	char *const args[] = {"nix-instantiate", "--argstr", "servicesFile", services_expr, "--argstr", "infrastructureFile", infrastructure_expr, "--argstr", "distributionFile", distribution_expr, "--argstr", "serviceName", serviceName, "--argstr", "targetName", targetName, DATADIR "/dydisnix/try-build.nix", NULL};
-	dup2(2, 1);
-	execvp("nix-instantiate", args);
-	_exit(1);
-    }
-    
-    wait(&status);
-    
-    return WEXITSTATUS(status);
+    ProcReact_Status status;
+    pid_t pid = instantiate_async(services_expr, infrastructure_expr, distribution_expr, serviceName, targetName);
+    int exit_status = procreact_wait_for_exit_status(pid, &status);
+
+    if(status != PROCREACT_STATUS_OK)
+        return 1;
+    else
+        return exit_status;
 }
 
 static void delete_filtered_target_array(GPtrArray *filtered_target_array)

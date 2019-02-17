@@ -1,5 +1,7 @@
 #include "servicegroup.h"
 #include "serviceproperties.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 int is_subgroup_of(gchar *current_group, gchar *group)
 {
@@ -271,4 +273,77 @@ GHashTable *group_services(GHashTable *queried_services_table, gchar *group)
         group_service(queried_services_table, grouped_services_table, (Service*)value, group);
 
     return grouped_services_table;
+}
+
+GPtrArray *query_unique_groups(GPtrArray *service_property_array)
+{
+    unsigned int i;
+    GHashTable *unique_groups_table = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTableIter iter;
+    gpointer *key;
+    gpointer *value;
+    GPtrArray *unique_groups_array = g_ptr_array_new();
+
+    for(i = 0; i < service_property_array->len; i++)
+    {
+        Service *current_service = g_ptr_array_index(service_property_array, i);
+        gchar *current_group = find_service_property_value(current_service, "group");
+
+        if(current_group != NULL && g_strcmp0(current_group, "") != 0)
+        {
+            if(g_hash_table_lookup(unique_groups_table, current_group) == NULL)
+                g_hash_table_insert(unique_groups_table, current_group, NULL);
+        }
+    }
+
+    g_hash_table_iter_init(&iter, unique_groups_table);
+
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+        g_ptr_array_add(unique_groups_array, (gchar*)key);
+
+    g_hash_table_destroy(unique_groups_table);
+
+    return unique_groups_array;
+}
+
+void mkdirp(const char *dir)
+{
+    gchar *tmp = g_strdup(dir);
+    size_t len = strlen(tmp);
+    unsigned int i;
+
+    if(tmp[len - 1] == '/') /* Make it ignore trailing / */
+        tmp[len - 1] = '\0';
+
+    for(i = 1; tmp[i] != '\0'; i++)
+    {
+        if(tmp[i] == '/')
+        {
+            tmp[i] = '\0';
+            mkdir(tmp, S_IRWXU);
+            tmp[i] = '/';
+        }
+    }
+
+    mkdir(tmp, S_IRWXU);
+    g_free(tmp);
+}
+
+void generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir, gchar *filename, void (*generate_artifact) (FILE *fd, const GPtrArray *service_property_array) )
+{
+    GHashTable *group_table = group_services(table, group);
+    GPtrArray *grouped_service_property_array = create_service_property_array_from_table(group_table);
+
+    gchar *basedir = g_strjoin("", output_dir, "/", group, NULL);
+    gchar *filepath = g_strjoin("", basedir, "/", filename, NULL);
+
+    mkdirp(basedir);
+    FILE *file = fopen(filepath, "w");
+    generate_artifact(file, grouped_service_property_array);
+    fclose(file);
+
+    g_free(filepath);
+    g_free(basedir);
+    delete_services_table(group_table);
+    g_ptr_array_free(grouped_service_property_array, TRUE);
 }

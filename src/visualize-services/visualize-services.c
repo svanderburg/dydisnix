@@ -1,7 +1,36 @@
 #include "visualize-services.h"
 #include <stdio.h>
+#include <unistd.h>
 #include <serviceproperties.h>
 #include <servicegroup.h>
+#include <procreact_pid.h>
+
+static pid_t run_dot_async(gchar *filename, gchar *image_format)
+{
+    pid_t pid = fork();
+
+    if(pid == 0)
+    {
+        gchar *format = g_strjoin("", "-T", image_format, NULL);
+        char *const args[] = {"dot", format, "-O", filename, NULL};
+        execvp(args[0], args);
+        _exit(1);
+    }
+
+    return pid;
+}
+
+static int run_dot(gchar *filename, gchar *image_format)
+{
+    ProcReact_Status status;
+    pid_t pid = run_dot_async(filename, image_format);
+    int exit_status = procreact_wait_for_boolean(pid, &status);
+
+    if(status != PROCREACT_STATUS_OK)
+        return FALSE;
+    else
+        return exit_status;
+}
 
 static void print_type(FILE *fd, const Service *service)
 {
@@ -11,9 +40,23 @@ static void print_type(FILE *fd, const Service *service)
         fprintf(fd, "\\n(%s)", prop->value);
 }
 
-static void generate_architecture_diagram(FILE *fd, const GPtrArray *service_property_array)
+static int generate_architecture_diagram(gchar *filepath, gchar *image_format, const GPtrArray *service_property_array)
 {
     unsigned int i;
+    FILE *fd;
+
+    if(filepath == NULL)
+        fd = stdout;
+    else
+    {
+        fd = fopen(filepath, "w");
+
+        if(fd == NULL)
+        {
+            g_printerr("Can't open file: %s\n", filepath);
+            return FALSE;
+        }
+    }
 
     fprintf(fd, "digraph G {\n");
     fprintf(fd, "node [style=filled,fillcolor=white,color=black];\n");
@@ -56,6 +99,26 @@ static void generate_architecture_diagram(FILE *fd, const GPtrArray *service_pro
     }
 
     fprintf(fd, "}\n");
+
+    if(filepath != NULL)
+    {
+        if(fclose(fd) != 0)
+        {
+            g_printerr("Can't close file!\n");
+            return FALSE;
+        }
+    }
+
+    if(image_format != NULL)
+    {
+        if(!run_dot(filepath, image_format))
+        {
+            g_printerr("Can't invoke dot to generate image for: %s\n", filepath);
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 static void add_outside_group_dependencies(GHashTable *queried_services_table, GPtrArray *dependencies, GPtrArray *service_property_array, GPtrArray *dep_service_property_array)
@@ -233,7 +296,7 @@ int visualize_services(gchar *services, int xml, int group_subservices, gchar *g
         }
 
         service_property_array = create_service_property_array_from_table(table);
-        generate_architecture_diagram(stdout, service_property_array);
+        generate_architecture_diagram(NULL, NULL, service_property_array);
         delete_services_table(table);
         g_ptr_array_free(service_property_array, TRUE);
 
@@ -241,14 +304,14 @@ int visualize_services(gchar *services, int xml, int group_subservices, gchar *g
     }
 }
 
-void generate_architecute_diagrams_for_group(GPtrArray *service_property_array, gchar *group, gchar *output_dir)
+void generate_architecute_diagrams_for_group(GPtrArray *service_property_array, gchar *group, gchar *output_dir, gchar *image_format)
 {
     GHashTable *table = query_services_in_group_with_context(service_property_array, group);
-    generate_group_artifacts(table, group, output_dir, "diagram.dot", generate_architecture_diagram);
+    generate_group_artifacts(table, group, output_dir, "diagram.dot", image_format, generate_architecture_diagram);
     delete_services_table(table);
 }
 
-int visualize_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir)
+int visualize_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir, gchar *image_format)
 {
     GPtrArray *service_property_array = create_service_property_array(services, xml);
 
@@ -262,12 +325,12 @@ int visualize_services_batch(gchar *services, int xml, int group_subservices, gc
         GPtrArray *unique_groups_array = query_unique_groups(service_property_array);
         unsigned int i;
 
-        generate_architecute_diagrams_for_group(service_property_array, "", output_dir);
+        generate_architecute_diagrams_for_group(service_property_array, "", output_dir, image_format);
 
         for(i = 0; i < unique_groups_array->len; i++)
         {
             gchar *group = g_ptr_array_index(unique_groups_array, i);
-            generate_architecute_diagrams_for_group(service_property_array, group, output_dir);
+            generate_architecute_diagrams_for_group(service_property_array, group, output_dir, image_format);
         }
 
         delete_service_property_array(service_property_array);

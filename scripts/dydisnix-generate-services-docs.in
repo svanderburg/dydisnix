@@ -1,0 +1,76 @@
+#!/bin/bash -e
+
+# Shows the usage of this command to the user
+
+showUsage()
+{
+    cat <<EOF
+Usage: $0 -s services_expr [OPTION]
+
+Options:
+  -s, --services=services_expr Services configuration which describes all
+                               components of the distributed system
+      --xml                    Specifies that the configurations are in XML not
+                               the Nix expression language.
+      --output-dir             Specifies directory in which the batch mode
+                               outputs are stored (default to current directory)
+  -f, --image-format=FORMAT    Image format to use for the outputs (e.g. svg or
+                               png)
+  -h, --help                   Shows the usage of this command to the user
+EOF
+}
+
+# Autoconf settings
+
+export prefix=@prefix@
+
+# Import checks
+
+source @DISNIX_PREFIX@/share/disnix/checks
+
+# Parse valid argument options
+
+PARAMS=`@getopt@ -n $0 -o s:f:h -l services:,format:,xml,output-dir:,help -- "$@"`
+
+if [ $? != 0 ]
+then
+    showUsage
+    exit 1
+fi
+
+eval set -- "$PARAMS"
+
+# Evaluate valid options
+
+while [ "$1" != "--" ]
+do
+    case "$1" in
+        -s|--services)
+            servicesFile=`readlink -f $2`
+            ;;
+        -f|--format)
+            formatArg="-f $2"
+            ;;
+        --xml)
+            xmlArg="--xml"
+            ;;
+        --output-dir)
+            outputDirArg="--output-dir $2"
+            ;;
+        -h|--help)
+            showUsage
+            exit 0
+            ;;
+    esac
+
+    shift
+done
+
+# Validate the given options
+
+checkServicesFile
+
+# Execute operation
+
+dydisnix-visualize-services --batch -s "$servicesFile" $formatArg $xmlArg $outputDirArg
+dydisnix-document-services --batch -s "$servicesFile" $formatArg $xmlArg $outputDirArg

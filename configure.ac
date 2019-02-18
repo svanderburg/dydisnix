@@ -52,6 +52,7 @@ scripts/dydisnix-gendist
 scripts/dydisnix-self-adapt
 scripts/dydisnix-augment-infra
 scripts/dydisnix-xml
+scripts/dydisnix-generate-services-docs
 scripts/Makefile
 src/Makefile
 src/dydisnix.pc

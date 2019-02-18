@@ -22,6 +22,8 @@ static void print_usage(const char *command)
     "                               a single node\n"
     "      --output-dir             Specifies directory in which the batch mode\n"
     "                               outputs are stored (default to current directory)\n"
+    "  -f, --image-format=FORMAT    Image format to use for the outputs (e.g. svg or\n"
+    "                               png)\n"
     "  -h, --help                   Shows the usage of this command to the user\n"
     );
 }
@@ -38,6 +40,7 @@ int main(int argc, char *argv[])
         {"group-subservices", no_argument, 0, 'G'},
         {"group", required_argument, 0, 'g'},
         {"output-dir", required_argument, 0, 'o'},
+        {"image-format", required_argument, 0, 'f'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
@@ -47,9 +50,10 @@ int main(int argc, char *argv[])
     char *group = "";
     int batch = FALSE;
     char *output_dir = ".";
+    char *image_format = NULL;
 
     /* Parse command-line options */
-    while((c = getopt_long(argc, argv, "s:h", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "f:s:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
@@ -71,6 +75,9 @@ int main(int argc, char *argv[])
             case 'o':
                 output_dir = optarg;
                 break;
+            case 'f':
+                image_format = optarg;
+                break;
             case 'h':
                 print_usage(argv[0]);
                 return 0;
@@ -90,7 +97,7 @@ int main(int argc, char *argv[])
 
     /* Execute visualize operation */
     if(batch)
-        return document_services_batch(services, xml, group_subservices, output_dir);
+        return document_services_batch(services, xml, group_subservices, output_dir, image_format);
     else
         return document_services(services, group, xml, group_subservices);
 }

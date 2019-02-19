@@ -40,7 +40,7 @@ static void print_type(FILE *fd, const Service *service)
         fprintf(fd, "\\n(%s)", prop->value);
 }
 
-static int generate_architecture_diagram(gchar *filepath, gchar *image_format, const GPtrArray *service_property_array)
+static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, const GPtrArray *service_property_array)
 {
     unsigned int i;
     FILE *fd;
@@ -296,7 +296,7 @@ int visualize_services(gchar *services, int xml, int group_subservices, gchar *g
         }
 
         service_property_array = create_service_property_array_from_table(table);
-        generate_architecture_diagram(NULL, NULL, service_property_array);
+        generate_architecture_diagram(NULL, NULL, "", service_property_array);
         delete_services_table(table);
         g_ptr_array_free(service_property_array, TRUE);
 

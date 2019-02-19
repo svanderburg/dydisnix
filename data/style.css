@@ -1,0 +1,32 @@
+body
+{
+    font-family: times, serif;
+    background-color: #ffffff;
+    color: #333333;
+}
+
+a:link
+{
+    color: #0000aa;
+}
+
+a:visited
+{
+    color: #aa00aa;
+}
+
+table, th, td
+{
+    border-style: solid;
+    border-width: 1px;
+}
+
+th
+{
+    background-color: #bbbbbb;
+}
+
+th, td
+{
+    padding: 0.2em;
+}

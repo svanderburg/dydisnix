@@ -13,11 +13,50 @@ static void display_property(FILE *fd, Service *service, gchar *name)
     fprintf(fd, "</td>\n");
 }
 
-static int generate_architecture_description(gchar *filepath, gchar *image_format, const GPtrArray *service_property_array)
+static gchar *compose_relative_root_path(gchar *group)
+{
+    if(group == NULL || g_strcmp0(group, "") == 0)
+        return g_strdup(".");
+    else
+    {
+        gchar **group_components = g_strsplit(group, "/", -1);
+        gchar *result = g_strdup("");
+
+        unsigned int i = 0;
+
+        while(group_components[i] != NULL)
+        {
+            gchar *old_result = result;
+
+            if(g_strcmp0(old_result, "") == 0)
+                result = g_strdup("..");
+            else
+                result = g_strjoin("", old_result, "/", "..", NULL);
+
+            g_free(old_result);
+            i++;
+        }
+
+        g_strfreev(group_components);
+
+        return result;
+    }
+}
+
+static void print_title(FILE *fd, gchar *group)
+{
+    fprintf(fd, "Functional architecture documentation");
+
+    if(g_strcmp0(group, "") != 0)
+        fprintf(fd, " for group: %s", group);
+}
+
+static int generate_architecture_description(gchar *filepath, gchar *image_format, gchar *group, const GPtrArray *service_property_array)
 {
     unsigned int i;
     FILE *fd;
     int first = TRUE;
+    gchar *root_path = compose_relative_root_path(group);
 
     if(filepath == NULL)
         fd = stdout;
@@ -34,10 +73,16 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     fprintf(fd, "<!DOCTYPE html>\n\n");
     fprintf(fd, "<html>\n");
     fprintf(fd, "    <head>\n");
-    fprintf(fd, "        <title>Documentation</title>\n");
+    fprintf(fd, "        <title>");
+    print_title(fd, group);
+    fprintf(fd, "</title>\n");
+    fprintf(fd, "        <link rel=\"stylesheet\" type=\"text/css\" href=\"%s/style.css\">\n", root_path);
     fprintf(fd, "    </head>\n");
 
     fprintf(fd, "    <body>\n");
+
+    if(g_strcmp0(group, "") != 0)
+        fprintf(fd, "        <h1>%s</h1>\n", group);
 
     if(image_format != NULL)
     {
@@ -117,6 +162,7 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
         }
     }
 
+    g_free(root_path);
     return TRUE;
 }
 
@@ -146,7 +192,7 @@ int document_services(gchar *services, gchar *group, int xml, int group_subservi
 
         service_property_array = create_service_property_array_from_table(table);
 
-        status = generate_architecture_description(NULL, NULL, service_property_array);
+        status = generate_architecture_description(NULL, NULL, "", service_property_array);
 
         delete_services_table(table);
         g_ptr_array_free(service_property_array, TRUE);
@@ -162,6 +208,39 @@ static int generate_architecture_descriptions_for_group(GPtrArray *service_prope
     status = generate_group_artifacts(table, group, output_dir, "index.html", image_format, generate_architecture_description);
     delete_services_table(table);
     return status;
+}
+
+static int copy_stylesheet(gchar *output_dir)
+{
+    FILE *src, *dest;
+    gchar *output_file;
+
+    src = fopen(DATADIR "/style.css", "r");
+    if(src == NULL)
+    {
+        g_printerr("Cannot open stylesheet!\n");
+        return FALSE;
+    }
+
+    output_file = g_strjoin("/", output_dir, "style.css", NULL);
+
+    dest = fopen(output_file, "w");
+    if(dest == NULL)
+    {
+        g_printerr("Cannot write stylesheet to destination!\n");
+        g_free(output_file);
+        return FALSE;
+    }
+
+    int c;
+    while((c = fgetc(src)) != EOF)
+        fputc(c, dest);
+
+    fclose(dest);
+    fclose(src);
+    g_free(output_file);
+
+    return TRUE;
 }
 
 int document_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir, gchar *image_format)
@@ -192,6 +271,9 @@ int document_services_batch(gchar *services, int xml, int group_subservices, gch
 
             delete_service_property_array(service_property_array);
         }
+
+        if(status)
+            status = copy_stylesheet(output_dir);
 
         return !status;
     }

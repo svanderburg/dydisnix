@@ -17,6 +17,6 @@ GPtrArray *query_unique_groups(GPtrArray *service_property_array);
 
 void mkdirp(const char *dir);
 
-int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir, gchar *filename, gchar *image_format, int (*generate_artifact) (gchar *filepath, gchar *image_format, const GPtrArray *service_property_array) );
+int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir, gchar *filename, gchar *image_format, int (*generate_artifact) (gchar *filepath, gchar *image_format, gchar *group, const GPtrArray *service_property_array) );
 
 #endif

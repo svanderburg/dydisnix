@@ -1,3 +1,5 @@
+AM_CPPFLAGS = -DDATADIR="\"$(prefix)/share/dydisnix\""
+
 bin_PROGRAMS = dydisnix-document-services
 noinst_HEADERS = document-services.h
 

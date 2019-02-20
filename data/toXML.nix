@@ -45,4 +45,10 @@ in
       ports = import portsFile;
     in
     filters.generatePortsXML ports;
+
+  docsToXML = {docsFile}:
+    let
+      docs = import docsFile;
+    in
+    filters.generateDocsXML docs;
 }

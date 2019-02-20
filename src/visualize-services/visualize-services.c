@@ -40,7 +40,7 @@ static void print_type(FILE *fd, const Service *service)
         fprintf(fd, "\\n(%s)", prop->value);
 }
 
-static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, const GPtrArray *service_property_array)
+static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, void *data, const GPtrArray *service_property_array)
 {
     unsigned int i;
     FILE *fd;
@@ -296,7 +296,7 @@ int visualize_services(gchar *services, int xml, int group_subservices, gchar *g
         }
 
         service_property_array = create_service_property_array_from_table(table);
-        generate_architecture_diagram(NULL, NULL, "", service_property_array);
+        generate_architecture_diagram(NULL, NULL, "", NULL, service_property_array);
         delete_services_table(table);
         g_ptr_array_free(service_property_array, TRUE);
 
@@ -307,7 +307,7 @@ int visualize_services(gchar *services, int xml, int group_subservices, gchar *g
 void generate_architecute_diagrams_for_group(GPtrArray *service_property_array, gchar *group, gchar *output_dir, gchar *image_format)
 {
     GHashTable *table = query_services_in_group_with_context(service_property_array, group);
-    generate_group_artifacts(table, group, output_dir, "diagram.dot", image_format, generate_architecture_diagram);
+    generate_group_artifacts(table, group, output_dir, "diagram.dot", image_format, NULL, generate_architecture_diagram);
     delete_services_table(table);
 }
 

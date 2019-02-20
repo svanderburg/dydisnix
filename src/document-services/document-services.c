@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <serviceproperties.h>
 #include <servicegroup.h>
+#include "docs-config.h"
 
 static void display_property(FILE *fd, Service *service, gchar *name)
 {
@@ -43,20 +44,35 @@ static gchar *compose_relative_root_path(gchar *group)
     }
 }
 
-static void print_title(FILE *fd, gchar *group)
+static void print_title(FILE *fd, gchar *group, gchar *group_description)
 {
     fprintf(fd, "Functional architecture documentation");
 
     if(g_strcmp0(group, "") != 0)
-        fprintf(fd, " for group: %s", group);
+    {
+        fprintf(fd, " for group: ");
+
+        if(group_description == NULL)
+            fprintf(fd, "%s", group);
+        else
+            fprintf(fd, "%s", group_description);
+    }
 }
 
-static int generate_architecture_description(gchar *filepath, gchar *image_format, gchar *group, const GPtrArray *service_property_array)
+static int generate_architecture_description(gchar *filepath, gchar *image_format, gchar *group, void *data, const GPtrArray *service_property_array)
 {
     unsigned int i;
     FILE *fd;
     int first = TRUE;
     gchar *root_path = compose_relative_root_path(group);
+    DocsConfig *docs_config = (DocsConfig*)data;
+
+    gchar *group_description;
+
+    if(docs_config == NULL || g_strcmp0(group, "") == 0)
+        group_description = NULL;
+    else
+        group_description = find_group(docs_config, group);
 
     if(filepath == NULL)
         fd = stdout;
@@ -74,7 +90,7 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     fprintf(fd, "<html>\n");
     fprintf(fd, "    <head>\n");
     fprintf(fd, "        <title>");
-    print_title(fd, group);
+    print_title(fd, group, group_description);
     fprintf(fd, "</title>\n");
     fprintf(fd, "        <link rel=\"stylesheet\" type=\"text/css\" href=\"%s/style.css\">\n", root_path);
     fprintf(fd, "    </head>\n");
@@ -82,7 +98,16 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     fprintf(fd, "    <body>\n");
 
     if(g_strcmp0(group, "") != 0)
-        fprintf(fd, "        <h1>%s</h1>\n", group);
+    {
+        fprintf(fd, "        <h1>");
+
+        if(group_description == NULL)
+            fprintf(fd, "%s", group);
+        else
+            fprintf(fd, "%s", group_description);
+
+        fprintf(fd, "</h1>\n");
+    }
 
     if(image_format != NULL)
     {
@@ -120,7 +145,6 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     if(!first)
         fprintf(fd, "        </table>\n");
 
-
     first = TRUE;
 
     for(i = 0; i < service_property_array->len; i++)
@@ -142,7 +166,23 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
 
             fprintf(fd, "            <tr>\n");
             fprintf(fd, "                <td><a href=\"%s/index.html\">%s</a></td>\n", current_service->name, current_service->name);
-            display_property(fd, current_service, "description");
+
+            if(docs_config == NULL)
+                fprintf(fd, "                <td></td>\n");
+            else
+            {
+                gchar *full_group;
+
+                if(g_strcmp0(group, "") == 0)
+                    full_group = g_strdup(current_service->name);
+                else
+                    full_group = g_strjoin("/", group, current_service->name, NULL);
+
+                gchar *group_description = find_group(docs_config, full_group);
+                fprintf(fd, "                <td>%s</td>\n", group_description);
+                g_free(full_group);
+            }
+
             fprintf(fd, "            </tr>\n");
         }
     }
@@ -166,7 +206,7 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     return TRUE;
 }
 
-int document_services(gchar *services, gchar *group, int xml, int group_subservices)
+int document_services(gchar *services, gchar *group, int xml, int group_subservices, gchar *docs)
 {
     GPtrArray *service_property_array = create_service_property_array(services, xml);
 
@@ -178,6 +218,12 @@ int document_services(gchar *services, gchar *group, int xml, int group_subservi
     else
     {
         int status;
+        DocsConfig *docs_config;
+
+        if(docs == NULL)
+            docs_config = NULL;
+        else
+            docs_config = create_docs_config(docs, xml);
 
         // HACK
         GHashTable *table = query_services_in_group(service_property_array, group);
@@ -192,20 +238,21 @@ int document_services(gchar *services, gchar *group, int xml, int group_subservi
 
         service_property_array = create_service_property_array_from_table(table);
 
-        status = generate_architecture_description(NULL, NULL, "", service_property_array);
+        status = generate_architecture_description(NULL, NULL, "", docs_config, service_property_array);
 
         delete_services_table(table);
+        delete_docs_config(docs_config);
         g_ptr_array_free(service_property_array, TRUE);
 
         return !status;
     }
 }
 
-static int generate_architecture_descriptions_for_group(GPtrArray *service_property_array, gchar *group, gchar *output_dir, gchar *image_format)
+static int generate_architecture_descriptions_for_group(GPtrArray *service_property_array, gchar *group, gchar *output_dir, gchar *image_format, DocsConfig *docs_config)
 {
     int status;
     GHashTable *table = query_services_in_group(service_property_array, group);
-    status = generate_group_artifacts(table, group, output_dir, "index.html", image_format, generate_architecture_description);
+    status = generate_group_artifacts(table, group, output_dir, "index.html", image_format, docs_config, generate_architecture_description);
     delete_services_table(table);
     return status;
 }
@@ -243,7 +290,7 @@ static int copy_stylesheet(gchar *output_dir)
     return TRUE;
 }
 
-int document_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir, gchar *image_format)
+int document_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir, gchar *image_format, gchar *docs)
 {
     GPtrArray *service_property_array = create_service_property_array(services, xml);
 
@@ -255,8 +302,14 @@ int document_services_batch(gchar *services, int xml, int group_subservices, gch
     else
     {
         int status;
+        DocsConfig *docs_config;
 
-        if((status = generate_architecture_descriptions_for_group(service_property_array, "", output_dir ,image_format)))
+        if(docs == NULL)
+            docs_config = NULL;
+        else
+            docs_config = create_docs_config(docs, xml);
+
+        if((status = generate_architecture_descriptions_for_group(service_property_array, "", output_dir ,image_format, docs_config)))
         {
             GPtrArray *unique_groups_array = query_unique_groups(service_property_array);
             unsigned int i;
@@ -264,11 +317,12 @@ int document_services_batch(gchar *services, int xml, int group_subservices, gch
             for(i = 0; i < unique_groups_array->len; i++)
             {
                 gchar *group = g_ptr_array_index(unique_groups_array, i);
-                status = generate_architecture_descriptions_for_group(service_property_array, group, output_dir, image_format);
+                status = generate_architecture_descriptions_for_group(service_property_array, group, output_dir, image_format, docs_config);
                 if(!status)
                     break;
             }
 
+            delete_docs_config(docs_config);
             delete_service_property_array(service_property_array);
         }
 

@@ -14,6 +14,8 @@ static void print_usage(const char *command)
     "Options:\n"
     "  -s, --services=services_expr Services configuration which describes all\n"
     "                               components of the distributed system\n"
+    "      --docs=docs_expr         Documentation configuration that specifies\n"
+    "                               generation settings\n"
     "      --xml                    Specifies that the configurations are in XML not\n"
     "                               the Nix expression language.\n"
     "      --group                  Only displays services and dependencies belonging\n"
@@ -36,6 +38,7 @@ int main(int argc, char *argv[])
     {
         {"batch", no_argument, 0, 'b'},
         {"services", required_argument, 0, 's'},
+        {"docs", required_argument, 0, 'D'},
         {"xml", no_argument, 0, 'x'},
         {"group-subservices", no_argument, 0, 'G'},
         {"group", required_argument, 0, 'g'},
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
         {0, 0, 0, 0}
     };
     char *services = NULL;
+    char *docs = NULL;
     int xml = FALSE;
     int group_subservices = FALSE;
     char *group = "";
@@ -62,6 +66,9 @@ int main(int argc, char *argv[])
                 break;
             case 's':
                 services = optarg;
+                break;
+            case 'D':
+                docs = optarg;
                 break;
             case 'x':
                 xml = TRUE;
@@ -97,7 +104,7 @@ int main(int argc, char *argv[])
 
     /* Execute visualize operation */
     if(batch)
-        return document_services_batch(services, xml, group_subservices, output_dir, image_format);
+        return document_services_batch(services, xml, group_subservices, output_dir, image_format, docs);
     else
-        return document_services(services, group, xml, group_subservices);
+        return document_services(services, group, xml, group_subservices, docs);
 }

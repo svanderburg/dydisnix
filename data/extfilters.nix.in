@@ -71,6 +71,22 @@ rec {
     }
   ;
 
+  generateDocsXML = docs:
+    let docsXSL = ./docs.xsl;
+    in
+    pkgs.stdenv.mkDerivation {
+      name = "docs.xml";
+      buildInputs = [ pkgs.libxslt ];
+      buildCommand = ''
+      (
+      cat << "EOF"
+      ${builtins.toXML docs}
+      EOF
+      ) | xsltproc ${docsXSL} - > $out
+      '';
+    }
+  ;
+
   generatePreviousDistribution = coordinatorProfile:
     let generateMappingXSL = ./generate-mapping.xsl;
     in

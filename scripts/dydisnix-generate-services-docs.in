@@ -10,6 +10,8 @@ Usage: $0 -s services_expr [OPTION]
 Options:
   -s, --services=services_expr Services configuration which describes all
                                components of the distributed system
+      --docs=docs_expr         Documentation configuration that specifies
+                               generation settings
       --xml                    Specifies that the configurations are in XML not
                                the Nix expression language.
       --output-dir             Specifies directory in which the batch mode
@@ -30,7 +32,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:f:h -l services:,format:,xml,output-dir:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:f:h -l services:,docs:,format:,xml,output-dir:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -47,6 +49,9 @@ do
     case "$1" in
         -s|--services)
             servicesFile=`readlink -f $2`
+            ;;
+        --docs)
+            docsArg="--docs $2"
             ;;
         -f|--format)
             formatArg="-f $2"
@@ -73,4 +78,4 @@ checkServicesFile
 # Execute operation
 
 dydisnix-visualize-services --batch -s "$servicesFile" $formatArg $xmlArg $outputDirArg
-dydisnix-document-services --batch -s "$servicesFile" $formatArg $xmlArg $outputDirArg
+dydisnix-document-services --batch -s "$servicesFile" $docsArg $formatArg $xmlArg $outputDirArg

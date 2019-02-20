@@ -329,7 +329,7 @@ void mkdirp(const char *dir)
     g_free(tmp);
 }
 
-int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir, gchar *filename, gchar *image_format, int (*generate_artifact) (gchar *filepath, gchar *image_format, gchar *group, const GPtrArray *service_property_array) )
+int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir, gchar *filename, gchar *image_format, void *data, int (*generate_artifact) (gchar *filepath, gchar *image_format, gchar *group, void *data, const GPtrArray *service_property_array) )
 {
     GHashTable *group_table = group_services(table, group);
     GPtrArray *grouped_service_property_array = create_service_property_array_from_table(group_table);
@@ -340,7 +340,7 @@ int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir,
     int status;
 
     mkdirp(basedir);
-    status = generate_artifact(filepath, image_format, group, grouped_service_property_array);
+    status = generate_artifact(filepath, image_format, group, data, grouped_service_property_array);
 
     g_free(filepath);
     g_free(basedir);

@@ -12,7 +12,19 @@ Group;
 
 typedef struct
 {
+    gchar *name;
+
+    gchar *value;
+}
+Description;
+
+typedef struct
+{
     GPtrArray *groups;
+
+    GPtrArray *fields;
+
+    GPtrArray *descriptions;
 }
 DocsConfig;
 
@@ -27,5 +39,7 @@ DocsConfig *create_docs_config(gchar *docs, const int xml);
 void delete_docs_config(DocsConfig *docs_config);
 
 gchar *find_group(const DocsConfig *docs_config, gchar *name);
+
+gchar *find_description(const DocsConfig *docs_config, gchar *name);
 
 #endif

@@ -370,6 +370,109 @@ deployment configurations must be reconstructed. This can be done by adding the
 
     $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --reconstruct
 
+Generating functional architecture documentation
+------------------------------------------------
+Another use case of the toolset is to use the model parsing infrastructure to
+generate functional architecture documentation.
+
+Running the following command will generate a HTML documentation catalog for the
+provided services expression, using SVG images for the diagrams, storing the
+output artefacts in the `out/` sub folder:
+
+    $ dydisnix-generate-services-docs -s services.nix -f svg --output-dir out
+
+The catalog can be inspected by opening the root page in the output folder:
+
+    $ firefox out/index.html
+
+For complex architectures consisting of many services, it is also possible to
+group services (for example, by clustering services that implement a feature
+group). Grouping can be done by annotating a service in a service Nix expression
+(e.g. `services.nix`) with a `group` property:
+
+```nix
+{distribution, invDistribution, pkgs, system}:
+
+let
+  customPkgs = import ../top-level/all-packages.nix {
+    inherit pkgs system;
+  };
+
+  groups = {
+    homework = "Homework";
+    literature = "Literature";
+  };
+in
+{
+  homeworkdb = {
+    name = "homeworkdb";
+    pkg = customPkgs.homeworkdb;
+    type = "mysql-database";
+    group = groups.homework;
+  };
+
+  homework = {
+    name = "homework";
+    pkg = customPkgs.homework;
+    dependsOn = {
+      inherit usersdb homeworkdb;
+    };
+    type = "apache-webapplication";
+    appName = "Homework";
+    group = groups.homework;
+  };
+
+  ...
+}
+```
+
+In the above services model, the `homeworkdb` and `homework` service are grouped
+together in a feature group called `Homework`. In the above example, this is a
+means to group a database and a web application front-end into one "logical"
+group" that makes more sense from a functional point of view.
+
+When services are grouped, the documentation catalog generator will partition
+the diagrams and their descriptions over multiple pages using a layered
+organisation allowing you to zoom in from the highest abstraction layer to
+deeper layers. There are multiple layers of sub groups possible, by using the
+`/' symbol as a delimiter in a group identifier.
+
+It may also be desired adjust certain kinds of properties for the generated
+documentation catalog. These adjustments can be specified in a docs configuration
+expression (e.g. `docs.nix`):
+
+```nix
+{
+  groups = {
+    Homework = "Homework subsystem";
+    Literature = "Literature subsystem";
+  };
+
+  fields = [ "description" "type" ];
+
+  descriptions = {
+    type = "Type";
+    description = "Description";
+  };
+}
+```
+
+The above configuration provides descriptions to the group identifiers and
+specifies that the `type` and `description` attributes of every service should
+be displayed in the overview.
+
+By adding the `docs.nix` configuration as a command-line parameter, we can
+adjust the documentation generation process with additional descriptions and
+fields:
+
+     $ dydisnix-generate-services-docs -s services.nix --docs docs.nix -f svg --output-dir out
+
+In addition to generating a full catalog, it is also possible to generate the
+diagrams (using `dydisnix-visualize-services`) and descriptions separately
+(using `dydisnix-document-services`). These tools can be used for showing the
+details of a single layer, or in batch mode to generate artefacts for all
+abstraction layers.
+
 License
 =======
 Disnix is free software; you can redistribute it and/or modify it under the terms

@@ -128,16 +128,51 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
                 fprintf(fd, "        <table>\n");
                 fprintf(fd, "            <tr>\n");
                 fprintf(fd, "                <th>Name</th>\n");
-                fprintf(fd, "                <th>Description</th>\n");
-                fprintf(fd, "                <th>Type</th>\n");
+
+                if(docs_config == NULL || docs_config->fields->len == 0)
+                {
+                    fprintf(fd, "                <th>Description</th>\n");
+                    fprintf(fd, "                <th>Type</th>\n");
+                }
+                else
+                {
+                    unsigned int j;
+
+                    for(j = 0; j < docs_config->fields->len; j++)
+                    {
+                        gchar *field = g_ptr_array_index(docs_config->fields, j);
+                        gchar *description = find_description(docs_config, field);
+
+                        if(description == NULL)
+                            fprintf(fd, "                <th>%s</th>", field);
+                        else
+                            fprintf(fd, "                <th>%s</th>", description);
+                    }
+                }
+
                 fprintf(fd, "            </tr>\n");
                 first = FALSE;
             }
 
             fprintf(fd, "            <tr>\n");
             fprintf(fd, "                <td>%s</td>\n", current_service->name);
-            display_property(fd, current_service, "description");
-            display_property(fd, current_service, "type");
+
+            if(docs_config == NULL || docs_config->fields->len == 0)
+            {
+                display_property(fd, current_service, "description");
+                display_property(fd, current_service, "type");
+            }
+            else
+            {
+                unsigned int j;
+
+                for(j = 0; j < docs_config->fields->len; j++)
+                {
+                    gchar *field = g_ptr_array_index(docs_config->fields, j);
+                    display_property(fd, current_service, field);
+                }
+            }
+
             fprintf(fd, "            </tr>\n");
         }
     }
@@ -179,7 +214,12 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
                     full_group = g_strjoin("/", group, current_service->name, NULL);
 
                 gchar *group_description = find_group(docs_config, full_group);
-                fprintf(fd, "                <td>%s</td>\n", group_description);
+
+                if(group_description == NULL)
+                    fprintf(fd, "                <td></td>\n");
+                else
+                    fprintf(fd, "                <td>%s</td>\n", group_description);
+
                 g_free(full_group);
             }
 

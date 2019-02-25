@@ -409,6 +409,7 @@ in
     pkg = customPkgs.homeworkdb;
     type = "mysql-database";
     group = groups.homework;
+    description = "Database backend of the Homework subsystem";
   };
 
   homework = {
@@ -420,6 +421,7 @@ in
     type = "apache-webapplication";
     appName = "Homework";
     group = groups.homework;
+    description = "Front-end of the Homework subsystem";
   };
 
   ...

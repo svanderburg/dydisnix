@@ -164,36 +164,6 @@ static GPtrArray *replace_service_dependency_by_group_dependency(Service *servic
     return replaced_dependencies;
 }
 
-static gchar *generate_group_root(gchar *current_group, gchar *group)
-{
-    if(current_group == NULL)
-        return NULL;
-    else
-    {
-        if(is_subgroup_of(current_group, group))
-        {
-            gchar *subgroup;
-            if(g_strcmp0(group, "") == 0)
-                subgroup = current_group;
-            else
-                subgroup = current_group + strlen(group) + 1;
-
-            gchar **group_tokens = g_strsplit(subgroup, "/", -1);
-            gchar *subgroup_root;
-
-            if(group_tokens[0] == NULL)
-                subgroup_root = NULL;
-            else
-                subgroup_root = g_strdup(group_tokens[0]);
-
-            g_strfreev(group_tokens);
-            return subgroup_root;
-        }
-        else
-            return NULL;
-    }
-}
-
 static void replace_service_dependencies_by_groups(Service *service, GHashTable *table, gchar *subgroup_root)
 {
     GHashTableIter iter;
@@ -214,13 +184,68 @@ static void replace_service_dependencies_by_groups(Service *service, GHashTable 
     }
 }
 
-static void group_service(GHashTable *queried_services_table, GHashTable *grouped_services_table, Service *service, gchar *group)
+static int exactly_fits_in_group(gchar **current_group_tokens, gchar **group_tokens)
+{
+    if(g_strv_length(current_group_tokens) <= g_strv_length(group_tokens))
+    {
+        int num_of_tokens, i;
+
+        if(g_strv_length(current_group_tokens) <= g_strv_length(group_tokens))
+            num_of_tokens = g_strv_length(current_group_tokens);
+        else
+            num_of_tokens = g_strv_length(group_tokens);
+
+        for(i = 0; i < num_of_tokens; i++)
+        {
+            if(g_strcmp0(current_group_tokens[i], group_tokens[i]) != 0)
+                return FALSE;
+        }
+
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
+
+static gchar *derive_sub_group_root(gchar **current_group_tokens, gchar **group_tokens)
+{
+    unsigned int i = 0;
+
+    while(current_group_tokens[i] != NULL && group_tokens[i] != NULL)
+    {
+        if(g_strcmp0(current_group_tokens[i], group_tokens[i]) != 0)
+            return g_strdup(current_group_tokens[i]);
+
+        i++;
+    }
+
+    if(current_group_tokens[i] == NULL)
+        return NULL;
+    else
+        return g_strdup(current_group_tokens[i]);
+}
+
+static void group_service(GHashTable *queried_services_table, GHashTable *grouped_services_table, Service *service, gchar **group_tokens)
 {
     gchar *current_group = find_service_property_value(service, "group");
-    gchar *subgroup_root = generate_group_root(current_group, group);
 
-    if(subgroup_root != NULL)
+    gchar **current_group_tokens;
+
+    if(current_group == NULL)
+        current_group_tokens = NULL;
+    else
+        current_group_tokens = g_strsplit(current_group, "/", -1);
+
+    if(current_group == NULL || g_strcmp0(current_group, "") == 0 || exactly_fits_in_group(current_group_tokens, group_tokens))
     {
+        /* If a service exactly fits in this group, just add it verbatim */
+        Service *leaf_service = copy_service(service);
+        g_hash_table_insert(grouped_services_table, leaf_service->name, leaf_service);
+    }
+    else
+    {
+        gchar *subgroup_root = derive_sub_group_root(current_group_tokens, group_tokens);
+
         /* If a service is part of a subgroup in this group, then create a single sub group node that abstracts over its properties */
         Service *group_service = g_hash_table_lookup(grouped_services_table, subgroup_root);
 
@@ -249,17 +274,19 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
         merge_dependencies(service->depends_on, group_service->depends_on, group_service->name);
         merge_dependencies(service->connects_to, group_service->connects_to, group_service->name);
     }
-    else
-    {
-        /* If a service does not fit within a sub group, just add it verbatim */
-        Service *leaf_service = copy_service(service);
-        g_hash_table_insert(grouped_services_table, leaf_service->name, leaf_service);
-    }
+
+    g_strfreev(current_group_tokens);
 }
 
 GHashTable *group_services(GHashTable *queried_services_table, gchar *group)
 {
     GHashTable *grouped_services_table = g_hash_table_new(g_str_hash, g_str_equal);
+    gchar **group_tokens;
+
+    if(group == NULL)
+        group_tokens = NULL;
+    else
+        group_tokens = g_strsplit(group, "/", -1);
 
     /* Iterate over all queried services and put them into the right sub groups */
 
@@ -270,8 +297,9 @@ GHashTable *group_services(GHashTable *queried_services_table, gchar *group)
     g_hash_table_iter_init(&iter, queried_services_table);
 
     while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
-        group_service(queried_services_table, grouped_services_table, (Service*)value, group);
+        group_service(queried_services_table, grouped_services_table, (Service*)value, group_tokens);
 
+    g_strfreev(group_tokens);
     return grouped_services_table;
 }
 

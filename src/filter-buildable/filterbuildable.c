@@ -42,10 +42,10 @@ static void delete_filtered_target_array(GPtrArray *filtered_target_array)
     g_ptr_array_free(filtered_target_array, TRUE);
 }
 
-int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr)
+int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, int xml)
 {
     unsigned int i;
-    GPtrArray *candidate_target_array = create_candidate_target_array_from_nix(distribution_expr, infrastructure_expr);
+    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_expr, infrastructure_expr, xml);
 
     if(candidate_target_array == NULL)
     {

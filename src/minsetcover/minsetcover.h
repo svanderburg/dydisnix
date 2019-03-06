@@ -2,6 +2,6 @@
 #define __DYDISNIX_MINSETCOVER_H
 #include <glib.h>
 
-int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribution_xml, gchar *target_property);
+int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, int xml);
 
 #endif

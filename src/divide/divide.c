@@ -18,14 +18,14 @@ static void delete_result_array(GPtrArray *result_array)
     g_ptr_array_free(result_array, TRUE);
 }
 
-int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gchar *distribution_xml, gchar *service_property, gchar *target_property)
+int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, int xml)
 {
     unsigned int i;
     int exit_status = 0;
-    GPtrArray *service_property_array = create_service_property_array_from_xml(service_xml);
-    GPtrArray *targets_array = create_target_property_array_from_xml(infrastructure_xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
-    
+    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, infrastructure, xml);
+
     if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");

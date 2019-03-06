@@ -5,7 +5,7 @@
 
 static void print_usage(const char *command)
 {
-    printf("Usage: %s --services-xml services_xml --infrastructure-xml infrastructure_xml --distribution-xml distribution_xml --target-property targetProperty\n\n", command);
+    printf("Usage: %s --services services --infrastructure infrastructure --distribution distribution --target-property targetProperty\n\n", command);
 
     puts(
     "Divides services over machines by using an approximation algorithm for the\n"
@@ -15,18 +15,20 @@ static void print_usage(const char *command)
     "amount of machines is minimized.\n\n"
 
     "Options:\n"
-    "      --services-xml=services_xml\n"
-    "                           XML representation of a configuration describing the\n"
-    "                           properties of the services\n"
-    "      --infrastructure-xml=infrastructure_xml\n"
-    "                           XML representation of a configuration describing the\n"
-    "                           available machines and their properties\n"
-    "      --distribution-xml=distribution_xml\n"
-    "                           XML representation of a configuration mapping\n"
-    "                           services to machines\n"
+    "  -s, --services=services_nix\n"
+    "                           Services Nix expression which describes all\n"
+    "                           components of the distributed system\n"
+    "  -i, --infrastructure=infrastructure_nix\n"
+    "                           Infrastructure Nix expression which captures\n"
+    "                           properties of machines in the network\n"
+    "  -d, --distribution=distribution_nix\n"
+    "                           Distribution Nix expression which maps services\n"
+    "                           to machines in the network\n"
     "      --target-property=targetProperty\n"
     "                           Specifies which target property stores the total\n"
     "                           capacity\n"
+    "      --xml                Specifies that the configurations are in XML not the\n"
+    "                           Nix expression language.\n"
     "  -h, --help               Shows the usage of this command to the user\n"
     );
 }
@@ -37,34 +39,39 @@ int main(int argc, char *argv[])
     int c, option_index = 0;
     struct option long_options[] =
     {
-        {"services-xml", required_argument, 0, 's'},
-        {"infrastructure-xml", required_argument, 0, 'i'},
-        {"distribution-xml", required_argument, 0, 'd'},
+        {"services", required_argument, 0, 's'},
+        {"infrastructure", required_argument, 0, 'i'},
+        {"distribution", required_argument, 0, 'd'},
         {"target-property", required_argument, 0, 'T'},
+        {"xml", no_argument, 0, 'x'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
-    char *services_xml = NULL;
-    char *infrastructure_xml = NULL;
-    char *distribution_xml = NULL;
+    char *services = NULL;
+    char *infrastructure = NULL;
+    char *distribution = NULL;
     char *target_property = NULL;
+    int xml = FALSE;
 
     /* Parse command-line options */
-    while((c = getopt_long(argc, argv, "h", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
             case 's':
-                services_xml = optarg;
+                services = optarg;
                 break;
             case 'i':
-                infrastructure_xml = optarg;
+                infrastructure = optarg;
                 break;
             case 'd':
-                distribution_xml = optarg;
+                distribution = optarg;
                 break;
             case 'T':
                 target_property = optarg;
+                break;
+            case 'x':
+                xml = TRUE;
                 break;
             case 'h':
                 print_usage(argv[0]);
@@ -77,30 +84,30 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(services_xml == NULL)
+    if(services == NULL)
     {
-        fprintf(stderr, "A services XML file must be specified!\n");
+        fprintf(stderr, "A services configuration file must be specified!\n");
         return 1;
     }
 
-    if(infrastructure_xml == NULL)
+    if(infrastructure == NULL)
     {
-        fprintf(stderr, "An infrastructure XML file must be specified!\n");
+        fprintf(stderr, "An infrastructure configuration file must be specified!\n");
         return 1;
     }
 
-    if(distribution_xml == NULL)
+    if(distribution == NULL)
     {
-        fprintf(stderr, "A distribution XML file must be specified!\n");
+        fprintf(stderr, "A distribution configuration file must be specified!\n");
         return 1;
     }
 
     if(target_property == NULL)
     {
-        fprintf(stderr, "An target property must be specified!\n");
+        fprintf(stderr, "A target property must be specified!\n");
         return 1;
     }
 
     /* Execute operation */
-    return minsetcover(services_xml, infrastructure_xml, distribution_xml, target_property);
+    return minsetcover(services, infrastructure, distribution, target_property, xml);
 }

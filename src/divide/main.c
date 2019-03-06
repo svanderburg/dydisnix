@@ -5,7 +5,7 @@
 
 static void print_usage(const char *command)
 {
-    printf("Usage: %s --strategy STRATEGY --services-xml services_xml --infrastructure-xml infrastructure_xml --distribution-xml distribution_xml --service-property serviceProperty --target-property targetProperty\n\n", command);
+    printf("Usage: %s --strategy STRATEGY --services services_expr --infrastructure infrastructure_expr --distribution distribution_expr --service-property serviceProperty --target-property targetProperty\n\n", command);
 
     puts(
     "Divides services over candidate targets using a one dimensional division strategy.\n\n"
@@ -14,20 +14,22 @@ static void print_usage(const char *command)
     "      --strategy=STRATEGY  Specifies the division strategy to use. Currently the\n"
     "                           supported strategies are: 'greedy', 'highest-bidder',\n"
     "                           and 'lowest-bidder'\n"
-    "      --services-xml=services_xml\n"
-    "                           XML representation of a configuration describing the\n"
-    "                           properties of the services\n"
-    "      --infrastructure-xml=infrastructure_xml\n"
-    "                           XML representation of a configuration describing the\n"
-    "                           available machines and their properties\n"
-    "      --distribution-xml=distribution_xml\n"
-    "                           XML representation of a configuration mapping\n"
-    "                           services to machines\n"
+    "  -s, --services=services_nix\n"
+    "                           Services Nix expression which describes all\n"
+    "                           components of the distributed system\n"
+    "  -i, --infrastructure=infrastructure_nix\n"
+    "                           Infrastructure Nix expression which captures\n"
+    "                           properties of machines in the network\n"
+    "  -d, --distribution=distribution_nix\n"
+    "                           Distribution Nix expression which maps services to\n"
+    "                           machines in the network\n"
     "      --service-property=serviceProperty\n"
     "                           Specifies which service property contains a capacity\n"
     "      --target-property=targetProperty\n"
     "                           Specifies which target property stores the total\n"
     "                           capacity\n"
+    "      --xml                Specifies that the configurations are in XML not the\n"
+    "                           Nix expression language.\n"
     "  -h, --help               Shows the usage of this command to the user\n"
     );
 }
@@ -39,23 +41,25 @@ int main(int argc, char *argv[])
     struct option long_options[] =
     {
         {"strategy", required_argument, 0, 'A'},
-        {"services-xml", required_argument, 0, 's'},
-        {"infrastructure-xml", required_argument, 0, 'i'},
-        {"distribution-xml", required_argument, 0, 'd'},
+        {"services", required_argument, 0, 's'},
+        {"infrastructure", required_argument, 0, 'i'},
+        {"distribution", required_argument, 0, 'd'},
         {"service-property", required_argument, 0, 'S'},
         {"target-property", required_argument, 0, 'T'},
+        {"xml", no_argument, 0, 'x'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
-    char *services_xml = NULL;
-    char *infrastructure_xml = NULL;
-    char *distribution_xml = NULL;
+    char *services = NULL;
+    char *infrastructure = NULL;
+    char *distribution = NULL;
     char *service_property = NULL;
     char *target_property = NULL;
     Strategy strategy = STRATEGY_NONE;
-    
+    int xml = FALSE;
+
     /* Parse command-line options */
-    while((c = getopt_long(argc, argv, "h", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
@@ -73,19 +77,22 @@ int main(int argc, char *argv[])
                 }
                 break;
             case 's':
-                services_xml = optarg;
+                services = optarg;
                 break;
             case 'i':
-                infrastructure_xml = optarg;
+                infrastructure = optarg;
                 break;
             case 'd':
-                distribution_xml = optarg;
+                distribution = optarg;
                 break;
             case 'S':
                 service_property = optarg;
                 break;
             case 'T':
                 target_property = optarg;
+                break;
+            case 'x':
+                xml = TRUE;
                 break;
             case 'h':
                 print_usage(argv[0]);
@@ -98,21 +105,21 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(services_xml == NULL)
+    if(services == NULL)
     {
-        fprintf(stderr, "A services XML file must be specified!\n");
+        fprintf(stderr, "A services expression must be specified!\n");
         return 1;
     }
 
-    if(infrastructure_xml == NULL)
+    if(infrastructure == NULL)
     {
-        fprintf(stderr, "An infrastructure XML file must be specified!\n");
+        fprintf(stderr, "An infrastructure configuration file must be specified!\n");
         return 1;
     }
 
-    if(distribution_xml == NULL)
+    if(distribution == NULL)
     {
-        fprintf(stderr, "A distribution XML file must be specified!\n");
+        fprintf(stderr, "A distribution configuration file must be specified!\n");
         return 1;
     }
 
@@ -129,5 +136,5 @@ int main(int argc, char *argv[])
     }
 
     /* Execute operation */
-    return divide(strategy, services_xml, infrastructure_xml, distribution_xml, service_property, target_property);
+    return divide(strategy, services, infrastructure, distribution, service_property, target_property, xml);
 }

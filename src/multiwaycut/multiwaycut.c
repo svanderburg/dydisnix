@@ -121,9 +121,9 @@ static void fix_unmapped_services(GPtrArray *initial_candidate_target_array, GPt
     }
 }
 
-int multiwaycut(gchar *distribution_xml)
+int multiwaycut(gchar *distribution, gchar *infrastructure, int xml)
 {
-    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, NULL, xml);
     
     if(candidate_target_array == NULL)
     {

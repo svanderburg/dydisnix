@@ -10,7 +10,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
 {
     GPtrArray *service_property_array = create_service_property_array(services, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array(infrastructure, distribution, xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, infrastructure, xml);
 
     if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
     {

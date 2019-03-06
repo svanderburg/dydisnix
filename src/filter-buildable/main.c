@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <getopt.h>
 
+#define TRUE 1
+#define FALSE 0
+
 static void print_usage(const char *command)
 {
     printf("Usage: %s -s services_nix -i infrastructure_nix -d distribution_nix\n\n", command);
@@ -19,6 +22,8 @@ static void print_usage(const char *command)
     "  -d, --distribution=distribution_nix\n"
     "                               Distribution Nix expression which maps services\n"
     "                               to machines in the network\n"
+    "      --xml                    Specifies that the configurations are in XML not\n"
+    "                               the Nix expression language.\n"
     "  -h, --help                   Shows the usage of this command to the user\n"
     );
 }
@@ -32,12 +37,14 @@ int main(int argc, char *argv[])
         {"services", required_argument, 0, 's'},
         {"infrastructure", required_argument, 0, 'i'},
         {"distribution", required_argument, 0, 'd'},
+        {"xml", no_argument, 0, 'x'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     char *services = NULL;
     char *infrastructure = NULL;
     char *distribution = NULL;
+    int xml = FALSE;
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
@@ -52,6 +59,9 @@ int main(int argc, char *argv[])
                 break;
             case 'd':
                 distribution = optarg;
+                break;
+            case 'x':
+                xml = TRUE;
                 break;
             case 'h':
                 print_usage(argv[0]);
@@ -83,5 +93,5 @@ int main(int argc, char *argv[])
     }
 
     /* Execute operation */
-    return filter_buildable(services, infrastructure, distribution);
+    return filter_buildable(services, infrastructure, distribution, xml);
 }

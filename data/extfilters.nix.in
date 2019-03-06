@@ -129,11 +129,12 @@ rec {
       ''
         dydisnix-divide \
           --strategy ${strategy} \
-          --services-xml ${generateServicesXML services} \
-          --infrastructure-xml ${generateInfrastructureXML infrastructure} \
-          --distribution-xml ${generateDistributionXML distribution} \
+          --services ${generateServicesXML services} \
+          --infrastructure ${generateInfrastructureXML infrastructure} \
+          --distribution ${generateDistributionXML distribution} \
           --service-property ${serviceProperty} \
           --target-property ${targetProperty} \
+          --xml \
           > $out
       '';
     })}";
@@ -155,7 +156,10 @@ rec {
       buildInputs = [ dydisnix ];
       buildCommand =
       ''
-        dydisnix-multiwaycut ${generateDistributionXML distribution} > $out
+        dydisnix-multiwaycut \
+          --distribution ${generateDistributionXML distribution} \
+          --xml \
+          > $out
       '';
     })}";
 
@@ -180,10 +184,11 @@ rec {
       buildCommand =
       ''
         dydisnix-minsetcover \
-          --services-xml ${generateServicesXML services} \
-          --infrastructure-xml ${generateInfrastructureXML infrastructure} \
-          --distribution-xml ${generateDistributionXML distribution} \
+          --services ${generateServicesXML services} \
+          --infrastructure ${generateInfrastructureXML infrastructure} \
+          --distribution ${generateDistributionXML distribution} \
           --target-property ${targetProperty} \
+          --xml \
           > $out
       '';
     })}";
@@ -207,8 +212,9 @@ rec {
       buildCommand =
       ''
          dydisnix-graphcol \
-          --services-xml ${generateServicesXML services} \
-          --infrastructure-xml ${generateInfrastructureXML infrastructure} \
+          --services ${generateServicesXML services} \
+          --infrastructure ${generateInfrastructureXML infrastructure} \
+          --xml \
           > $out
       '';
     })}";

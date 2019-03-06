@@ -3,9 +3,12 @@
 #include <getopt.h>
 #include <string.h>
 
+#define TRUE 1
+#define FALSE 0
+
 static void print_usage(const char *command)
 {
-    printf("Usage: %s --services-xml services_xml --infrastructure-xml infrastructure_xml\n\n", command);
+    printf("Usage: %s --services services_nix --infrastructure infrastructure_nix\n\n", command);
 
     puts(
     "Divides services over machines in the network using an approximation\n"
@@ -15,12 +18,14 @@ static void print_usage(const char *command)
     "is a real network link using a minimum amount of machines.\n\n"
 
     "Options:\n"
-    "      --services-xml=services_xml\n"
-    "                           XML representation of a configuration describing the\n"
-    "                           properties of the services\n"
-    "      --infrastructure-xml=infrastructure_xml\n"
-    "                           XML representation of a configuration describing the\n"
-    "                           available machines and their properties\n"
+    "  -s, --services=services_nix\n"
+    "                           Services Nix expression which describes all\n"
+    "                           components of the distributed system\n"
+    "  -i, --infrastructure=infrastructure_nix\n"
+    "                           Infrastructure Nix expression which captures\n"
+    "                           properties of machines in the network\n"
+    "      --xml                Specifies that the configurations are in XML not the\n"
+    "                           Nix expression language.\n"
     "  -h, --help               Shows the usage of this command to the user\n"
     );
 }
@@ -31,24 +36,29 @@ int main(int argc, char *argv[])
     int c, option_index = 0;
     struct option long_options[] =
     {
-        {"services-xml", required_argument, 0, 's'},
-        {"infrastructure-xml", required_argument, 0, 'i'},
+        {"services", required_argument, 0, 's'},
+        {"infrastructure", required_argument, 0, 'i'},
+        {"xml", no_argument, 0, 'x'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
-    char *services_xml = NULL;
-    char *infrastructure_xml = NULL;
+    char *services = NULL;
+    char *infrastructure = NULL;
+    int xml = FALSE;
 
     /* Parse command-line options */
-    while((c = getopt_long(argc, argv, "h", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "s:i:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
             case 's':
-                services_xml = optarg;
+                services = optarg;
                 break;
             case 'i':
-                infrastructure_xml = optarg;
+                infrastructure = optarg;
+                break;
+            case 'x':
+                xml = TRUE;
                 break;
             case 'h':
                 print_usage(argv[0]);
@@ -61,18 +71,18 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(services_xml == NULL)
+    if(services == NULL)
     {
         fprintf(stderr, "A services XML file must be specified!\n");
         return 1;
     }
 
-    if(infrastructure_xml == NULL)
+    if(infrastructure == NULL)
     {
         fprintf(stderr, "An infrastructure XML file must be specified!\n");
         return 1;
     }
 
     /* Execute operation */
-    return graphcol(services_xml, infrastructure_xml);
+    return graphcol(services, infrastructure, xml);
 }

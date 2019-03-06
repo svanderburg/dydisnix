@@ -4,11 +4,11 @@
 #include "targetmapping.h"
 #include <stdlib.h>
 
-int minsetcover(gchar *services_xml, gchar *infrastructure_xml, gchar *distribution_xml, gchar *target_property)
+int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, int xml)
 {
-    GPtrArray *service_property_array = create_service_property_array_from_xml(services_xml);
-    GPtrArray *targets_array = create_target_property_array_from_xml(infrastructure_xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
+    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
+    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, infrastructure, xml);
     int exit_status = 0;
     
     if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)

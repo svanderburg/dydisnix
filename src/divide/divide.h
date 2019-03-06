@@ -11,6 +11,6 @@ typedef enum
 }
 Strategy;
 
-int divide(Strategy strategy, gchar *service_xml, gchar *infrastructure_xml, gchar *distribution_xml, gchar *service_property, gchar *target_property);
+int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, int xml);
 
 #endif

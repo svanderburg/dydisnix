@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <getopt.h>
+#include <checkoptions.h>
 #include "document-services.h"
 
 static void print_usage(const char *command)
@@ -96,11 +97,8 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(services == NULL)
-    {
-        fprintf(stderr, "A services model file must be specified!\n");
+    if(!check_services_option(services))
         return 1;
-    }
 
     /* Execute visualize operation */
     if(batch)

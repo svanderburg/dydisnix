@@ -1,6 +1,7 @@
 #include "filterbuildable.h"
 #include <stdio.h>
 #include <getopt.h>
+#include <checkoptions.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -74,23 +75,10 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(services == NULL)
-    {
-        fprintf(stderr, "A service expression must be specified!\n");
+    if(!check_services_option(services)
+      || !check_infrastructure_option(infrastructure)
+      || !check_distribution_option(distribution))
         return 1;
-    }
-
-    if(infrastructure == NULL)
-    {
-        fprintf(stderr, "An infrastructure expression must be specified!\n");
-        return 1;
-    }
-
-    if(distribution == NULL)
-    {
-        fprintf(stderr, "A distribution expression must be specified!\n");
-        return 1;
-    }
 
     /* Execute operation */
     return filter_buildable(services, infrastructure, distribution, xml);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <getopt.h>
+#include <checkoptions.h>
 #include "multiwaycut.h"
 
 static void print_usage(const char *command)
@@ -67,17 +68,9 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(!xml && infrastructure == NULL) /* A distribution Nix expression requires an infrastructure Nix expression. XML representation of a distribution mapping is self-contained */
-    {
-        fprintf(stderr, "An infrastructure configuration file must be specified!\n");
+    if((!xml && !check_infrastructure_option(infrastructure))
+      || !check_distribution_option(distribution))
         return 1;
-    }
-
-    if(distribution == NULL)
-    {
-        fprintf(stderr, "A distribution configuration file must be specified!\n");
-        return 1;
-    }
 
     /* Execute operation */
     return multiwaycut(distribution, infrastructure, xml);

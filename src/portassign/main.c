@@ -1,6 +1,7 @@
 #include "portassign.h"
 #include <stdio.h>
 #include <getopt.h>
+#include <checkoptions.h>
 
 static void print_usage(const char *command)
 {
@@ -86,23 +87,10 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(services == NULL)
-    {
-        fprintf(stderr, "A services model file must be specified!\n");
+    if(!check_services_option(services)
+      || !check_infrastructure_option(infrastructure)
+      || !check_distribution_option(distribution))
         return 1;
-    }
-
-    if(infrastructure == NULL)
-    {
-        fprintf(stderr, "An infrastructure model file must be specified!\n");
-        return 1;
-    }
-
-    if(distribution == NULL)
-    {
-        fprintf(stderr, "A distribution model file must be specified!\n");
-        return 1;
-    }
 
     /* Execute operation */
     portassign(services, infrastructure, distribution, ports, service_property, xml);

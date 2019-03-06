@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <getopt.h>
 #include <string.h>
+#include <checkoptions.h>
 
 static void print_usage(const char *command)
 {
@@ -105,35 +106,12 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if(services == NULL)
-    {
-        fprintf(stderr, "A services expression must be specified!\n");
+    if(!check_services_option(services)
+      || !check_infrastructure_option(infrastructure)
+      || !check_distribution_option(distribution)
+      || !check_service_property_option(service_property)
+      || !check_target_property_option(target_property))
         return 1;
-    }
-
-    if(infrastructure == NULL)
-    {
-        fprintf(stderr, "An infrastructure configuration file must be specified!\n");
-        return 1;
-    }
-
-    if(distribution == NULL)
-    {
-        fprintf(stderr, "A distribution configuration file must be specified!\n");
-        return 1;
-    }
-
-    if(service_property == NULL)
-    {
-        fprintf(stderr, "A service property must be specified!\n");
-        return 1;
-    }
-
-    if(target_property == NULL)
-    {
-        fprintf(stderr, "An target property must be specified!\n");
-        return 1;
-    }
 
     /* Execute operation */
     return divide(strategy, services, infrastructure, distribution, service_property, target_property, xml);

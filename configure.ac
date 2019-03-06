@@ -56,6 +56,7 @@ scripts/dydisnix-generate-services-docs
 scripts/Makefile
 src/Makefile
 src/dydisnix.pc
+src/libdymain/Makefile
 src/filter-buildable/Makefile
 src/divide/Makefile
 src/multiwaycut/Makefile

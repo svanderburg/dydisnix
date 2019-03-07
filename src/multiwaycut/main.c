@@ -33,34 +33,34 @@ int main(int argc, char *argv[])
     int c, option_index = 0;
     struct option long_options[] =
     {
-        {"infrastructure", required_argument, 0, 'i'},
-        {"distribution", required_argument, 0, 'd'},
-        {"xml", no_argument, 0, 'x'},
+        {"infrastructure", required_argument, 0, DYDISNIX_OPTION_INFRASTRUCTURE},
+        {"distribution", required_argument, 0, DYDISNIX_OPTION_DISTRIBUTION},
+        {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     char *infrastructure = NULL;
     char *distribution = NULL;
-    int xml = FALSE;
+    int xml = DYDISNIX_DEFAULT_XML;
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "i:d:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
-            case 'i':
+            case DYDISNIX_OPTION_INFRASTRUCTURE:
                 infrastructure = optarg;
                 break;
-            case 'd':
+            case DYDISNIX_OPTION_DISTRIBUTION:
                 distribution = optarg;
                 break;
-            case 'x':
+            case DYDISNIX_OPTION_XML:
                 xml = TRUE;
                 break;
-            case 'h':
+            case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
                 return 0;
-            case '?':
+            default:
                 print_usage(argv[0]);
                 return 1;
         }

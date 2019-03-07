@@ -25,7 +25,7 @@ static void print_usage(const char *command)
     "                               a single node\n"
     "      --output-dir             Specifies directory in which the batch mode\n"
     "                               outputs are stored (default to current directory)\n"
-    "  -f, --image-format=FORMAT    Image format to use for the outputs (e.g. svg or\n"
+    "  -f, --format=FORMAT          Image format to use for the outputs (e.g. svg or\n"
     "                               png)\n"
     "  -h, --help                   Shows the usage of this command to the user\n"
     );
@@ -37,23 +37,23 @@ int main(int argc, char *argv[])
     int c, option_index = 0;
     struct option long_options[] =
     {
-        {"batch", no_argument, 0, 'b'},
-        {"services", required_argument, 0, 's'},
-        {"docs", required_argument, 0, 'D'},
-        {"xml", no_argument, 0, 'x'},
-        {"group-subservices", no_argument, 0, 'G'},
-        {"group", required_argument, 0, 'g'},
-        {"output-dir", required_argument, 0, 'o'},
-        {"image-format", required_argument, 0, 'f'},
-        {"help", no_argument, 0, 'h'},
+        {"batch", no_argument, 0, DYDISNIX_OPTION_BATCH},
+        {"services", required_argument, 0, DYDISNIX_OPTION_SERVICES},
+        {"docs", required_argument, 0, DYDISNIX_OPTION_DOCS},
+        {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
+        {"group-subservices", no_argument, 0, DYDISNIX_OPTION_GROUP_SUBSERVICES},
+        {"group", required_argument, 0, DYDISNIX_OPTION_GROUP},
+        {"output-dir", required_argument, 0, DYDISNIX_OPTION_OUTPUT_DIR},
+        {"format", required_argument, 0, DYDISNIX_OPTION_FORMAT},
+        {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
         {0, 0, 0, 0}
     };
     char *services = NULL;
     char *docs = NULL;
-    int xml = FALSE;
-    int group_subservices = FALSE;
+    int xml = DYDISNIX_DEFAULT_XML;
+    int group_subservices = DYDISNIX_DEFAULT_GROUP_SUBSERVICES;
     char *group = "";
-    int batch = FALSE;
+    int batch = DYDISNIX_DEFAULT_BATCH;
     char *output_dir = ".";
     char *image_format = NULL;
 
@@ -62,34 +62,34 @@ int main(int argc, char *argv[])
     {
         switch(c)
         {
-            case 'b':
+            case DYDISNIX_OPTION_BATCH:
                 batch = TRUE;
                 break;
-            case 's':
+            case DYDISNIX_OPTION_SERVICES:
                 services = optarg;
                 break;
-            case 'D':
+            case DYDISNIX_OPTION_DOCS:
                 docs = optarg;
                 break;
-            case 'x':
+            case DYDISNIX_OPTION_XML:
                 xml = TRUE;
                 break;
-            case 'G':
+            case DYDISNIX_OPTION_GROUP_SUBSERVICES:
                 group_subservices = TRUE;
                 break;
-            case 'g':
+            case DYDISNIX_OPTION_GROUP:
                 group = optarg;
                 break;
-            case 'o':
+            case DYDISNIX_OPTION_OUTPUT_DIR:
                 output_dir = optarg;
                 break;
-            case 'f':
+            case DYDISNIX_OPTION_FORMAT:
                 image_format = optarg;
                 break;
-            case 'h':
+            case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
                 return 0;
-            case '?':
+            default:
                 print_usage(argv[0]);
                 return 1;
         }

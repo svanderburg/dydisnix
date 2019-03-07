@@ -40,44 +40,44 @@ int main(int argc, char *argv[])
     int c, option_index = 0;
     struct option long_options[] =
     {
-        {"services", required_argument, 0, 's'},
-        {"infrastructure", required_argument, 0, 'i'},
-        {"distribution", required_argument, 0, 'd'},
-        {"target-property", required_argument, 0, 'T'},
-        {"xml", no_argument, 0, 'x'},
-        {"help", no_argument, 0, 'h'},
+        {"services", required_argument, 0, DYDISNIX_OPTION_SERVICES},
+        {"infrastructure", required_argument, 0, DYDISNIX_OPTION_INFRASTRUCTURE},
+        {"distribution", required_argument, 0, DYDISNIX_OPTION_DISTRIBUTION},
+        {"target-property", required_argument, 0, DYDISNIX_OPTION_TARGET_PROPERTY},
+        {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
+        {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
         {0, 0, 0, 0}
     };
     char *services = NULL;
     char *infrastructure = NULL;
     char *distribution = NULL;
     char *target_property = NULL;
-    int xml = FALSE;
+    int xml = DYDISNIX_DEFAULT_XML;
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
-            case 's':
+            case DYDISNIX_OPTION_SERVICES:
                 services = optarg;
                 break;
-            case 'i':
+            case DYDISNIX_OPTION_INFRASTRUCTURE:
                 infrastructure = optarg;
                 break;
-            case 'd':
+            case DYDISNIX_OPTION_DISTRIBUTION:
                 distribution = optarg;
                 break;
-            case 'T':
+            case DYDISNIX_OPTION_TARGET_PROPERTY:
                 target_property = optarg;
                 break;
-            case 'x':
+            case DYDISNIX_OPTION_XML:
                 xml = TRUE;
                 break;
-            case 'h':
+            case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
                 return 0;
-            case '?':
+            default:
                 print_usage(argv[0]);
                 return 1;
         }

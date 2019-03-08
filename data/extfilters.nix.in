@@ -7,88 +7,65 @@ let
   inherit (builtins) toXML;
 in
 rec {
+  nixExpressionToXML = {name, expr, xsl}:
+    pkgs.stdenv.mkDerivation {
+      name = "${name}.xml";
+      buildInputs = [ pkgs.libxslt ];
+      exprXML = toXML expr;
+      passAsFile = [ "exprXML" ];
+
+      buildCommand = ''
+        if [ "$exprXMLPath" != "" ]
+        then
+            xsltproc ${xsl} $exprXMLPath > $out
+        else
+        (
+        cat << "EOF"
+        $exprXML
+        EOF
+        ) | xsltproc ${xsl} - > $out
+        fi
+      '';
+    };
+
   generateServicesXML = services:
-    let servicesXSL = ./services.xsl;
-    in
-    pkgs.stdenv.mkDerivation {
-      name = "services.xml";
-      buildInputs = [ pkgs.libxslt ];
-      buildCommand = ''
-      (
-      cat << "EOF"
-      ${builtins.toXML services}
-      EOF
-      ) | xsltproc ${servicesXSL} - > $out
-      '';
-    }
-  ;
-  
+    nixExpressionToXML {
+      name = "services";
+      expr = services;
+      xsl = ./services.xsl;
+    };
+
   generateInfrastructureXML = infrastructure:
-    let infrastructureXSL = "${disnix}/share/disnix/infrastructure.xsl";
-    in
-    pkgs.stdenv.mkDerivation {
-      name = "infrastructure.xml";
-      buildInputs = [ pkgs.libxslt dydisnix ];
-      buildCommand = ''
-      (
-      cat << "EOF"
-      ${builtins.toXML infrastructure}
-      EOF
-      ) | xsltproc ${infrastructureXSL} - > $out
-      '';
-    }
-  ;
-  
+    nixExpressionToXML {
+      name = "infrastructure";
+      expr = infrastructure;
+      xsl = "${disnix}/share/disnix/infrastructure.xsl";
+    };
+
   generateDistributionXML = distribution:
-    let distributionXSL = ./distribution.xsl;
-    in
-    pkgs.stdenv.mkDerivation {
-      name = "distribution.xml";
-      buildInputs = [ pkgs.libxslt ];
-      buildCommand = ''
-      (
-      cat << "EOF"
-      ${builtins.toXML distribution}
-      EOF
-      ) | xsltproc ${distributionXSL} - > $out
-      '';
-    }
-  ;
-  
+    nixExpressionToXML {
+      name = "distribution";
+      expr = distribution;
+      xsl = ./distribution.xsl;
+    };
+
   generatePortsXML = ports:
-    let portsXSL = ./ports.xsl;
-    in
-    pkgs.stdenv.mkDerivation {
-      name = "ports.xml";
-      buildInputs = [ pkgs.libxslt ];
-      buildCommand = ''
-      (
-      cat << "EOF"
-      ${builtins.toXML ports}
-      EOF
-      ) | xsltproc ${portsXSL} - > $out
-      '';
-    }
-  ;
+    nixExpressionToXML {
+      name = "ports";
+      expr = ports;
+      xsl = ./ports.xsl;
+    };
 
   generateDocsXML = docs:
-    let docsXSL = ./docs.xsl;
-    in
-    pkgs.stdenv.mkDerivation {
-      name = "docs.xml";
-      buildInputs = [ pkgs.libxslt ];
-      buildCommand = ''
-      (
-      cat << "EOF"
-      ${builtins.toXML docs}
-      EOF
-      ) | xsltproc ${docsXSL} - > $out
-      '';
-    }
-  ;
+    nixExpressionToXML {
+      name = "docs";
+      expr = docs;
+      xsl = ./ports.xsl;
+    };
 
   generatePreviousDistribution = coordinatorProfile:
-    let generateMappingXSL = ./generate-mapping.xsl;
+    let
+      generateMappingXSL = ./generate-mapping.xsl;
     in
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";

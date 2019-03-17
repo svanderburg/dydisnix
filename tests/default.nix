@@ -22,7 +22,7 @@ in
             substitute = false
           '';
 
-          environment.systemPackages = [ disnix dydisnix pkgs.stdenv ] ++ pkgs.libxml2.all ++ pkgs.libxslt.all;
+          environment.systemPackages = [ disnix dydisnix pkgs.stdenv pkgs.graphviz ] ++ pkgs.libxml2.all ++ pkgs.libxslt.all;
         };
       };
       testScript = ''
@@ -518,6 +518,12 @@ in
         $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-port-assign -s ${tests}/services-sharedprivateport.nix -i ${tests}/infrastructure.nix -d ${tests}/distribution3.nix -p ports.nix > ports2.nix");
         $machine->mustSucceed("grep 'testService2 = 8001;' ports2.nix");
         $machine->mustSucceed("grep 'testService3 = 3001;' ports2.nix");
+
+        # Generate a documentation catalog
+        $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-generate-services-docs -s ${tests}/visualize/services.nix -f svg --output-dir \$TMPDIR/out1");
+
+        # Generate a documentation catalog with extra documentation properties
+        $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-generate-services-docs -s ${tests}/visualize/services.nix --docs ${tests}/visualize/docs.nix -f svg --output-dir \$TMPDIR/out2");
       '';
     };
 }

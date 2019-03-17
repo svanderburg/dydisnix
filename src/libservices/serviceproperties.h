@@ -6,15 +6,7 @@ typedef struct
 {
     gchar *name;
 
-    gchar *value;
-}
-ServiceProperty;
-
-typedef struct
-{
-    gchar *name;
-
-    GPtrArray *property;
+    GHashTable *property;
 
     GPtrArray *connects_to;
 
@@ -34,7 +26,7 @@ GPtrArray *create_service_property_array(gchar *services, const int xml);
 
 void delete_service(Service *service);
 
-GPtrArray *copy_properties(GPtrArray *properties);
+GHashTable *copy_properties(GHashTable *properties);
 
 Service *copy_service(const Service *service);
 
@@ -44,8 +36,6 @@ void print_service_property_array(const GPtrArray *service_property_array);
 
 Service *find_service(GPtrArray *service_array, gchar *name);
 
-ServiceProperty *find_service_property(const Service *service, gchar *name);
-
-gchar *find_service_property_value(const Service *service, gchar *name);
+gchar *find_service_property(const Service *service, gchar *name);
 
 #endif

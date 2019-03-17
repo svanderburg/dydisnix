@@ -27,96 +27,58 @@ char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrast
     return path;
 }
 
+gpointer parse_distribution_item(xmlNodePtr element)
+{
+    DistributionItem *item = (DistributionItem*)g_malloc0(sizeof(DistributionItem));
+    xmlNodePtr element_children = element->children;
+
+    while(element_children != NULL)
+    {
+        if(xmlStrcmp(element_children->name, (xmlChar*) "service") == 0)
+            item->service = parse_value(element_children);
+        else if(xmlStrcmp(element_children->name, (xmlChar*) "targets") == 0)
+            item->targets = parse_list(element_children, "target", parse_value);
+
+        element_children = element_children->next;
+    }
+
+    return item;
+}
+
 GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_file)
 {
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
-    xmlXPathObjectPtr result;
-    GPtrArray *candidate_target_array = NULL;
-    
+    GPtrArray *candidate_target_array;
+
     /* Parse the XML document */
-    
+
     if((doc = xmlParseFile(candidate_mapping_file)) == NULL)
     {
-	fprintf(stderr, "Error with candidate mapping XML file!\n");
-	xmlCleanupParser();
-	return NULL;
+        fprintf(stderr, "Error with candidate mapping XML file!\n");
+        xmlCleanupParser();
+        return NULL;
     }
 
     /* Retrieve root element */
     node_root = xmlDocGetRootElement(doc);
-    
+
     if(node_root == NULL)
     {
         fprintf(stderr, "The candidate mapping XML file is empty!\n");
-	xmlFreeDoc(doc);
-	xmlCleanupParser();
-	return NULL;
+        xmlFreeDoc(doc);
+        xmlCleanupParser();
+        return NULL;
     }
 
-    /* Query the mapping elements */
-    result = executeXPathQuery(doc, "/distribution/distributionitem");
-    
-    /* Iterate over all the mapping elements and add them to the array */
-    
-    if(result)
-    {
-	unsigned int i;
-	xmlNodeSetPtr nodeset = result->nodesetval;
-	
-	/* Create a candidate target array */
-        candidate_target_array = g_ptr_array_new();
-	
-	/* Iterate over all the distributionitem elements */
-	for(i = 0; i < nodeset->nodeNr; i++)
-        {
-	    xmlNodePtr distributionitem_children = nodeset->nodeTab[i]->children;
-	    DistributionItem *item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
-	    gchar *service = NULL;
-	    GPtrArray *targets = NULL;
-	    
-	    /* Iterate over all the distributionitem children (derivation and target elements) */
-	    
-	    while(distributionitem_children != NULL)
-	    {
-		if(xmlStrcmp(distributionitem_children->name, (xmlChar*) "service") == 0)
-		    service = g_strdup((gchar*)distributionitem_children->children->content);
-		else if(xmlStrcmp(distributionitem_children->name, (xmlChar*) "targets") == 0)
-		{
-		    xmlNodePtr targets_children = distributionitem_children->children;
-		    targets = g_ptr_array_new();
-		    
-		    /* Iterate over the targets children */
-		    
-		    while(targets_children != NULL)
-		    {
-			if(xmlStrcmp(targets_children->name, (xmlChar*) "target") == 0) /* Only iterate over target nodes */
-			{
-			    gchar *target = g_strdup((gchar*)targets_children->children->content);
-			    g_ptr_array_add(targets, target);
-			}
-			
-			targets_children = targets_children->next;
-		    }
-		}
-		    
-		distributionitem_children = distributionitem_children->next;
-	    }
-	    
-	    /* Add the distributionitem to the array */
-	    
-	    item->service = service;
-	    item->targets = targets;
-	    g_ptr_array_add(candidate_target_array, item);
-	}
-    }
-    
+    /* Parse mappings */
+    candidate_target_array = parse_list(node_root, "distributionitem", parse_distribution_item);
+
     /* Cleanup */
-    xmlXPathFreeObject(result);
     xmlFreeDoc(doc);
     xmlCleanupParser();
-    
+
     /* Return the candidate host array */
     return candidate_target_array;
 }

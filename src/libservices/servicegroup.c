@@ -37,7 +37,7 @@ GHashTable *query_services_in_group(GPtrArray *service_property_array, gchar *gr
     for(i = 0; i < service_property_array->len; i++)
     {
         Service *current_service = g_ptr_array_index(service_property_array, i);
-        gchar *current_group = find_service_property_value(current_service, "group");
+        gchar *current_group = find_service_property(current_service, "group");
 
         if(g_strcmp0(group, "") == 0 || is_in_group(current_group, group))
         {
@@ -227,7 +227,7 @@ static gchar *derive_sub_group_root(gchar **current_group_tokens, gchar **group_
 
 static void group_service(GHashTable *queried_services_table, GHashTable *grouped_services_table, Service *service, gchar **group_tokens)
 {
-    gchar *current_group = find_service_property_value(service, "group");
+    gchar *current_group = find_service_property(service, "group");
 
     gchar **current_group_tokens;
 
@@ -253,7 +253,7 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
         {
             group_service = (Service*)g_malloc(sizeof(Service));
             group_service->name = subgroup_root;
-            group_service->property = g_ptr_array_new();
+            group_service->property = g_hash_table_new(g_str_hash, g_str_equal);
             group_service->connects_to = g_ptr_array_new();
             group_service->depends_on = g_ptr_array_new();
             group_service->group_node = TRUE;
@@ -315,7 +315,7 @@ GPtrArray *query_unique_groups(GPtrArray *service_property_array)
     for(i = 0; i < service_property_array->len; i++)
     {
         Service *current_service = g_ptr_array_index(service_property_array, i);
-        gchar *current_group = find_service_property_value(current_service, "group");
+        gchar *current_group = find_service_property(current_service, "group");
 
         if(current_group != NULL && g_strcmp0(current_group, "") != 0)
         {

@@ -10,7 +10,7 @@
 					<maxPort><xsl:value-of select="attrs/attr[@name='maxPort']/int/@value" /></maxPort>
 					<servicesToPorts>
 						<xsl:for-each select="attrs/attr[@name='servicesToPorts']/attrs/attr">
-						    <service name="{@name}"><xsl:value-of select="int/@value" /></service>
+						    <xsl:element name="{@name}"><xsl:value-of select="int/@value" /></xsl:element>
 						</xsl:for-each>
 					</servicesToPorts>
 				</globalConfig>
@@ -23,7 +23,7 @@
 						<maxPort><xsl:value-of select="attrs/attr[@name='maxPort']/int/@value" /></maxPort>
 						<servicesToPorts>
 							<xsl:for-each select="attrs/attr[@name='servicesToPorts']/attrs/attr">
-							    <service name="{@name}"><xsl:value-of select="int/@value" /></service>
+							    <xsl:element name="{@name}"><xsl:value-of select="int/@value" /></xsl:element>
 							</xsl:for-each>
 						</servicesToPorts>
 					</xsl:element>

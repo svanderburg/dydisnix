@@ -81,66 +81,76 @@ void init_port_configuration(PortConfiguration *port_configuration)
     port_configuration->target_configs = g_hash_table_new_full(g_str_hash, g_str_equal, delete_target_key, delete_config_value);
 }
 
-static TargetConfig *parse_target_config(xmlNodePtr config_node)
+static gpointer parse_int(xmlNodePtr element)
+{
+    gchar *value = parse_value(element);
+    int *value_int = (int*)g_malloc(sizeof(int));
+    *value_int = atoi(value);
+    g_free(value);
+    return value_int;
+}
+
+static gpointer parse_config(xmlNodePtr element)
 {
     gint last_port = 0;
     gint min_port = 0;
     gint max_port = 0;
-    
+
     /* Construct a target config */
     TargetConfig *target_config = create_target_config(last_port, min_port, max_port);
-    
+
     /* Iterate over the config node's children */
-    xmlNodePtr config_node_children = config_node->children;
-    
-    while(config_node_children != NULL)
+    xmlNodePtr element_children = element->children;
+
+    while(element_children != NULL)
     {
-        if(xmlStrcmp(config_node_children->name, (xmlChar*) "lastPort") == 0)
-            last_port = atoi((char*)config_node_children->children->content);
-        else if(xmlStrcmp(config_node_children->name, (xmlChar*) "minPort") == 0)
-            min_port = atoi((char*)config_node_children->children->content);
-        else if(xmlStrcmp(config_node_children->name, (xmlChar*) "maxPort") == 0)
-            max_port = atoi((char*)config_node_children->children->content);
-        else if(xmlStrcmp(config_node_children->name, (xmlChar*) "servicesToPorts") == 0)
+        if(xmlStrcmp(element_children->name, (xmlChar*) "lastPort") == 0)
         {
-            xmlNodePtr service_to_ports_children = config_node_children->children;
-            
-            while(service_to_ports_children != NULL)
-            {
-                if(xmlStrcmp(service_to_ports_children->name, (xmlChar*) "service") == 0)
-                {
-                    gint *port = (gint*)g_malloc(sizeof(gint));
-                    gchar *service = NULL;
-                    
-                    xmlAttrPtr service_properties = service_to_ports_children->properties;
-                    *port = atoi((char*)service_to_ports_children->children->content);
-                    
-                    while(service_properties != NULL)
-                    {
-                        if(xmlStrcmp(service_properties->name, (xmlChar*) "name") == 0)
-                            service = g_strdup((gchar*)service_properties->children->content);
-                        
-                        service_properties = service_properties->next;
-                    }
-                    
-                    g_hash_table_insert(target_config->services_to_ports, service, port);
-                    g_hash_table_insert(target_config->ports_to_services, port, service);
-                }
-                
-                service_to_ports_children = service_to_ports_children->next;
-            }
+            gchar *value = parse_value(element_children);
+            last_port = atoi(value);
+            g_free(value);
         }
-        
-        config_node_children = config_node_children->next;
+        else if(xmlStrcmp(element_children->name, (xmlChar*) "minPort") == 0)
+        {
+            gchar *value = parse_value(element_children);
+            min_port = atoi(value);
+            g_free(value);
+        }
+        else if(xmlStrcmp(element_children->name, (xmlChar*) "maxPort") == 0)
+        {
+            gchar *value = parse_value(element_children);
+            max_port = atoi(value);
+            g_free(value);
+        }
+        else if(xmlStrcmp(element_children->name, (xmlChar*) "servicesToPorts") == 0)
+            target_config->services_to_ports = parse_dictionary(element_children, parse_int);
+
+        element_children = element_children->next;
     }
 
     /* Set remainder of configuration values */
     target_config->last_port = last_port;
     target_config->min_port = min_port;
     target_config->max_port = max_port;
-    
+
     /* Return parsed target config */
     return target_config;
+}
+
+void parse_port_configuration(PortConfiguration *port_configuration, xmlNodePtr element)
+{
+    memset(port_configuration, '\0', sizeof(PortConfiguration));
+    xmlNodePtr element_children = element->children;
+
+    while(element_children != NULL)
+    {
+        if(xmlStrcmp(element_children->name, (xmlChar*) "globalConfig") == 0)
+            port_configuration->global_config = parse_config(element_children);
+        else if(xmlStrcmp(element_children->name, (xmlChar*) "targetConfigs") == 0)
+            port_configuration->target_configs = parse_dictionary(element_children, parse_config);
+
+        element_children = element_children->next;
+    }
 }
 
 int open_port_configuration_from_xml(PortConfiguration *port_configuration, const gchar *port_configuration_file)
@@ -148,20 +158,19 @@ int open_port_configuration_from_xml(PortConfiguration *port_configuration, cons
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
-    xmlXPathObjectPtr result;
 
     /* Parse the XML document */
-    
+
     if((doc = xmlParseFile(port_configuration_file)) == NULL)
     {
         g_printerr("Error with parsing the port configuration XML file!\n");
         xmlCleanupParser();
         return FALSE;
     }
-    
+
     /* Check if the document has a root */
     node_root = xmlDocGetRootElement(doc);
-    
+
     if(node_root == NULL)
     {
         g_printerr("The port configuration XML file is empty!\n");
@@ -169,54 +178,14 @@ int open_port_configuration_from_xml(PortConfiguration *port_configuration, cons
         xmlCleanupParser();
         return FALSE;
     }
-    
-    /* Query the global config properties */
-    result = executeXPathQuery(doc, "/portConfiguration/globalConfig");
-    
-    if(result)
-    {
-        unsigned int i;
-        xmlNodeSetPtr nodeset = result->nodesetval;
-        
-        for(i = 0; i < nodeset->nodeNr; i++)
-            port_configuration->global_config = parse_target_config(nodeset->nodeTab[i]);
-    }
-    else
-        port_configuration->global_config = NULL;
-    
-    /* Query the target config properties */
-    result = executeXPathQuery(doc, "/portConfiguration/targetConfigs");
-    
-    port_configuration->target_configs = g_hash_table_new_full(g_str_hash, g_str_equal, delete_target_key, delete_config_value);
-    
-    if(result)
-    {
-        unsigned int i;
-        xmlNodeSetPtr nodeset = result->nodesetval;
-        
-        for(i = 0; i < nodeset->nodeNr; i++)
-        {
-            xmlNodePtr target_node_children = nodeset->nodeTab[i]->children;
-            
-            while(target_node_children != NULL)
-            {
-                if(xmlStrcmp(target_node_children->name, (xmlChar *) "text") != 0)
-                {
-                    TargetConfig *target_config = parse_target_config(target_node_children);
-                    gchar *target = g_strdup((gchar*)target_node_children->name);
-                
-                    g_hash_table_insert(port_configuration->target_configs, target, target_config);
-                }
-                
-                target_node_children = target_node_children->next;
-            }
-        }
-    }
-    
+
+    /* Parse the target config */
+    parse_port_configuration(port_configuration, node_root);
+
     /* Cleanup */
     xmlFreeDoc(doc);
     xmlCleanupParser();
-    
+
     return TRUE;
 }
 
@@ -382,26 +351,25 @@ RemoveParams;
 static gboolean remove_service_port_pair(gchar *service, RemoveParams *params)
 {
     DistributionItem *item = find_distribution_item(params->candidate_target_array, service);
-    
+
     if(item == NULL)
         return TRUE;
     else
     {
         Service *service = find_service(params->service_property_array, item->service);
-        
+
         if(service == NULL)
             return TRUE;
         else
         {
-            ServiceProperty *property = find_service_property(service, params->service_property);
-            
-            if(property == NULL)
+            gchar *value = find_service_property(service, params->service_property);
+
+            if(value == NULL)
                 return TRUE;
             else
-                return (g_strcmp0(property->value, params->service_property_value) != 0);
+                return (g_strcmp0(value, params->service_property_value) != 0);
         }
     }
-
 }
 
 static gboolean remove_service_to_port_mapping(gpointer key, gpointer value, gpointer user_data)

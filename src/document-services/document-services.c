@@ -6,11 +6,11 @@
 
 static void display_property(FILE *fd, Service *service, gchar *name)
 {
-    ServiceProperty *prop = find_service_property(service, name);
+    gchar *prop_value = find_service_property(service, name);
 
     fprintf(fd, "                <td>");
-    if(prop != NULL)
-        fprintf(fd, "%s", prop->value);
+    if(prop_value != NULL)
+        fprintf(fd, "%s", prop_value);
     fprintf(fd, "</td>\n");
 }
 

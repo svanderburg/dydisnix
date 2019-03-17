@@ -34,10 +34,10 @@ static int run_dot(gchar *filename, gchar *image_format)
 
 static void print_type(FILE *fd, const Service *service)
 {
-    ServiceProperty *prop = find_service_property(service, "type");
+    gchar *prop_value = find_service_property(service, "type");
 
-    if(prop != NULL)
-        fprintf(fd, "\\n(%s)", prop->value);
+    if(prop_value != NULL)
+        fprintf(fd, "\\n(%s)", prop_value);
 }
 
 static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, void *data, const GPtrArray *service_property_array)

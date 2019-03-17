@@ -4,27 +4,11 @@
 
 typedef struct
 {
-    gchar *name;
-
-    gchar *value;
-}
-Group;
-
-typedef struct
-{
-    gchar *name;
-
-    gchar *value;
-}
-Description;
-
-typedef struct
-{
-    GPtrArray *groups;
+    GHashTable *groups;
 
     GPtrArray *fields;
 
-    GPtrArray *descriptions;
+    GHashTable *descriptions;
 }
 DocsConfig;
 

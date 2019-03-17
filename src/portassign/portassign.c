@@ -37,23 +37,23 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
         {
             DistributionItem *distribution_item = g_ptr_array_index(candidate_target_array, i);
             Service *service = find_service(service_property_array, distribution_item->service);
-            ServiceProperty *prop;
+            gchar *prop_value;
 
             if(service == NULL)
-                prop = NULL;
+                prop_value = NULL;
             else
-                prop = find_service_property(service, service_property);
+                prop_value = find_service_property(service, service_property);
 
             /* For each service that has a port property that is unassigned, assign a port */
 
-            if(prop != NULL)
+            if(prop_value != NULL)
             {
-                if(g_strcmp0(prop->value, "shared") == 0) /* If a shared port is requested, consult the shared ports pool */
+                if(g_strcmp0(prop_value, "shared") == 0) /* If a shared port is requested, consult the shared ports pool */
                 {
                     gint port = assign_or_reuse_port(&port_configuration, NULL, distribution_item->service);
                     g_print("    %s = %d;\n", distribution_item->service, port);
                 }
-                else if(g_strcmp0(prop->value, "private") == 0) /* If a private port is requested, consult the machine's ports pool */
+                else if(g_strcmp0(prop_value, "private") == 0) /* If a private port is requested, consult the machine's ports pool */
                 {
                     if(distribution_item->targets->len > 0)
                     {

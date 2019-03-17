@@ -15,7 +15,7 @@
             </fields>
             <descriptions>
                 <xsl:for-each select="attr[@name='descriptions']/attrs/attr">
-                    <description name="{@name}"><xsl:value-of select="*/@value" /></description>
+                    <xsl:element name="{@name}"><xsl:value-of select="*/@value" /></xsl:element>
                 </xsl:for-each>
             </descriptions>
         </docs-config>

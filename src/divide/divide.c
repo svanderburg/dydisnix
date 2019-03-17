@@ -40,16 +40,16 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	{
 	    DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
 	    Service *service = find_service(service_property_array, item->service);
-	    ServiceProperty *service_prop = find_service_property(service, service_property);
-	    
+	    gchar *service_value = find_service_property(service, service_property);
+
 	    GPtrArray *targets = item->targets;
 	    unsigned int j;
 	
 	    DistributionItem *result_item;
 	    
-	    if(service_prop == NULL)
+	    if(service_value == NULL)
 	    {
-		g_printerr("Service property: %s not found!\n", service_property);
+		g_printerr("Value for service property: %s not found!\n", service_property);
 		exit_status = 1;
 		break;
 	    }
@@ -66,20 +66,20 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	    {
 		gchar *target_name = g_ptr_array_index(targets, j);
 		Target *target = find_target_by_name(targets_array, target_name);
-		TargetProperty *target_prop = find_target_property(target, target_property);
+		gchar *target_value = find_target_property(target, target_property);
 		
-		if(target_prop == NULL)
+		if(target_value == NULL)
 		{
-		    g_printerr("Target property: %s not found!\n", target_property);
+		    g_printerr("Value for target property: %s not found!\n", target_property);
 		    exit_status = 1;
 		    break;
 		}
 	    
 		if(strategy == STRATEGY_GREEDY)
 		{
-		    if(atoi(service_prop->value) <= atoi(target_prop->value))
+		    if(atoi(service_value) <= atoi(target_value))
 		    {
-			substract_target_value(target, target_property, atoi(service_prop->value));
+			substract_target_value(target, target_property, atoi(service_value));
 			select_target = target;
 			g_ptr_array_add(result_item->targets, target_name);
 			break;
@@ -89,14 +89,14 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		{
 		    if(select_target == NULL)
 		    {
-			if(atoi(service_prop->value) <= atoi(target_prop->value))
+			if(atoi(service_value) <= atoi(target_value))
 			    select_target = target;
 		    }
 		    else
 		    {
-			TargetProperty *select_target_prop = find_target_property(select_target, target_property);
-		    
-			if(atoi(target_prop->value) > atoi(select_target_prop->value))
+			gchar *select_target_value = find_target_property(select_target, target_property);
+
+			if(atoi(target_value) > atoi(select_target_value))
 			    select_target = target;
 		    }
 		}
@@ -104,14 +104,14 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		{
 	    	    if(select_target == NULL)
 		    {
-			if(atoi(service_prop->value) <= atoi(target_prop->value))
+			if(atoi(service_value) <= atoi(target_value))
 			    select_target = target;
 		    }
 		    else
 		    {
-			TargetProperty *select_target_prop = find_target_property(select_target, target_property);
-			
-			if(atoi(target_prop->value) < atoi(select_target_prop->value) && atoi(service_prop->value) <= atoi(select_target_prop->value))
+			gchar *select_target_value = find_target_property(select_target, target_property);
+
+			if(atoi(target_value) < atoi(select_target_value) && atoi(service_value) <= atoi(select_target_value))
 			    select_target = target;
 		    }
 		}
@@ -127,7 +127,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	    {
 		if(select_target != NULL)
 		{
-	    	    substract_target_value(select_target, target_property, atoi(service_prop->value));
+	    	    substract_target_value(select_target, target_property, atoi(service_value));
 		    g_ptr_array_add(result_item->targets, select_target->name);
 		}
 	    }

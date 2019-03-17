@@ -60,7 +60,7 @@ rec {
     nixExpressionToXML {
       name = "docs";
       expr = docs;
-      xsl = ./ports.xsl;
+      xsl = ./docs.xsl;
     };
 
   generatePreviousDistribution = coordinatorProfile:

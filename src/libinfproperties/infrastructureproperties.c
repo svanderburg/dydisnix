@@ -94,7 +94,7 @@ Target *find_target_by_name(GPtrArray *target_array, gchar *name)
         return *ret;
 }
 
-static gint compare_target_property_keys(const TargetProperty **l, const TargetProperty **r)
+/*static gint compare_target_property_keys(const TargetProperty **l, const TargetProperty **r)
 {
     const TargetProperty *left = *l;
     const TargetProperty *right = *r;
@@ -120,14 +120,14 @@ TargetProperty *find_target_property(Target *target, gchar *name)
         else
             return *ret;
     }
-}
+}*/
 
 void substract_target_value(Target *target, gchar *property_name, int amount)
 {
     gchar buffer[BUFFER_SIZE];
-    TargetProperty *property = find_target_property(target, property_name);
-    int value = atoi(property->value) - amount;
-    g_sprintf(buffer, "%d", value);
-    g_free(property->value);
-    property->value = g_strdup(buffer);
+    gchar *value = find_target_property(target, property_name);
+    int result = atoi(value) - amount;
+    g_sprintf(buffer, "%d", result);
+    g_free(value);
+    g_hash_table_insert(target->properties_table, property_name, g_strdup(buffer));
 }

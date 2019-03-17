@@ -43,20 +43,20 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 	    double min_cost = -1;
 	    int min_cost_index = -1;
 	    TargetMappingItem *min_cost_target_mapping;
-		    
+
 	    for(i = 0; i < target_mapping_array->len; i++)
 	    {
 		TargetMappingItem *target_mapping = g_ptr_array_index(target_mapping_array, i);
 		Target *target = find_target_by_name(targets_array, target_mapping->target);
-		TargetProperty *target_prop = find_target_property(target, target_property);
-		
+		gchar *target_value = find_target_property(target, target_property);
+
 		int count = 0;
 		double cost;
 		unsigned int j;
 	    
-		if(target_prop == NULL)
+		if(target_value == NULL)
 		{
-		    g_printerr("Target property: %s not found!\n", target_property);
+		    g_printerr("Value for target property: %s not found!\n", target_property);
 		    exit_status = 1;
 		    break;
 		}
@@ -69,7 +69,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 			count++;
 		}
 		
-		cost = atoi(target_prop->value) / (double)count;
+		cost = atoi(target_value) / (double)count;
 	    
 		if(min_cost == -1 || cost < min_cost)
 		{

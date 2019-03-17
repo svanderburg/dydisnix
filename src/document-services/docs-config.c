@@ -26,12 +26,24 @@ char *generate_docs_xml_from_expr(char *docs_expr)
     return path;
 }
 
-static gint compare_group_keys(const Group **l, const Group **r)
+static DocsConfig *parse_docs_config(xmlNodePtr element)
 {
-    const Group *left = *l;
-    const Group *right = *r;
+    DocsConfig *docs_config = (DocsConfig*)g_malloc0(sizeof(DocsConfig));
+    xmlNodePtr element_children = element->children;
 
-    return g_strcmp0(left->name, right->name);
+    while(element_children != NULL)
+    {
+        if(xmlStrcmp(element_children->name, (xmlChar*) "groups") == 0)
+            docs_config->groups = parse_dictionary_attr(element_children, "group", "name", parse_value);
+        else if(xmlStrcmp(element_children->name, (xmlChar*) "fields") == 0)
+            docs_config->fields = parse_list(element_children, "field", parse_value);
+        else if(xmlStrcmp(element_children->name, (xmlChar*) "descriptions") == 0)
+            docs_config->descriptions = parse_dictionary(element_children, parse_value);
+
+        element_children = element_children->next;
+    }
+
+    return docs_config;
 }
 
 DocsConfig *create_docs_config_from_xml(gchar *docs_xml_file)
@@ -39,18 +51,13 @@ DocsConfig *create_docs_config_from_xml(gchar *docs_xml_file)
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
-    xmlXPathObjectPtr result;
-
-    DocsConfig *docs_config = (DocsConfig*)g_malloc(sizeof(DocsConfig));
-    docs_config->groups = g_ptr_array_new();
-    docs_config->fields = g_ptr_array_new();
-    docs_config->descriptions = g_ptr_array_new();
+    DocsConfig *docs_config;
 
     /* Parse the XML document */
 
     if((doc = xmlParseFile(docs_xml_file)) == NULL)
     {
-        g_printerr("Error with parsing the services XML file!\n");
+        g_printerr("Error with parsing the docs XML file!\n");
         xmlCleanupParser();
         return NULL;
     }
@@ -67,89 +74,7 @@ DocsConfig *create_docs_config_from_xml(gchar *docs_xml_file)
     }
 
     /* Parse groups */
-    result = executeXPathQuery(doc, "/docs-config/groups/group");
-
-    if(result)
-    {
-        unsigned int i;
-        xmlNodeSetPtr nodeset = result->nodesetval;
-
-        for(i = 0; i < nodeset->nodeNr; i++)
-        {
-            xmlAttr *group_properties = nodeset->nodeTab[i]->properties;
-            xmlNodePtr group_children = nodeset->nodeTab[i]->children;
-            Group *group = (Group*)g_malloc(sizeof(Group));
-            group->name = NULL;
-            group->value = NULL;
-
-            /* Read name attribute */
-            while(group_properties != NULL)
-            {
-                if(xmlStrcmp(group_properties->name, (const xmlChar*) "name") == 0)
-                    group->name = g_strdup((gchar*)group_properties->children->content);
-
-                group_properties = group_properties->next;
-            }
-
-            if(group_children != NULL)
-                group->value = g_strdup((gchar*)group_children->content);
-
-            g_ptr_array_add(docs_config->groups, group);
-        }
-    }
-
-    g_ptr_array_sort(docs_config->groups, (GCompareFunc)compare_group_keys);
-
-    /* Parse fields */
-
-    result = executeXPathQuery(doc, "/docs-config/fields/field");
-
-    if(result)
-    {
-        unsigned int i;
-        xmlNodeSetPtr nodeset = result->nodesetval;
-
-        for(i = 0; i < nodeset->nodeNr; i++)
-        {
-            gchar *field = g_strdup((gchar*)nodeset->nodeTab[i]->children->content);
-            g_ptr_array_add(docs_config->fields, field);
-        }
-    }
-
-    /* Parse descriptions */
-
-    result = executeXPathQuery(doc, "/docs-config/descriptions/description");
-
-    if(result)
-    {
-        unsigned int i;
-        xmlNodeSetPtr nodeset = result->nodesetval;
-
-        for(i = 0; i < nodeset->nodeNr; i++)
-        {
-            xmlAttr *description_properties = nodeset->nodeTab[i]->properties;
-            xmlNodePtr description_children = nodeset->nodeTab[i]->children;
-            Description *description = (Description*)g_malloc(sizeof(Description));
-            description->name = NULL;
-            description->value = NULL;
-
-            /* Read name attribute */
-            while(description_properties != NULL)
-            {
-                if(xmlStrcmp(description_properties->name, (const xmlChar*) "name") == 0)
-                    description->name = g_strdup((gchar*)description_properties->children->content);
-
-                description_properties = description_properties->next;
-            }
-
-            if(description_children != NULL)
-                description->value = g_strdup((gchar*)description_children->content);
-
-            g_ptr_array_add(docs_config->descriptions, description);
-        }
-    }
-
-    g_ptr_array_sort(docs_config->descriptions, (GCompareFunc)compare_group_keys);
+    docs_config = parse_docs_config(node_root);
 
     /* Cleanup */
     xmlFreeDoc(doc);
@@ -180,16 +105,17 @@ void delete_docs_config(DocsConfig *docs_config)
     if(docs_config != NULL)
     {
         unsigned int i;
+        GHashTableIter iter;
+        gpointer key, value;
 
-        for(i = 0; i < docs_config->groups->len; i++)
+        g_hash_table_iter_init(&iter, docs_config->groups);
+        while(g_hash_table_iter_next(&iter, &key, &value))
         {
-            Group *group = g_ptr_array_index(docs_config->groups, i);
-            g_free(group->name);
-            g_free(group->value);
-            g_free(group);
+            g_free(key);
+            g_free(value);
         }
 
-        g_ptr_array_free(docs_config->groups, TRUE);
+        g_hash_table_destroy(docs_config->groups);
 
         for(i = 0; i < docs_config->fields->len; i++)
         {
@@ -199,15 +125,14 @@ void delete_docs_config(DocsConfig *docs_config)
 
         g_ptr_array_free(docs_config->fields, TRUE);
 
-        for(i = 0; i < docs_config->descriptions->len; i++)
+        g_hash_table_iter_init(&iter, docs_config->descriptions);
+        while(g_hash_table_iter_next(&iter, &key, &value))
         {
-            Description *description = g_ptr_array_index(docs_config->descriptions, i);
-            g_free(description->name);
-            g_free(description->value);
-            g_free(description);
+            g_free(key);
+            g_free(value);
         }
 
-        g_ptr_array_free(docs_config->descriptions, TRUE);
+        g_hash_table_destroy(docs_config->descriptions);
 
         g_free(docs_config);
     }
@@ -215,30 +140,10 @@ void delete_docs_config(DocsConfig *docs_config)
 
 gchar *find_group(const DocsConfig *docs_config, gchar *name)
 {
-    Group group;
-    Group **ret, *groupPtr = &group;
-
-    groupPtr->name = name;
-
-    ret = bsearch(&groupPtr, docs_config->groups->pdata, docs_config->groups->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_group_keys);
-
-    if(ret == NULL)
-        return NULL;
-    else
-        return (*ret)->value;
+    return g_hash_table_lookup(docs_config->groups, name);
 }
 
 gchar *find_description(const DocsConfig *docs_config, gchar *name)
 {
-    Description description;
-    Description **ret, *descriptionPtr = &description;
-
-    descriptionPtr->name = name;
-
-    ret = bsearch(&descriptionPtr, docs_config->descriptions->pdata, docs_config->descriptions->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_group_keys);
-
-    if(ret == NULL)
-        return NULL;
-    else
-        return (*ret)->value;
+    return g_hash_table_lookup(docs_config->descriptions, name);
 }

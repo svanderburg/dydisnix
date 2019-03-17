@@ -4,7 +4,8 @@
 	<xsl:template match="/expr/attrs">
 		<services>
 			<xsl:for-each select="attr">
-				<service name="{@name}">
+				<service>
+					<name><xsl:value-of select="@name" /></name>
 					<dependsOn>
 						<xsl:for-each select="attrs/attr[@name='dependsOn']">
 							<xsl:for-each select="list/*">

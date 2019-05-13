@@ -4,8 +4,9 @@
 #include <targetmapping.h>
 #include <serviceproperties.h>
 #include <candidatetargetmapping.h>
-#include <xmlutil.h>
 #include <procreact_future.h>
+#include <nixxml-parse.h>
+#include <nixxml-ghashtable.h>
 
 static ProcReact_Future generate_ports_xml_from_expr_async(char *ports_expr)
 {
@@ -81,60 +82,49 @@ void init_port_configuration(PortConfiguration *port_configuration)
     port_configuration->target_configs = g_hash_table_new_full(g_str_hash, g_str_equal, delete_target_key, delete_config_value);
 }
 
-static gpointer parse_int(xmlNodePtr element)
+static void *parse_int(xmlNodePtr element, void *userdata)
 {
-    gchar *value = parse_value(element);
+    gchar *value = NixXML_parse_value(element, userdata);
     int *value_int = (int*)g_malloc(sizeof(int));
     *value_int = atoi(value);
     g_free(value);
     return value_int;
 }
 
-static gpointer parse_config(xmlNodePtr element)
+static void *create_target_config_from_element(xmlNodePtr element, void *userdata)
 {
-    gint last_port = 0;
-    gint min_port = 0;
-    gint max_port = 0;
+    return create_target_config(0, 0, 0);
+}
 
-    /* Construct a target config */
-    TargetConfig *target_config = create_target_config(last_port, min_port, max_port);
+static void parse_and_insert_target_config_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
+{
+    TargetConfig *target_config = (TargetConfig*)table;
 
-    /* Iterate over the config node's children */
-    xmlNodePtr element_children = element->children;
-
-    while(element_children != NULL)
+    if(xmlStrcmp(key, (xmlChar*) "lastPort") == 0)
     {
-        if(xmlStrcmp(element_children->name, (xmlChar*) "lastPort") == 0)
-        {
-            gchar *value = parse_value(element_children);
-            last_port = atoi(value);
-            g_free(value);
-        }
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "minPort") == 0)
-        {
-            gchar *value = parse_value(element_children);
-            min_port = atoi(value);
-            g_free(value);
-        }
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "maxPort") == 0)
-        {
-            gchar *value = parse_value(element_children);
-            max_port = atoi(value);
-            g_free(value);
-        }
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "servicesToPorts") == 0)
-            target_config->services_to_ports = parse_dictionary(element_children, parse_int);
-
-        element_children = element_children->next;
+        gchar *value = NixXML_parse_value(element, NULL);
+        target_config->last_port = atoi(value);
+        g_free(value);
     }
+    else if(xmlStrcmp(key, (xmlChar*) "minPort") == 0)
+    {
+        gchar *value = NixXML_parse_value(element, NULL);
+        target_config->min_port = atoi(value);
+        g_free(value);
+    }
+    else if(xmlStrcmp(key, (xmlChar*) "maxPort") == 0)
+    {
+        gchar *value = NixXML_parse_value(element, NULL);
+        target_config->max_port = atoi(value);
+        g_free(value);
+    }
+    else if(xmlStrcmp(key, (xmlChar*) "servicesToPorts") == 0)
+        target_config->services_to_ports = NixXML_parse_g_hash_table_simple(element, userdata, parse_int);
+}
 
-    /* Set remainder of configuration values */
-    target_config->last_port = last_port;
-    target_config->min_port = min_port;
-    target_config->max_port = max_port;
-
-    /* Return parsed target config */
-    return target_config;
+static void *parse_config(xmlNodePtr element, void *userdata)
+{
+    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_target_config_from_element, parse_and_insert_target_config_attributes);
 }
 
 void parse_port_configuration(PortConfiguration *port_configuration, xmlNodePtr element)
@@ -145,9 +135,9 @@ void parse_port_configuration(PortConfiguration *port_configuration, xmlNodePtr 
     while(element_children != NULL)
     {
         if(xmlStrcmp(element_children->name, (xmlChar*) "globalConfig") == 0)
-            port_configuration->global_config = parse_config(element_children);
+            port_configuration->global_config = parse_config(element_children, NULL);
         else if(xmlStrcmp(element_children->name, (xmlChar*) "targetConfigs") == 0)
-            port_configuration->target_configs = parse_dictionary(element_children, parse_config);
+            port_configuration->target_configs = NixXML_parse_g_hash_table_simple(element_children, NULL, parse_config);
 
         element_children = element_children->next;
     }

@@ -76,7 +76,7 @@ static gint compare_target_names(const Target **l, const Target **r)
     const Target *left = *l;
     const Target *right = *r;
     
-    return g_strcmp0(left->name, right->name);
+    return xmlStrcmp(left->name, right->name);
 }
 
 Target *find_target_by_name(GPtrArray *target_array, gchar *name)
@@ -84,7 +84,7 @@ Target *find_target_by_name(GPtrArray *target_array, gchar *name)
     Target target;
     Target **ret, *targetPtr = &target;
     
-    targetPtr->name = name;
+    targetPtr->name = (xmlChar*) name;
     
     ret = bsearch(&targetPtr, target_array->pdata, target_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_target_names);
 
@@ -94,34 +94,6 @@ Target *find_target_by_name(GPtrArray *target_array, gchar *name)
         return *ret;
 }
 
-/*static gint compare_target_property_keys(const TargetProperty **l, const TargetProperty **r)
-{
-    const TargetProperty *left = *l;
-    const TargetProperty *right = *r;
-    
-    return g_strcmp0(left->name, right->name);
-}
-
-TargetProperty *find_target_property(Target *target, gchar *name)
-{
-    if(target->properties == NULL)
-        return NULL;
-    else
-    {
-        TargetProperty prop;
-        TargetProperty **ret, *propPtr = &prop;
-        
-        propPtr->name = name;
-        
-        ret = bsearch(&propPtr, target->properties->pdata, target->properties->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_target_property_keys);
-        
-        if(ret == NULL)
-            return NULL;
-        else
-            return *ret;
-    }
-}*/
-
 void substract_target_value(Target *target, gchar *property_name, int amount)
 {
     gchar buffer[BUFFER_SIZE];
@@ -129,5 +101,5 @@ void substract_target_value(Target *target, gchar *property_name, int amount)
     int result = atoi(value) - amount;
     g_sprintf(buffer, "%d", result);
     g_free(value);
-    g_hash_table_insert(target->properties_table, property_name, g_strdup(buffer));
+    g_hash_table_insert(target->properties_table, g_strdup(property_name), g_strdup(buffer));
 }

@@ -15,6 +15,4 @@ void substract_target_value(Target *target, gchar *property_name, int amount);
 
 Target *find_target_by_name(GPtrArray *target_array, gchar *name);
 
-//TargetProperty *find_target_property(Target *target, gchar *name);
-
 #endif

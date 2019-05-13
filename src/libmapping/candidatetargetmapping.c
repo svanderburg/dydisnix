@@ -1,7 +1,8 @@
 #include "candidatetargetmapping.h"
 #include <stdlib.h>
-#include <xmlutil.h>
 #include <procreact_future.h>
+#include <nixxml-parse.h>
+#include <nixxml-gptrarray.h>
 
 static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribution_expr, char *infrastructure_expr)
 {
@@ -27,22 +28,24 @@ char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrast
     return path;
 }
 
-gpointer parse_distribution_item(xmlNodePtr element)
+static void *create_distribution_item(xmlNodePtr element, void *userdata)
 {
-    DistributionItem *item = (DistributionItem*)g_malloc0(sizeof(DistributionItem));
-    xmlNodePtr element_children = element->children;
+    return g_malloc0(sizeof(DistributionItem));
+}
 
-    while(element_children != NULL)
-    {
-        if(xmlStrcmp(element_children->name, (xmlChar*) "service") == 0)
-            item->service = parse_value(element_children);
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "targets") == 0)
-            item->targets = parse_list(element_children, "target", parse_value);
+static void parse_and_insert_distribution_item_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
+{
+    DistributionItem *item = (DistributionItem*)table;
 
-        element_children = element_children->next;
-    }
+    if(xmlStrcmp(key, (xmlChar*) "service") == 0)
+        item->service = NixXML_parse_value(element, NULL);
+    else if(xmlStrcmp(key, (xmlChar*) "targets") == 0)
+        item->targets = NixXML_parse_g_ptr_array(element, "target", userdata, NixXML_parse_value);
+}
 
-    return item;
+static void *parse_distribution_item(xmlNodePtr element, void *userdata)
+{
+    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_distribution_item, parse_and_insert_distribution_item_attributes);
 }
 
 GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_file)
@@ -73,7 +76,7 @@ GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_
     }
 
     /* Parse mappings */
-    candidate_target_array = parse_list(node_root, "distributionitem", parse_distribution_item);
+    candidate_target_array = NixXML_parse_g_ptr_array(node_root, "distributionitem", NULL, parse_distribution_item);
 
     /* Cleanup */
     xmlFreeDoc(doc);

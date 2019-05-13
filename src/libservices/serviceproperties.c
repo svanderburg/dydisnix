@@ -1,8 +1,9 @@
 #include "serviceproperties.h"
 #include <string.h>
 #include <stdlib.h>
-#include <xmlutil.h>
 #include <procreact_future.h>
+#include <nixxml-parse.h>
+#include <nixxml-gptrarray.h>
 
 static ProcReact_Future generate_service_xml_from_expr_async(char *service_expr)
 {
@@ -28,26 +29,28 @@ char *generate_service_xml_from_expr(char *service_expr)
     return path;
 }
 
-static gpointer parse_service(xmlNodePtr element)
+static void *create_service(xmlNodePtr element, void *userdata)
 {
-    Service *service = (Service*)g_malloc0(sizeof(Service));
-    xmlNodePtr element_children = element->children;
+    return g_malloc0(sizeof(Service));
+}
 
-    while(element_children != NULL)
-    {
-        if(xmlStrcmp(element_children->name, (xmlChar*) "name") == 0)
-            service->name = parse_value(element_children);
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "properties") == 0)
-            service->property = parse_dictionary(element_children, parse_value);
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "connectsTo") == 0)
-            service->connects_to = parse_list(element_children, "dependency", parse_value);
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "dependsOn") == 0)
-            service->depends_on = parse_list(element_children, "dependency", parse_value);
+void parse_and_insert_service_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
+{
+    Service *service = (Service*)table;
 
-        element_children = element_children->next;
-    }
+    if(xmlStrcmp(key, (xmlChar*) "name") == 0)
+        service->name = NixXML_parse_value(element, userdata);
+    else if(xmlStrcmp(key, (xmlChar*) "properties") == 0)
+        service->property = NixXML_parse_g_hash_table_simple(element, userdata, NixXML_parse_value);
+    else if(xmlStrcmp(key, (xmlChar*) "connectsTo") == 0)
+        service->connects_to = NixXML_parse_g_ptr_array(element, "dependency", userdata, NixXML_parse_value);
+    else if(xmlStrcmp(key, (xmlChar*) "dependsOn") == 0)
+        service->depends_on = NixXML_parse_g_ptr_array(element, "dependency", userdata, NixXML_parse_value);
+}
 
-    return service;
+static void *parse_service(xmlNodePtr element, void *userdata)
+{
+    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_service, parse_and_insert_service_attributes);
 }
 
 GPtrArray *create_service_property_array_from_xml(const gchar *services_xml_file)
@@ -78,7 +81,7 @@ GPtrArray *create_service_property_array_from_xml(const gchar *services_xml_file
     }
 
     /* Parse the services */
-    service_property_array = parse_list(node_root, "service", parse_service);
+    service_property_array = NixXML_parse_g_ptr_array(node_root, "service", NULL, parse_service);
 
     /* Cleanup */
     xmlFreeDoc(doc);
@@ -114,10 +117,7 @@ void delete_service(Service *service)
 
     g_hash_table_iter_init(&iter, service->property);
     while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        g_free(key);
         g_free(value);
-    }
 
     g_hash_table_destroy(service->property);
 

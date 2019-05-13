@@ -127,7 +127,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	    {
 		if(select_target != NULL)
 		{
-	    	    substract_target_value(select_target, target_property, atoi(service_value));
+		    substract_target_value(select_target, target_property, atoi(service_value));
 		    g_ptr_array_add(result_item->targets, select_target->name);
 		}
 	    }

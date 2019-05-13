@@ -1,6 +1,8 @@
 #include "docs-config.h"
-#include <xmlutil.h>
 #include <procreact_future.h>
+#include <nixxml-parse.h>
+#include <nixxml-gptrarray.h>
+#include <nixxml-ghashtable.h>
 
 static ProcReact_Future generate_docs_xml_from_expr_async(char *docs_expr)
 {
@@ -26,24 +28,26 @@ char *generate_docs_xml_from_expr(char *docs_expr)
     return path;
 }
 
-static DocsConfig *parse_docs_config(xmlNodePtr element)
+static void *create_docs_config_from_element(xmlNodePtr element, void *userdata)
 {
-    DocsConfig *docs_config = (DocsConfig*)g_malloc0(sizeof(DocsConfig));
-    xmlNodePtr element_children = element->children;
+    return g_malloc0(sizeof(DocsConfig));
+}
 
-    while(element_children != NULL)
-    {
-        if(xmlStrcmp(element_children->name, (xmlChar*) "groups") == 0)
-            docs_config->groups = parse_dictionary_attr(element_children, "group", "name", parse_value);
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "fields") == 0)
-            docs_config->fields = parse_list(element_children, "field", parse_value);
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "descriptions") == 0)
-            docs_config->descriptions = parse_dictionary(element_children, parse_value);
+static void parse_and_insert_docs_config_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
+{
+    DocsConfig *docs_config = (DocsConfig*)table;
 
-        element_children = element_children->next;
-    }
+    if(xmlStrcmp(key, (xmlChar*) "groups") == 0)
+        docs_config->groups = NixXML_parse_g_hash_table_verbose(element, "group", "name", userdata, NixXML_parse_value);
+    else if(xmlStrcmp(key, (xmlChar*) "fields") == 0)
+        docs_config->fields = NixXML_parse_g_ptr_array(element, "field", userdata, NixXML_parse_value);
+    else if(xmlStrcmp(key, (xmlChar*) "descriptions") == 0)
+        docs_config->descriptions = NixXML_parse_g_hash_table_simple(element, userdata, NixXML_parse_value);
+}
 
-    return docs_config;
+static DocsConfig *parse_docs_config(xmlNodePtr element, void *userdata)
+{
+    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_docs_config_from_element, parse_and_insert_docs_config_attributes);
 }
 
 DocsConfig *create_docs_config_from_xml(gchar *docs_xml_file)
@@ -74,7 +78,7 @@ DocsConfig *create_docs_config_from_xml(gchar *docs_xml_file)
     }
 
     /* Parse groups */
-    docs_config = parse_docs_config(node_root);
+    docs_config = parse_docs_config(node_root, NULL);
 
     /* Cleanup */
     xmlFreeDoc(doc);
@@ -110,10 +114,7 @@ void delete_docs_config(DocsConfig *docs_config)
 
         g_hash_table_iter_init(&iter, docs_config->groups);
         while(g_hash_table_iter_next(&iter, &key, &value))
-        {
-            g_free(key);
             g_free(value);
-        }
 
         g_hash_table_destroy(docs_config->groups);
 
@@ -127,10 +128,7 @@ void delete_docs_config(DocsConfig *docs_config)
 
         g_hash_table_iter_init(&iter, docs_config->descriptions);
         while(g_hash_table_iter_next(&iter, &key, &value))
-        {
-            g_free(key);
             g_free(value);
-        }
 
         g_hash_table_destroy(docs_config->descriptions);
 

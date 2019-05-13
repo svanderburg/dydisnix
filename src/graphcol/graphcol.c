@@ -114,7 +114,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, int xml)
     
     /* Color the max degree vertex with the first color */
     
-    max_adjacency->target = ((Target*)g_ptr_array_index(targets_array, 0))->name;
+    max_adjacency->target = (gchar*)(((Target*)g_ptr_array_index(targets_array, 0))->name);
     colored_vertices++;
     
     while(colored_vertices < adjacency_array->len)
@@ -178,7 +178,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, int xml)
 	    {
 		gchar *current_used_target = g_ptr_array_index(used_targets, j);
 		
-		if(g_strcmp0(current_target->name, current_used_target) == 0)
+		if(xmlStrcmp(current_target->name, (xmlChar*) current_used_target) == 0)
 		{
 		    exists = TRUE;
 		    break;
@@ -187,7 +187,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, int xml)
 	    
 	    if(!exists)
 	    {
-		pickTarget = current_target->name;
+		pickTarget = (gchar*)current_target->name;
 		break;
 	    }
 	}

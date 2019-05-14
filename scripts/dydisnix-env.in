@@ -51,11 +51,23 @@ Options:
       --keep=NUM                      Amount of snapshot generations to keep.
                                       Defaults to: 1
       --show-trace                    Shows a trace of the output
+      --target-property=PROP          The target property of an infrastructure
+                                      model, that specifies how to connect to
+                                      the remote Disnix interface. (Defaults to
+                                      hostname)
+      --interface=INTERFACE           Path to executable that communicates with
+                                      a Disnix interface. Defaults to:
+                                      disnix-ssh-client
   -h, --help                          Shows the usage of this command
 
 Environment:
-  DYDISNIX_GENINFRA    Executable to invoke to dynamically capture an
-                       infrastructure model
+  DISNIX_CLIENT_INTERFACE    Sets the client interface (defaults to:
+                             disnix-ssh-client)
+  DISNIX_TARGET_PROPERTY     Sets the target property of an infrastructure
+                             model, that specifies how to connect to the remote
+                             Disnix interface. (Defaults to: hostname)
+  DYDISNIX_GENINFRA          Executable to invoke to dynamically capture an
+                             infrastructure model
 EOF
 }
 
@@ -64,7 +76,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:m:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:m:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -124,6 +136,12 @@ do
         --show-trace)
             showTraceArg="--show-trace"
             ;;
+        --interface)
+            interfaceArg="--interface $2"
+            ;;
+        --target-property)
+            targetPropertyArg="--target-property $2"
+            ;;
         -h|--help)
             showUsage
             exit 0
@@ -175,7 +193,7 @@ fi
 echo "[coordinator]: Using infrastructure model: $infrastructureFile" >&2
 
 echo "[coordinator]: Generating a distribution model..." >&2
-distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $coordinatorProfilePathArg $showTraceArg`
+distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $coordinatorProfilePathArg $interfaceArg $targetPropertyArg $showTraceArg`
 echo "[coordinator]: Using generated distribution model: $distribution" >&2
 
 if [ "$portsFile" != "" ]

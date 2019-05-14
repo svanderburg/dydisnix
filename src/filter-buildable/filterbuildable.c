@@ -2,13 +2,21 @@
 #include <unistd.h>
 #include <procreact_pid.h>
 
-static int instantiate_async(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName)
+static int instantiate_async(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName, char *interface, char *target_property)
 {
     pid_t pid = fork();
 
     if(pid == 0)
     {
-        char *const args[] = {"nix-instantiate", "--argstr", "servicesFile", services_expr, "--argstr", "infrastructureFile", infrastructure_expr, "--argstr", "distributionFile", distribution_expr, "--argstr", "serviceName", serviceName, "--argstr", "targetName", targetName, DATADIR "/dydisnix/try-build.nix", NULL};
+        char *const args[] = {"nix-instantiate",
+            "--argstr", "servicesFile", services_expr,
+            "--argstr", "infrastructureFile", infrastructure_expr,
+            "--argstr", "distributionFile", distribution_expr,
+            "--argstr", "serviceName", serviceName,
+            "--argstr", "targetName", targetName,
+            "--argstr", "defaultClientInterface", interface,
+            "--argstr", "defaultTargetProperty", target_property,
+            DATADIR "/dydisnix/try-build.nix", NULL};
         dup2(2, 1);
         execvp(args[0], args);
         _exit(1);
@@ -17,10 +25,10 @@ static int instantiate_async(gchar *services_expr, gchar *infrastructure_expr, g
     return pid;
 }
 
-static int instantiate(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName)
+static int instantiate(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName, char *interface, char *target_property)
 {
     ProcReact_Status status;
-    pid_t pid = instantiate_async(services_expr, infrastructure_expr, distribution_expr, serviceName, targetName);
+    pid_t pid = instantiate_async(services_expr, infrastructure_expr, distribution_expr, serviceName, targetName, interface, target_property);
     int exit_status = procreact_wait_for_exit_status(pid, &status);
 
     if(status != PROCREACT_STATUS_OK)
@@ -42,7 +50,7 @@ static void delete_filtered_target_array(GPtrArray *filtered_target_array)
     g_ptr_array_free(filtered_target_array, TRUE);
 }
 
-int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, int xml)
+int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, int xml, char *interface, char *target_property)
 {
     unsigned int i;
     GPtrArray *candidate_target_array = create_candidate_target_array(distribution_expr, infrastructure_expr, xml);
@@ -69,7 +77,7 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
 	    {
 		gchar *target = g_ptr_array_index(item->targets, j);
 	    
-		if(instantiate(services_expr, infrastructure_expr, distribution_expr, item->service, target) == 0)
+		if(instantiate(services_expr, infrastructure_expr, distribution_expr, item->service, target, interface, target_property) == 0)
 	    	    g_ptr_array_add(filter_item->targets, target);
 	    }
 	

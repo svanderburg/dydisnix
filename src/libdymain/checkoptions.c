@@ -37,7 +37,7 @@ int check_distribution_option(const char *distribution)
         return TRUE;
 }
 
-int check_service_property_option(const char *service_property)
+int check_service_mapping_property_option(const char *service_property)
 {
     if(service_property == NULL)
     {
@@ -48,7 +48,7 @@ int check_service_property_option(const char *service_property)
         return TRUE;
 }
 
-int check_target_property_option(const char *target_property)
+int check_target_mapping_property_option(const char *target_property)
 {
     if(target_property == NULL)
     {

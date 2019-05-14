@@ -29,9 +29,22 @@ Options:
       --coordinator-profile-path=PATH
                                   Path where to store the coordinator profile
                                   generations
+      --target-property=PROP      The target property of an infrastructure model,
+                                  that specifies how to connect to the remote
+                                  Disnix interface. (Defaults to hostname)
+      --interface=INTERFACE       Path to executable that communicates with a
+                                  Disnix interface. Defaults to:
+                                  disnix-ssh-client
       --no-out-link               Do not create a 'result' symlink
       --show-trace                Shows a trace of the output
   -h, --help                      Shows the usage of this command
+
+Environment:
+  DISNIX_CLIENT_INTERFACE    Sets the client interface (defaults to:
+                             disnix-ssh-client)
+  DISNIX_TARGET_PROPERTY     Sets the target property of an infrastructure
+                             model, that specifies how to connect to the remote
+                             Disnix interface. (Defaults to: hostname)
 EOF
 }
 
@@ -45,7 +58,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:p:h -l services:,infrastructure:,qos:,filter-buildable,xml,profile:,coordinator-profile-path:,no-out-link,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:p:h -l services:,infrastructure:,qos:,filter-buildable,xml,profile:,coordinator-profile-path:,interface:,target-property:,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -81,6 +94,12 @@ do
             ;;
         --coordinator-profile-path)
             coordinatorProfilePath=$2
+            ;;
+        --interface)
+            interfaceArg="--interface $2"
+            ;;
+        --target-property)
+            targetPropertyArg="--target-property $2"
             ;;
         --no-out-link)
             noOutLink=1
@@ -128,9 +147,8 @@ fi
 if [ "$filterBuildable" = "1" ]
 then
     initialDistribution=`$0 --services $servicesFile --infrastructure $infrastructureFile`
-    initialDistributionXML=`$0 --services $servicesFile --infrastructure $infrastructureFile --xml`
     filteredDistribution=`mktemp -p $TMPDIR`
-    dydisnix-filter-buildable --services $servicesFile --infrastructure $infrastructureFile --distribution $initialDistribution > $filteredDistribution
+    dydisnix-filter-buildable --services $servicesFile --infrastructure $infrastructureFile --distribution $initialDistribution $interfaceArg $targetPropertyArg > $filteredDistribution
     initialDistributionArg="--argstr distributionFile $filteredDistribution"
 fi
 

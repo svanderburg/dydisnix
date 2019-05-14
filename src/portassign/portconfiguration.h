@@ -22,15 +22,15 @@ PortConfiguration;
 
 char *generate_ports_xml_from_expr(char *ports_expr);
 
-void init_port_configuration(PortConfiguration *port_configuration);
+PortConfiguration *create_empty_port_configuration(void);
 
-int open_port_configuration_from_xml(PortConfiguration *port_configuration, const gchar *port_configuration_file);
+PortConfiguration *open_port_configuration_from_xml(const gchar *port_configuration_file);
 
-int open_port_configuration_from_nix(PortConfiguration *port_configuration, gchar *port_configuration_file);
+PortConfiguration *open_port_configuration_from_nix(gchar *port_configuration_file);
 
-int open_port_configuration(PortConfiguration *port_configuration, gchar *port_configuration_file, int xml);
+PortConfiguration *open_port_configuration(gchar *port_configuration_file, int xml);
 
-void destroy_port_configuration(PortConfiguration *port_configuration);
+void delete_port_configuration(PortConfiguration *port_configuration);
 
 /**
  * If a port reservation has been made use that port number.

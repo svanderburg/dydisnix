@@ -76,10 +76,12 @@ static void delete_config_value(gpointer data)
     delete_target_config(target_config);
 }
 
-void init_port_configuration(PortConfiguration *port_configuration)
+PortConfiguration *create_empty_port_configuration(void)
 {
+    PortConfiguration *port_configuration = (PortConfiguration*)g_malloc(sizeof(PortConfiguration));
     port_configuration->global_config = NULL;
     port_configuration->target_configs = g_hash_table_new_full(g_str_hash, g_str_equal, delete_target_key, delete_config_value);
+    return port_configuration;
 }
 
 static void *parse_int(xmlNodePtr element, void *userdata)
@@ -127,27 +129,32 @@ static void *parse_config(xmlNodePtr element, void *userdata)
     return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_target_config_from_element, parse_and_insert_target_config_attributes);
 }
 
-void parse_port_configuration(PortConfiguration *port_configuration, xmlNodePtr element)
+static void *create_port_configuration_from_element(xmlNodePtr element, void *userdata)
 {
-    memset(port_configuration, '\0', sizeof(PortConfiguration));
-    xmlNodePtr element_children = element->children;
-
-    while(element_children != NULL)
-    {
-        if(xmlStrcmp(element_children->name, (xmlChar*) "globalConfig") == 0)
-            port_configuration->global_config = parse_config(element_children, NULL);
-        else if(xmlStrcmp(element_children->name, (xmlChar*) "targetConfigs") == 0)
-            port_configuration->target_configs = NixXML_parse_g_hash_table_simple(element_children, NULL, parse_config);
-
-        element_children = element_children->next;
-    }
+    return g_malloc0(sizeof(PortConfiguration));
 }
 
-int open_port_configuration_from_xml(PortConfiguration *port_configuration, const gchar *port_configuration_file)
+static void parse_and_insert_port_configuration_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
+{
+    PortConfiguration *port_configuration = (PortConfiguration*)table;
+
+    if(xmlStrcmp(key, (xmlChar*) "globalConfig") == 0)
+        port_configuration->global_config = parse_config(element, NULL);
+    else if(xmlStrcmp(key, (xmlChar*) "targetConfigs") == 0)
+        port_configuration->target_configs = NixXML_parse_g_hash_table_simple(element, NULL, parse_config);
+}
+
+void *parse_port_configuration(xmlNodePtr element, void *userdata)
+{
+    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_port_configuration_from_element, parse_and_insert_port_configuration_attributes);
+}
+
+PortConfiguration *open_port_configuration_from_xml(const gchar *port_configuration_file)
 {
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
+    PortConfiguration *port_configuration;
 
     /* Parse the XML document */
 
@@ -155,7 +162,7 @@ int open_port_configuration_from_xml(PortConfiguration *port_configuration, cons
     {
         g_printerr("Error with parsing the port configuration XML file!\n");
         xmlCleanupParser();
-        return FALSE;
+        return NULL;
     }
 
     /* Check if the document has a root */
@@ -166,39 +173,43 @@ int open_port_configuration_from_xml(PortConfiguration *port_configuration, cons
         g_printerr("The port configuration XML file is empty!\n");
         xmlFreeDoc(doc);
         xmlCleanupParser();
-        return FALSE;
+        return NULL;
     }
 
     /* Parse the target config */
-    parse_port_configuration(port_configuration, node_root);
+    port_configuration = parse_port_configuration(node_root, NULL);
 
     /* Cleanup */
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    return TRUE;
+    return port_configuration;
 }
 
-int open_port_configuration_from_nix(PortConfiguration *port_configuration, gchar *port_configuration_file)
+PortConfiguration *open_port_configuration_from_nix(char *port_configuration_file)
 {
     char *ports_xml = generate_ports_xml_from_expr(port_configuration_file);
-    int status = open_port_configuration_from_xml(port_configuration, ports_xml);
+    PortConfiguration *port_configuration = open_port_configuration_from_xml(ports_xml);
     free(ports_xml);
-    return status;
+    return port_configuration;
 }
 
-int open_port_configuration(PortConfiguration *port_configuration, gchar *port_configuration_file, int xml)
+PortConfiguration *open_port_configuration(gchar *port_configuration_file, int xml)
 {
     if(xml)
-        return open_port_configuration_from_xml(port_configuration, port_configuration_file);
+        return open_port_configuration_from_xml(port_configuration_file);
     else
-        return open_port_configuration_from_nix(port_configuration, port_configuration_file);
+        return open_port_configuration_from_nix(port_configuration_file);
 }
 
-void destroy_port_configuration(PortConfiguration *port_configuration)
+void delete_port_configuration(PortConfiguration *port_configuration)
 {
-    delete_target_config(port_configuration->global_config);
-    g_hash_table_destroy(port_configuration->target_configs);
+    if(port_configuration != NULL)
+    {
+        delete_target_config(port_configuration->global_config);
+        g_hash_table_destroy(port_configuration->target_configs);
+        g_free(port_configuration);
+    }
 }
 
 gint assign_or_reuse_port(PortConfiguration *port_configuration, gchar *target, gchar *service)
@@ -275,10 +286,11 @@ static void print_indent(unsigned int indent_level)
         g_print("  ");
 }
 
-static void print_target_config(TargetConfig *target_config, unsigned int indent_level) {
+static void print_target_config(TargetConfig *target_config, unsigned int indent_level)
+{
     GHashTableIter iter;
     gpointer key, value;
-    
+
     print_indent(indent_level);
     g_print("lastPort = %d;\n", target_config->last_port);
     print_indent(indent_level);
@@ -295,7 +307,7 @@ static void print_target_config(TargetConfig *target_config, unsigned int indent
         print_indent(indent_level + 1);
         g_print("%s = %d;\n", (gchar*)key, *port);
     }
-    
+
     print_indent(indent_level);
     g_print("};\n");
 }

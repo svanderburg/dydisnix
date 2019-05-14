@@ -4,6 +4,7 @@
 #include <procreact_future.h>
 #include <nixxml-parse.h>
 #include <nixxml-gptrarray.h>
+#include <nixxml-ghashtable.h>
 
 static ProcReact_Future generate_service_xml_from_expr_async(char *service_expr)
 {

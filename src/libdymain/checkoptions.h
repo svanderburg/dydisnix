@@ -27,7 +27,8 @@ typedef enum
     DYDISNIX_OPTION_GROUP_SUBSERVICES = 261,
     DYDISNIX_OPTION_GROUP = 262,
     DYDISNIX_OPTION_OUTPUT_DIR = 263,
-    DYDISNIX_OPTION_DOCS = 264
+    DYDISNIX_OPTION_DOCS = 264,
+    DYDISNIX_OPTION_INTERFACE = 265
 }
 DydisnixCommandLineOptions;
 
@@ -37,8 +38,8 @@ int check_infrastructure_option(const char *infrastructure);
 
 int check_distribution_option(const char *distribution);
 
-int check_service_property_option(const char *service_property);
+int check_service_mapping_property_option(const char *service_property);
 
-int check_target_property_option(const char *target_property);
+int check_target_mapping_property_option(const char *target_property);
 
 #endif

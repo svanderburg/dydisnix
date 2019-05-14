@@ -19,16 +19,16 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
     }
     else
     {
-        PortConfiguration port_configuration;
+        PortConfiguration *port_configuration;
         unsigned int i;
 
         if(ports == NULL)
-            init_port_configuration(&port_configuration); /* If no ports config is given, initialise an empty one */
+            port_configuration = create_empty_port_configuration(); /* If no ports config is given, initialise an empty one */
         else
-            open_port_configuration(&port_configuration, ports, xml); /* Otherwise, open the ports config */
+            port_configuration = open_port_configuration(ports, xml); /* Otherwise, open the ports config */
 
         /* Clean obsolete reservations */
-        clean_obsolete_reservations(&port_configuration, candidate_target_array, service_property_array, service_property);
+        clean_obsolete_reservations(port_configuration, candidate_target_array, service_property_array, service_property);
 
         g_print("{\n");
         g_print("  ports = {\n");
@@ -50,7 +50,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
             {
                 if(g_strcmp0(prop_value, "shared") == 0) /* If a shared port is requested, consult the shared ports pool */
                 {
-                    gint port = assign_or_reuse_port(&port_configuration, NULL, distribution_item->service);
+                    gint port = assign_or_reuse_port(port_configuration, NULL, distribution_item->service);
                     g_print("    %s = %d;\n", distribution_item->service, port);
                 }
                 else if(g_strcmp0(prop_value, "private") == 0) /* If a private port is requested, consult the machine's ports pool */
@@ -58,7 +58,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
                     if(distribution_item->targets->len > 0)
                     {
                         gchar *target = g_ptr_array_index(distribution_item->targets, 0);
-                        gint port = assign_or_reuse_port(&port_configuration, target, distribution_item->service);
+                        gint port = assign_or_reuse_port(port_configuration, target, distribution_item->service);
                         g_print("    %s = %d;\n", distribution_item->service, port);
                     }
                     else
@@ -68,10 +68,10 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
         }
 
         g_print("  };\n");
-        print_port_configuration(&port_configuration);
+        print_port_configuration(port_configuration);
         g_print("}\n");
 
-        destroy_port_configuration(&port_configuration);
+        delete_port_configuration(port_configuration);
 
         return 0;
     }

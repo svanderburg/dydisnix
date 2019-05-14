@@ -109,8 +109,8 @@ int main(int argc, char *argv[])
     if(!check_services_option(services)
       || !check_infrastructure_option(infrastructure)
       || !check_distribution_option(distribution)
-      || !check_service_property_option(service_property)
-      || !check_target_property_option(target_property))
+      || !check_service_mapping_property_option(service_property)
+      || !check_target_mapping_property_option(target_property))
         return 1;
 
     /* Execute operation */

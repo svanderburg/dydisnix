@@ -47,8 +47,7 @@ int main(int argc, char *argv[])
         {0, 0, 0, 0}
     };
     char *services = NULL;
-    int xml = DYDISNIX_DEFAULT_XML;
-    int group_subservices = DYDISNIX_DEFAULT_GROUP_SUBSERVICES;
+    unsigned int flags = 0;
     char *group = "";
     int batch = DYDISNIX_DEFAULT_BATCH;
     char *output_dir = ".";
@@ -66,10 +65,10 @@ int main(int argc, char *argv[])
                 services = optarg;
                 break;
             case DYDISNIX_OPTION_XML:
-                xml = TRUE;
+                flags |= DYDISNIX_FLAG_XML;
                 break;
             case DYDISNIX_OPTION_GROUP_SUBSERVICES:
-                group_subservices = TRUE;
+                flags |= DYDISNIX_FLAG_GROUP_SUBSERVICES;
                 break;
             case DYDISNIX_OPTION_GROUP:
                 group = optarg;
@@ -96,7 +95,7 @@ int main(int argc, char *argv[])
 
     /* Execute visualize operation */
     if(batch)
-        return visualize_services_batch(services, xml, group_subservices, output_dir, image_format);
+        return visualize_services_batch(services, flags, output_dir, image_format);
     else
-        return visualize_services(services, xml, group_subservices, group);
+        return visualize_services(services, flags, group);
 }

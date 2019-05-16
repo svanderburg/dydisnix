@@ -44,6 +44,6 @@ gint assign_or_reuse_port(PortConfiguration *port_configuration, gchar *target, 
 
 void print_port_configuration(PortConfiguration *port_configuration);
 
-void clean_obsolete_reservations(PortConfiguration *port_configuration, GPtrArray *candidate_target_array, GPtrArray *service_property_array, gchar *service_property);
+void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property);
 
 #endif

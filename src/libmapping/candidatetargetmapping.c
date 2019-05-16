@@ -3,6 +3,9 @@
 #include <procreact_future.h>
 #include <nixxml-parse.h>
 #include <nixxml-gptrarray.h>
+#include <nixxml-ghashtable.h>
+#include <nixxml-print-nix.h>
+#include <nixxml-print-xml.h>
 
 static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribution_expr, char *infrastructure_expr)
 {
@@ -28,32 +31,17 @@ char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrast
     return path;
 }
 
-static void *create_distribution_item(xmlNodePtr element, void *userdata)
+static void *parse_mapping(xmlNodePtr element, void *userdata)
 {
-    return g_malloc0(sizeof(DistributionItem));
+    return NixXML_parse_g_ptr_array(element, "target", userdata, NixXML_parse_value);
 }
 
-static void parse_and_insert_distribution_item_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
-{
-    DistributionItem *item = (DistributionItem*)table;
-
-    if(xmlStrcmp(key, (xmlChar*) "service") == 0)
-        item->service = NixXML_parse_value(element, NULL);
-    else if(xmlStrcmp(key, (xmlChar*) "targets") == 0)
-        item->targets = NixXML_parse_g_ptr_array(element, "target", userdata, NixXML_parse_value);
-}
-
-static void *parse_distribution_item(xmlNodePtr element, void *userdata)
-{
-    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_distribution_item, parse_and_insert_distribution_item_attributes);
-}
-
-GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_file)
+GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping_file)
 {
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
-    GPtrArray *candidate_target_array;
+    GHashTable *candidate_target_table;
 
     /* Parse the XML document */
 
@@ -76,127 +64,80 @@ GPtrArray *create_candidate_target_array_from_xml(const char *candidate_mapping_
     }
 
     /* Parse mappings */
-    candidate_target_array = NixXML_parse_g_ptr_array(node_root, "distributionitem", NULL, parse_distribution_item);
+    candidate_target_table = NixXML_parse_g_hash_table_verbose(node_root, "service", "name", NULL, parse_mapping);
 
     /* Cleanup */
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
     /* Return the candidate host array */
-    return candidate_target_array;
+    return candidate_target_table;
 }
 
-GPtrArray *create_candidate_target_array_from_nix(gchar *distribution_expr, gchar *infrastructure_expr)
+GHashTable *create_candidate_target_table_from_nix(gchar *distribution_expr, gchar *infrastructure_expr)
 {
     char *distribution_xml = generate_distribution_xml_from_expr(distribution_expr, infrastructure_expr);
-    GPtrArray *candidate_target_array = create_candidate_target_array_from_xml(distribution_xml);
+    GHashTable *candidate_target_table = create_candidate_target_table_from_xml(distribution_xml);
     free(distribution_xml);
-    return candidate_target_array;
+    return candidate_target_table;
 }
 
-GPtrArray *create_candidate_target_array(gchar *distribution_expr, gchar *infrastructure_expr, int xml)
+GHashTable *create_candidate_target_table(gchar *distribution_expr, gchar *infrastructure_expr, int xml)
 {
     if(xml)
-        return create_candidate_target_array_from_xml(distribution_expr);
+        return create_candidate_target_table_from_xml(distribution_expr);
     else
-        return create_candidate_target_array_from_nix(distribution_expr, infrastructure_expr);
+        return create_candidate_target_table_from_nix(distribution_expr, infrastructure_expr);
 }
 
-void delete_candidate_target_array(GPtrArray *candidate_target_array)
+void delete_candidate_target_table(GHashTable *candidate_target_table)
 {
-    if(candidate_target_array != NULL)
+    if(candidate_target_table != NULL)
     {
-        unsigned int i;
-        
-        for(i = 0; i < candidate_target_array->len; i++)
+        GHashTableIter iter;
+        gpointer key, value;
+
+        g_hash_table_iter_init(&iter, candidate_target_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
         {
-            DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
-            unsigned int j;
-            
-            g_free(item->service);
-            
-            if(item->targets != NULL)
+            GPtrArray *targets = (GPtrArray*)value;
+
+            if(targets != NULL)
             {
-                for(j = 0; j < item->targets->len; j++)
+                unsigned int i;
+
+                for(i = 0; i < targets->len; i++)
                 {
-                    gchar *target = g_ptr_array_index(item->targets, j);
+                    gchar *target = g_ptr_array_index(targets, i);
                     g_free(target);
                 }
+
+                g_ptr_array_free(targets, TRUE);
             }
-
-            g_ptr_array_free(item->targets, TRUE);
-            g_free(item);
         }
-        
-        g_ptr_array_free(candidate_target_array, TRUE);
+
+        g_hash_table_destroy(candidate_target_table);
     }
 }
 
-void print_candidate_target_array(const GPtrArray *candidate_target_array)
+static void print_targets_nix(FILE *file, const void *value, const int indent_level, void *userdata)
 {
-    unsigned int i;
-    
-    for(i = 0; i < candidate_target_array->len; i++)
-    {
-	DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
-	unsigned int j;
-	
-	g_print("service: %s\n", item->service);
-	g_print("targets:\n");
-	
-	for(j = 0; j < item->targets->len; j++)
-	{
-	    gchar *target = g_ptr_array_index(item->targets, j);
-	    
-	    g_print("  target: %s\n", target);
-	}
-    }
+    NixXML_print_g_ptr_array_nix(file, value, indent_level, userdata, NixXML_print_string_nix);
 }
 
-void print_expr_of_candidate_target_array(const GPtrArray *candidate_target_array)
+void print_candidate_target_table_nix(GHashTable *candidate_target_table)
 {
-    unsigned int i;
-    
-    g_print("{\n");
-    
-    for(i = 0; i < candidate_target_array->len; i++)
-    {
-	DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
-	unsigned int j;
-	
-	g_print("  %s = [\n", item->service);
-	
-	for(j = 0; j < item->targets->len; j++)
-	{
-	    gchar *target = g_ptr_array_index(item->targets, j);
-	    g_print("    \"%s\"\n", target);
-	}
-	
-	g_print("  ];\n");
-    }
-    
-    g_print("}\n");
+    NixXML_print_g_hash_table_nix(stdout, candidate_target_table, 0, NULL, print_targets_nix);
 }
 
-static gint compare_distribution_item_keys(const DistributionItem **l, const DistributionItem **r)
+static void print_targets_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata)
 {
-    const DistributionItem *left = *l;
-    const DistributionItem *right = *r;
-    
-    return g_strcmp0(left->service, right->service);
+    NixXML_print_g_ptr_array_xml(file, value, "target", indent_level, type_property_name, userdata, NixXML_print_string_xml);
 }
 
-DistributionItem *find_distribution_item(GPtrArray *candidate_target_array, gchar *service)
+void print_candidate_target_table_xml(GHashTable *candidate_target_table)
 {
-    DistributionItem distributionItem;
-    DistributionItem *distributionItemPtr = &distributionItem, **ret;
-    
-    distributionItemPtr->service = service;
-    
-    ret = bsearch(&distributionItemPtr, candidate_target_array->pdata, candidate_target_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_distribution_item_keys);
-
-    if(ret == NULL)
-        return NULL;
-    else
-        return *ret;
+    NixXML_print_open_root_tag(stdout, "distribution");
+    NixXML_print_g_hash_table_verbose_xml(stdout, candidate_target_table, "service", "name", 0, NULL, NULL, print_targets_xml);
+    NixXML_print_close_root_tag(stdout, "distribution");
 }

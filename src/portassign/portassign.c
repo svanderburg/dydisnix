@@ -6,13 +6,14 @@
 #include <unistd.h>
 #include <string.h>
 
-int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *ports, gchar *service_property, int xml)
+int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *ports, gchar *service_property, const unsigned int flags)
 {
+    int xml = flags & DYDISNIX_FLAG_XML;
     GPtrArray *service_property_array = create_service_property_array(services, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, infrastructure, xml);
+    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
 
-    if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
+    if(service_property_array == NULL || targets_array == NULL || candidate_target_table == NULL)
     {
         g_printerr("Error with opening one of the models!\n");
         return 1;
@@ -20,7 +21,6 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
     else
     {
         PortConfiguration *port_configuration;
-        unsigned int i;
 
         if(ports == NULL)
             port_configuration = create_empty_port_configuration(); /* If no ports config is given, initialise an empty one */
@@ -28,15 +28,21 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
             port_configuration = open_port_configuration(ports, xml); /* Otherwise, open the ports config */
 
         /* Clean obsolete reservations */
-        clean_obsolete_reservations(port_configuration, candidate_target_array, service_property_array, service_property);
+        clean_obsolete_reservations(port_configuration, candidate_target_table, service_property_array, service_property);
 
         g_print("{\n");
         g_print("  ports = {\n");
 
-        for(i = 0; i < candidate_target_array->len; i++)
+        GHashTableIter iter;
+        gpointer key, value;
+
+        g_hash_table_iter_init(&iter, candidate_target_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
         {
-            DistributionItem *distribution_item = g_ptr_array_index(candidate_target_array, i);
-            Service *service = find_service(service_property_array, distribution_item->service);
+            gchar *service_name = (gchar*)key;
+            GPtrArray *targets = (GPtrArray*)value;
+
+            Service *service = find_service(service_property_array, service_name);
             gchar *prop_value;
 
             if(service == NULL)
@@ -50,19 +56,19 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
             {
                 if(g_strcmp0(prop_value, "shared") == 0) /* If a shared port is requested, consult the shared ports pool */
                 {
-                    gint port = assign_or_reuse_port(port_configuration, NULL, distribution_item->service);
-                    g_print("    %s = %d;\n", distribution_item->service, port);
+                    gint port = assign_or_reuse_port(port_configuration, NULL, service_name);
+                    g_print("    %s = %d;\n", service_name, port);
                 }
                 else if(g_strcmp0(prop_value, "private") == 0) /* If a private port is requested, consult the machine's ports pool */
                 {
-                    if(distribution_item->targets->len > 0)
+                    if(targets->len > 0)
                     {
-                        gchar *target = g_ptr_array_index(distribution_item->targets, 0);
-                        gint port = assign_or_reuse_port(port_configuration, target, distribution_item->service);
-                        g_print("    %s = %d;\n", distribution_item->service, port);
+                        gchar *target = g_ptr_array_index(targets, 0);
+                        gint port = assign_or_reuse_port(port_configuration, target, service_name);
+                        g_print("    %s = %d;\n", service_name, port);
                     }
                     else
-                        g_printerr("WARNING: %s is not distributed to any machine. Skipping port assignment...\n", distribution_item->service);
+                        g_printerr("WARNING: %s is not distributed to any machine. Skipping port assignment...\n", service_name);
                 }
             }
         }
@@ -71,7 +77,11 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
         print_port_configuration(port_configuration);
         g_print("}\n");
 
+        /* Cleanup */
         delete_port_configuration(port_configuration);
+        delete_service_property_array(service_property_array);
+        delete_target_array(targets_array);
+        delete_candidate_target_table(candidate_target_table);
 
         return 0;
     }

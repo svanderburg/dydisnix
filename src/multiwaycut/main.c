@@ -23,6 +23,8 @@ static void print_usage(const char *command)
     "                           machines in the network\n"
     "      --xml                Specifies that the configurations are in XML not the\n"
     "                           Nix expression language.\n"
+    "      --output-xml         Specifies that the output should be in XML not the\n"
+    "                           Nix expression language\n"
     "  -h, --help               Shows the usage of this command to the user\n"
     );
 }
@@ -36,12 +38,13 @@ int main(int argc, char *argv[])
         {"infrastructure", required_argument, 0, DYDISNIX_OPTION_INFRASTRUCTURE},
         {"distribution", required_argument, 0, DYDISNIX_OPTION_DISTRIBUTION},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
+        {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
     char *infrastructure = NULL;
     char *distribution = NULL;
-    int xml = DYDISNIX_DEFAULT_XML;
+    unsigned int flags = 0;
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "i:d:h", long_options, &option_index)) != -1)
@@ -55,7 +58,10 @@ int main(int argc, char *argv[])
                 distribution = optarg;
                 break;
             case DYDISNIX_OPTION_XML:
-                xml = TRUE;
+                flags |= DYDISNIX_FLAG_XML;
+                break;
+            case DYDISNIX_OPTION_OUTPUT_XML:
+                flags |= DYDISNIX_FLAG_OUTPUT_XML;
                 break;
             case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
@@ -68,10 +74,10 @@ int main(int argc, char *argv[])
 
     /* Validate options */
 
-    if((!xml && !check_infrastructure_option(infrastructure))
+    if((!(flags & DYDISNIX_FLAG_XML) && !check_infrastructure_option(infrastructure))
       || !check_distribution_option(distribution))
         return 1;
 
     /* Execute operation */
-    return multiwaycut(distribution, infrastructure, xml);
+    return multiwaycut(distribution, infrastructure, flags);
 }

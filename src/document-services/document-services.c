@@ -246,8 +246,9 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     return TRUE;
 }
 
-int document_services(gchar *services, gchar *group, int xml, int group_subservices, gchar *docs)
+int document_services(gchar *services, gchar *group, const unsigned int flags, gchar *docs)
 {
+    int xml = flags & DYDISNIX_FLAG_XML;
     GPtrArray *service_property_array = create_service_property_array(services, xml);
 
     if(service_property_array == NULL)
@@ -269,7 +270,7 @@ int document_services(gchar *services, gchar *group, int xml, int group_subservi
         GHashTable *table = query_services_in_group(service_property_array, group);
         delete_service_property_array(service_property_array);
 
-        if(group_subservices)
+        if(flags & DYDISNIX_FLAG_GROUP_SUBSERVICES)
         {
             GHashTable *group_table = group_services(table, group);
             delete_services_table(table);
@@ -330,8 +331,9 @@ static int copy_stylesheet(gchar *output_dir)
     return TRUE;
 }
 
-int document_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir, gchar *image_format, gchar *docs)
+int document_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format, gchar *docs)
 {
+    int xml = flags & DYDISNIX_FLAG_XML;
     GPtrArray *service_property_array = create_service_property_array(services, xml);
 
     if(service_property_array == NULL)

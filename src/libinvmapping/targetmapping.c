@@ -2,34 +2,37 @@
 #include <stdlib.h>
 #include <candidatetargetmapping.h>
 
-GPtrArray *create_target_mapping_array(GPtrArray *candidate_target_array)
+GPtrArray *create_target_mapping_array(GHashTable *candidate_target_table)
 {
     GPtrArray *target_mapping_array = g_ptr_array_new();
-    unsigned int i;
-    
-    for(i = 0; i < candidate_target_array->len; i++)
+
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, candidate_target_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
-	DistributionItem *distribution_item = g_ptr_array_index(candidate_target_array, i);
-	GPtrArray *targets = distribution_item->targets;
-	unsigned int j;
-	
-	for(j = 0; j < targets->len; j++)
-	{
-	    gchar *target = g_ptr_array_index(targets, j);
-	    TargetMappingItem *mapping = find_target_mapping_item(target_mapping_array, target);
-	    
-	    if(mapping == NULL)
-	    {
-		mapping = (TargetMappingItem*)g_malloc(sizeof(TargetMappingItem));
-		mapping->target = target;
-		mapping->services = g_ptr_array_new();
-		
-		g_ptr_array_add(target_mapping_array, mapping);
-		g_ptr_array_sort(target_mapping_array, (GCompareFunc)compare_target_mapping_item);
-	    }
-	
-	    g_ptr_array_add(mapping->services, distribution_item->service);
-	}
+        gchar *service = (gchar*)key;
+        GPtrArray *targets = (GPtrArray*)value;
+        unsigned int i;
+
+        for(i = 0; i < targets->len; i++)
+        {
+            gchar *target = g_ptr_array_index(targets, i);
+            TargetMappingItem *mapping = find_target_mapping_item(target_mapping_array, target);
+
+            if(mapping == NULL)
+            {
+                mapping = (TargetMappingItem*)g_malloc(sizeof(TargetMappingItem));
+                mapping->target = target;
+                mapping->services = g_ptr_array_new();
+
+                g_ptr_array_add(target_mapping_array, mapping);
+                g_ptr_array_sort(target_mapping_array, (GCompareFunc)compare_target_mapping_item);
+            }
+
+            g_ptr_array_add(mapping->services, service);
+        }
     }
     
     return target_mapping_array;

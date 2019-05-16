@@ -1,3 +1,4 @@
+#include "multiwaycut.h"
 #include "targetmapping.h"
 #include "candidatetargetmapping.h"
 
@@ -67,101 +68,102 @@ static void discard_heaviest_cut(GPtrArray *target_mapping_array)
     }
 }
 
-static GPtrArray *create_candidate_target_mapping_from(GPtrArray *target_mapping_array)
+static GHashTable *create_candidate_target_mapping_from(GPtrArray *target_mapping_array)
 {
     unsigned int i;
-    GPtrArray *result = g_ptr_array_new();
-    
+    GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
+
     for(i = 0; i < target_mapping_array->len; i++)
     {
-	TargetMappingItem *target_mapping_item = g_ptr_array_index(target_mapping_array, i);
-	unsigned int j;
-	
-	for(j = 0; j < target_mapping_item->services->len; j++)
-	{
-	    gchar *service = g_ptr_array_index(target_mapping_item->services, j);
-	    DistributionItem *distribution_item = find_distribution_item(result, service);
-	    
-	    if(distribution_item == NULL)
-	    {
-		distribution_item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
-		distribution_item->service = service;
-		distribution_item->targets = g_ptr_array_new();
-		
-		g_ptr_array_add(result, distribution_item);
-	    }
-	
-	    g_ptr_array_add(distribution_item->targets, target_mapping_item->target);
-	}
+        TargetMappingItem *target_mapping_item = g_ptr_array_index(target_mapping_array, i);
+        unsigned int j;
+
+        for(j = 0; j < target_mapping_item->services->len; j++)
+        {
+            gchar *service = g_ptr_array_index(target_mapping_item->services, j);
+            GPtrArray *targets = g_hash_table_lookup(result_table, service);
+
+            if(targets == NULL)
+            {
+                targets = g_ptr_array_new();
+                g_hash_table_insert(result_table, service, targets);
+            }
+
+            g_ptr_array_add(targets, target_mapping_item->target);
+        }
     }
-    
-    return result;
+
+    return result_table;
 }
 
-static void fix_unmapped_services(GPtrArray *initial_candidate_target_array, GPtrArray *candidate_target_array)
+static void fix_unmapped_services(GHashTable *initial_candidate_target_table, GHashTable *candidate_target_table)
 {
-    unsigned int i;
-    
-    for(i = 0; i < initial_candidate_target_array->len; i++)
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, initial_candidate_target_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
-	DistributionItem *item = g_ptr_array_index(initial_candidate_target_array, i);
-	
-	if(find_distribution_item(candidate_target_array, item->service) == NULL)
-	{
-	    DistributionItem *candidate_item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
-	    candidate_item->service = item->service;
-	    candidate_item->targets = g_ptr_array_new();
-	    
-	    if(item->targets->len > 0)
-		g_ptr_array_add(candidate_item->targets, g_ptr_array_index(item->targets, 0));
-	
-	    g_ptr_array_add(candidate_target_array, candidate_item);
-	    g_ptr_array_sort(candidate_target_array, (GCompareFunc)compare_target_mapping_item);
-	}
+        gchar *service = (gchar*)key;
+        GPtrArray *targets = (GPtrArray*)value;
+
+        if(g_hash_table_lookup(candidate_target_table, service) == NULL)
+        {
+            GPtrArray *candidate_targets = g_ptr_array_new();
+
+            if(targets->len > 0)
+                g_ptr_array_add(candidate_targets, g_ptr_array_index(targets, 0));
+
+            g_hash_table_insert(candidate_target_table, service, candidate_targets);
+        }
     }
 }
 
-int multiwaycut(gchar *distribution, gchar *infrastructure, int xml)
+int multiwaycut(gchar *distribution, gchar *infrastructure, const unsigned int flags)
 {
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, NULL, xml);
-    
-    if(candidate_target_array == NULL)
+    GHashTable *candidate_target_table = create_candidate_target_table(distribution, NULL, flags & DYDISNIX_FLAG_XML);
+
+    if(candidate_target_table == NULL)
     {
-	g_printerr("Error opening candidate target host mapping!\n");
-	return 1;
+        g_printerr("Error opening candidate target host mapping!\n");
+        return 1;
     }
     else
     {
-	GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_array);
-	GPtrArray *filtered;
-	GPtrArray *distmapping;
-	unsigned int i;
-    
-	filtered = filter_cuts(target_mapping_array);
-    
-	discard_heaviest_cut(filtered);
-    
-	distmapping = create_candidate_target_mapping_from(filtered);
-    
-	fix_unmapped_services(candidate_target_array, distmapping);
-    
-	print_expr_of_candidate_target_array(distmapping);
-    
-	/* Cleanup */
-    
-	for(i = 0; i < distmapping->len; i++)
-	{
-	    DistributionItem *item = g_ptr_array_index(distmapping, i);
-	    g_ptr_array_free(item->targets, TRUE);
-	    g_free(item);
-	}
-    
-	g_ptr_array_free(distmapping, TRUE);
-    
-	delete_target_mapping_array(filtered);
-	delete_target_mapping_array(target_mapping_array);
-	delete_candidate_target_array(candidate_target_array);
-	
-	return 0;
+        GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_table);
+        GPtrArray *filtered;
+        GHashTable *distmapping;
+        GHashTableIter iter;
+        gpointer key, value;
+
+        filtered = filter_cuts(target_mapping_array);
+
+        discard_heaviest_cut(filtered);
+
+        distmapping = create_candidate_target_mapping_from(filtered);
+
+        fix_unmapped_services(candidate_target_table, distmapping);
+
+        if(flags & DYDISNIX_FLAG_OUTPUT_XML)
+            print_candidate_target_table_xml(distmapping);
+        else
+            print_candidate_target_table_nix(distmapping);
+
+        /* Cleanup */
+
+        g_hash_table_iter_init(&iter, distmapping);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+        {
+            GPtrArray *targets = (GPtrArray*)value;
+            g_ptr_array_free(targets, TRUE);
+        }
+
+        g_hash_table_destroy(distmapping);
+
+        delete_target_mapping_array(filtered);
+        delete_target_mapping_array(target_mapping_array);
+        delete_candidate_target_table(candidate_target_table);
+
+        return 0;
     }
 }

@@ -31,6 +31,8 @@ static void print_usage(const char *command)
     "                           capacity\n"
     "      --xml                Specifies that the configurations are in XML not the\n"
     "                           Nix expression language.\n"
+    "      --output-xml         Specifies that the output should be in XML not the\n"
+    "                           Nix expression language\n"
     "  -h, --help               Shows the usage of this command to the user\n"
     );
 }
@@ -48,6 +50,7 @@ int main(int argc, char *argv[])
         {"service-property", required_argument, 0, DYDISNIX_OPTION_SERVICE_PROPERTY},
         {"target-property", required_argument, 0, DYDISNIX_OPTION_TARGET_PROPERTY},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
+        {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
         {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
         {0, 0, 0, 0}
     };
@@ -57,7 +60,7 @@ int main(int argc, char *argv[])
     char *service_property = NULL;
     char *target_property = NULL;
     Strategy strategy = STRATEGY_NONE;
-    int xml = DYDISNIX_DEFAULT_XML;
+    unsigned int flags = 0;
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
@@ -93,7 +96,10 @@ int main(int argc, char *argv[])
                 target_property = optarg;
                 break;
             case DYDISNIX_OPTION_XML:
-                xml = TRUE;
+                flags |= DYDISNIX_FLAG_XML;
+                break;
+            case DYDISNIX_OPTION_OUTPUT_XML:
+                flags |= DYDISNIX_FLAG_OUTPUT_XML;
                 break;
             case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
@@ -114,5 +120,5 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return divide(strategy, services, infrastructure, distribution, service_property, target_property, xml);
+    return divide(strategy, services, infrastructure, distribution, service_property, target_property, flags);
 }

@@ -1,6 +1,7 @@
 #ifndef __DYDISNIX_DIVIDE_H
 #define __DYDISNIX_DIVIDE_H
 #include <glib.h>
+#include <checkoptions.h>
 
 typedef enum
 {
@@ -11,6 +12,6 @@ typedef enum
 }
 Strategy;
 
-int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, int xml);
+int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, const unsigned int flags);
 
 #endif

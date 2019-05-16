@@ -10,7 +10,7 @@ typedef struct
 }
 TargetMappingItem;
 
-GPtrArray *create_target_mapping_array(GPtrArray *candidate_target_array);
+GPtrArray *create_target_mapping_array(GHashTable *candidate_target_table);
 
 void delete_target_mapping_array(GPtrArray *target_mapping_array);
 

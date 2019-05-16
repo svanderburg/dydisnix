@@ -4,14 +4,11 @@
 	<xsl:template match="/">
 		<distribution>
 			<xsl:for-each select="/expr/attrs/attr">
-				<distributionitem>
-					<service><xsl:value-of select="@name" /></service>
-					<targets>
-						<xsl:for-each select="list/string">
-							<target><xsl:value-of select="@value" /></target>
-						</xsl:for-each>
-					</targets>
-				</distributionitem>
+				<service name="{@name}">
+					<xsl:for-each select="list/string">
+						<target><xsl:value-of select="@value" /></target>
+					</xsl:for-each>
+				</service>
 			</xsl:for-each>
 		</distribution>
 	</xsl:template>

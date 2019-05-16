@@ -64,8 +64,9 @@ static void add_interdependent_services_to_adjacency_array(GPtrArray *dependenci
     }
 }
 
-int graphcol(char *services_xml, char *infrastructure_xml, int xml)
+int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int flags)
 {
+    int xml = flags & DYDISNIX_FLAG_XML;
     GPtrArray *service_property_array = create_service_property_array(services_xml, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure_xml, xml);
     GPtrArray *adjacency_array = g_ptr_array_new();

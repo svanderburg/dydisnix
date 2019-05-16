@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     };
     char *services = NULL;
     char *infrastructure = NULL;
-    int xml = DYDISNIX_DEFAULT_XML;
+    unsigned int flags = 0;
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "s:i:h", long_options, &option_index)) != -1)
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
                 infrastructure = optarg;
                 break;
             case DYDISNIX_OPTION_XML:
-                xml = TRUE;
+                flags |= DYDISNIX_FLAG_XML;
                 break;
             case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
@@ -77,5 +77,5 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return graphcol(services, infrastructure, xml);
+    return graphcol(services, infrastructure, flags);
 }

@@ -4,60 +4,61 @@
 #include "infrastructureproperties.h"
 #include "candidatetargetmapping.h"
 
-static void delete_result_array(GPtrArray *result_array)
+static void delete_result_table(GHashTable *result_table)
 {
-    unsigned int i;
-    
-    for(i = 0; i < result_array->len; i++)
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, result_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
-	DistributionItem *item = g_ptr_array_index(result_array, i);
-	g_ptr_array_free(item->targets, TRUE);
-	g_free(item);
+        GPtrArray *targets = (GPtrArray*)value;
+        g_ptr_array_free(targets, TRUE);
     }
-    
-    g_ptr_array_free(result_array, TRUE);
+
+    g_hash_table_destroy(result_table);
 }
 
-int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, int xml)
+int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, const unsigned int flags)
 {
-    unsigned int i;
     int exit_status = 0;
+    int xml = flags & DYDISNIX_FLAG_XML;
     GPtrArray *service_property_array = create_service_property_array(services, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, infrastructure, xml);
+    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
 
-    if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
+    if(service_property_array == NULL || targets_array == NULL || candidate_target_table == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");
 	exit_status = 1;
     }
     else
     {
-	GPtrArray *result_array = g_ptr_array_new();
-    
-	/* Iterate over each service */
-	for(i = 0; i < candidate_target_array->len; i++)
-	{
-	    DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
-	    Service *service = find_service(service_property_array, item->service);
-	    gchar *service_value = find_service_property(service, service_property);
+        GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
+        GHashTableIter iter;
+        gpointer key, value;
 
-	    GPtrArray *targets = item->targets;
+        /* Iterate over each service */
+
+        g_hash_table_iter_init(&iter, candidate_target_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+        {
+            gchar *service_name = (gchar*)key;
+            GPtrArray *targets = (GPtrArray*)value;
+
+            Service *service = find_service(service_property_array, service_name);
+            gchar *service_value = find_service_property(service, service_property);
+            GPtrArray *result_targets = g_ptr_array_new();
+
 	    unsigned int j;
 	
-	    DistributionItem *result_item;
-	    
 	    if(service_value == NULL)
 	    {
 		g_printerr("Value for service property: %s not found!\n", service_property);
 		exit_status = 1;
 		break;
 	    }
-	    
-	    result_item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
-	    result_item->service = item->service;
-	    result_item->targets = g_ptr_array_new();
-	
+
 	    /* Iterate over targets for the current service */
 	
 	    Target *select_target = NULL;
@@ -81,7 +82,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		    {
 			substract_target_value(target, target_property, atoi(service_value));
 			select_target = target;
-			g_ptr_array_add(result_item->targets, target_name);
+			g_ptr_array_add(result_targets, target_name);
 			break;
 		    }
 		}
@@ -119,7 +120,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	    
 	    if(select_target == NULL)
 	    {
-	        g_printerr("Unable to select a target machine for service: %s, because none of them has sufficient resources left!\n", item->service);
+	        g_printerr("Unable to select a target machine for service: %s, because none of them has sufficient resources left!\n", service_name);
 	        exit_status = 1;
 	    }
 	
@@ -128,25 +129,28 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		if(select_target != NULL)
 		{
 		    substract_target_value(select_target, target_property, atoi(service_value));
-		    g_ptr_array_add(result_item->targets, select_target->name);
+		    g_ptr_array_add(result_targets, select_target->name);
 		}
 	    }
-	
-	    g_ptr_array_add(result_array, result_item);
+
+            g_hash_table_insert(result_table, service_name, result_targets);
 	}
-    
-	/* Print Nix expression of the result */
-	print_expr_of_candidate_target_array(result_array);
-    
-	/* Cleanup */
-	delete_result_array(result_array);
+
+        /* Print Nix expression of the result */
+        if(flags & DYDISNIX_FLAG_OUTPUT_XML)
+            print_candidate_target_table_xml(result_table);
+        else
+            print_candidate_target_table_nix(result_table);
+
+        /* Cleanup */
+        delete_result_table(result_table);
     }
-    
+
     /* Cleanup */
-    
+
     delete_service_property_array(service_property_array);
     delete_target_array(targets_array);
-    delete_candidate_target_array(candidate_target_array);
+    delete_candidate_target_table(candidate_target_table);
 
     /* Return exit status */
     return exit_status;

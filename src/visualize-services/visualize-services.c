@@ -273,9 +273,9 @@ static GHashTable *query_services_in_group_with_context(GPtrArray *service_prope
     return queried_services_table;
 }
 
-int visualize_services(gchar *services, int xml, int group_subservices, gchar *group)
+int visualize_services(gchar *services, const unsigned int flags, gchar *group)
 {
-    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GPtrArray *service_property_array = create_service_property_array(services, flags & DYDISNIX_FLAG_XML);
 
     if(service_property_array == NULL)
     {
@@ -288,7 +288,7 @@ int visualize_services(gchar *services, int xml, int group_subservices, gchar *g
         GHashTable *table = query_services_in_group_with_context(service_property_array, group);
         delete_service_property_array(service_property_array);
 
-        if(group_subservices)
+        if(flags & DYDISNIX_FLAG_GROUP_SUBSERVICES)
         {
             GHashTable *group_table = group_services(table, group);
             delete_services_table(table);
@@ -311,9 +311,9 @@ void generate_architecute_diagrams_for_group(GPtrArray *service_property_array, 
     delete_services_table(table);
 }
 
-int visualize_services_batch(gchar *services, int xml, int group_subservices, gchar *output_dir, gchar *image_format)
+int visualize_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format)
 {
-    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GPtrArray *service_property_array = create_service_property_array(services, flags & DYDISNIX_FLAG_XML);
 
     if(service_property_array == NULL)
     {

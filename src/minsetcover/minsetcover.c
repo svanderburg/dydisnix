@@ -1,42 +1,43 @@
+#include "minsetcover.h"
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
 #include "candidatetargetmapping.h"
 #include "targetmapping.h"
 #include <stdlib.h>
 
-int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, int xml)
+int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, const unsigned int flags)
 {
+    int xml = flags & DYDISNIX_FLAG_XML;
     GPtrArray *service_property_array = create_service_property_array(services, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution, infrastructure, xml);
+    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
     int exit_status = 0;
     
-    if(service_property_array == NULL || targets_array == NULL || candidate_target_array == NULL)
+    if(service_property_array == NULL || targets_array == NULL || candidate_target_table == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");
 	exit_status = 1;
     }
     else
     {
-	GHashTable *covered_services_table = g_hash_table_new(g_str_hash, g_str_equal);
-	GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_array);
-	GPtrArray *result = g_ptr_array_new();
-	unsigned int i;
-    
+        GHashTable *covered_services_table = g_hash_table_new(g_str_hash, g_str_equal);
+        GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_table);
+        GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
+        GHashTableIter iter;
+        gpointer key, value;
+
         /* Create a result array with the same services as in the input distribution model and empty candidate hosts */
-	for(i = 0; i < candidate_target_array->len; i++)
-	{
-	    DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
-	
-	    DistributionItem *result_item = (DistributionItem*)g_malloc(sizeof(DistributionItem));
-	    result_item->service = item->service;
-	    result_item->targets = g_ptr_array_new();
-	
-	    g_ptr_array_add(result, result_item);
-	}
-    
-	/* Execute minimum set cover approximation */
-	
+
+        g_hash_table_iter_init(&iter, candidate_target_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+        {
+            gchar *service = (gchar*)key;
+            GPtrArray *result_targets = g_ptr_array_new();
+            g_hash_table_insert(result_table, service, result_targets);
+        }
+
+        /* Execute minimum set cover approximation */
+
 	while(g_hash_table_size(covered_services_table) < service_property_array->len)
 	{
 	    unsigned int i;
@@ -83,38 +84,41 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 	    for(i = 0; i < min_cost_target_mapping->services->len; i++)
 	    {
 		gchar *service = g_ptr_array_index(min_cost_target_mapping->services, i);
-		DistributionItem *item = find_distribution_item(result, service);
-		
+		GPtrArray *targets = g_hash_table_lookup(result_table, service);
+
 		if(g_hash_table_lookup(covered_services_table, service) == NULL)
 		{
-		    g_ptr_array_add(item->targets, min_cost_target_mapping->target);
+		    g_ptr_array_add(targets, min_cost_target_mapping->target);
 		    g_hash_table_insert(covered_services_table, service, service);
 		}
 	    }
 	}
-    
-	/* Print resulting expression to stdout */
-	print_expr_of_candidate_target_array(result);
-    
-	/* Cleanup */
-    
-	for(i = 0; i < result->len; i++)
-	{
-	    DistributionItem *item = g_ptr_array_index(result, i);
-	    g_ptr_array_free(item->targets, TRUE);
-	    g_free(item);
-	}
-    
-	g_ptr_array_free(result, TRUE);
-    
-	delete_target_mapping_array(target_mapping_array);
-	g_hash_table_destroy(covered_services_table);
+
+        /* Print resulting expression to stdout */
+        if(flags & DYDISNIX_FLAG_OUTPUT_XML)
+            print_candidate_target_table_xml(result_table);
+        else
+            print_candidate_target_table_nix(result_table);
+
+        /* Cleanup */
+
+        g_hash_table_iter_init(&iter, result_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+        {
+            GPtrArray *targets = (GPtrArray*)targets;
+            g_ptr_array_free(targets, TRUE);
+        }
+
+        g_hash_table_destroy(result_table);
+
+        delete_target_mapping_array(target_mapping_array);
+        g_hash_table_destroy(covered_services_table);
     }
-    
+
     /* Cleanup */
-    delete_candidate_target_array(candidate_target_array);
+    delete_candidate_target_table(candidate_target_table);
     delete_target_array(targets_array);
     delete_service_property_array(service_property_array);
-    
+
     return exit_status;
 }

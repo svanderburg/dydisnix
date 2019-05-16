@@ -26,6 +26,8 @@ static void print_usage(const char *command)
     "                               to machines in the network\n"
     "      --xml                    Specifies that the configurations are in XML not\n"
     "                               the Nix expression language.\n"
+    "      --output-xml             Specifies that the output should be in XML not the\n"
+    "                               Nix expression language\n"
     "      --target-property=PROP   The target property of an infrastructure model,\n"
     "                               that specifies how to connect to the remote Disnix\n"
     "                               interface. (Defaults to hostname)\n"
@@ -54,13 +56,14 @@ int main(int argc, char *argv[])
         {"interface", required_argument, 0, DYDISNIX_OPTION_INTERFACE},
         {"target-property", required_argument, 0, DYDISNIX_OPTION_TARGET_PROPERTY},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
+        {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
         {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
         {0, 0, 0, 0}
     };
     char *services = NULL;
     char *infrastructure = NULL;
     char *distribution = NULL;
-    int xml = DYDISNIX_DEFAULT_XML;
+    unsigned int flags = 0;
     char *interface = NULL;
     char *target_property = NULL;
 
@@ -79,7 +82,10 @@ int main(int argc, char *argv[])
                 distribution = optarg;
                 break;
             case DYDISNIX_OPTION_XML:
-                xml = TRUE;
+                flags |= DYDISNIX_FLAG_XML;
+                break;
+            case DYDISNIX_OPTION_OUTPUT_XML:
+                flags |= DYDISNIX_FLAG_OUTPUT_XML;
                 break;
             case DYDISNIX_OPTION_INTERFACE:
                 interface = optarg;
@@ -107,5 +113,5 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return filter_buildable(services, infrastructure, distribution, xml, interface, target_property);
+    return filter_buildable(services, infrastructure, distribution, flags, interface, target_property);
 }

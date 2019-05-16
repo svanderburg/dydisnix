@@ -343,22 +343,22 @@ void print_port_configuration(PortConfiguration *port_configuration)
 
 typedef struct
 {
-    GPtrArray *candidate_target_array;
+    GHashTable *candidate_target_table;
     GPtrArray *service_property_array;
     gchar *service_property;
     gchar *service_property_value;
 }
 RemoveParams;
 
-static gboolean remove_service_port_pair(gchar *service, RemoveParams *params)
+static gboolean remove_service_port_pair(gchar *service_name, RemoveParams *params)
 {
-    DistributionItem *item = find_distribution_item(params->candidate_target_array, service);
+    GPtrArray *targets = g_hash_table_lookup(params->candidate_target_table, service_name);
 
-    if(item == NULL)
+    if(targets == NULL)
         return TRUE;
     else
     {
-        Service *service = find_service(params->service_property_array, item->service);
+        Service *service = find_service(params->service_property_array, service_name);
 
         if(service == NULL)
             return TRUE;
@@ -390,12 +390,12 @@ static gboolean remove_port_to_service_mapping(gpointer key, gpointer value, gpo
 
 /** Remove global port reservations for services that are no longer deployed */
 
-static void clean_obsolete_services_to_ports(TargetConfig *target_config, GPtrArray *candidate_target_array, GPtrArray *service_property_array, gchar *service_property, gchar *service_property_value)
+static void clean_obsolete_services_to_ports(TargetConfig *target_config, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property, gchar *service_property_value)
 {
     RemoveParams params;
     
     /* Remove obsolete service to port mappings */
-    params.candidate_target_array = candidate_target_array;
+    params.candidate_target_table = candidate_target_table;
     params.service_property_array = service_property_array;
     params.service_property = service_property;
     params.service_property_value = service_property_value;
@@ -412,17 +412,17 @@ static gboolean remove_obsolete_target_config(gpointer key, gpointer value, gpoi
     return (find_target_mapping_item(target_mapping_array, target) == NULL);
 }
 
-void clean_obsolete_reservations(PortConfiguration *port_configuration, GPtrArray *candidate_target_array, GPtrArray *service_property_array, gchar *service_property)
+void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property)
 {
     /* Generate inverse mapping to determine which machines are in use */
-    GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_array);
+    GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_table);
     
     GHashTableIter iter;
     gpointer key, value;
     
     /* Clean the global target config */
     if(port_configuration->global_config != NULL)
-        clean_obsolete_services_to_ports(port_configuration->global_config, candidate_target_array, service_property_array, service_property, "shared");
+        clean_obsolete_services_to_ports(port_configuration->global_config, candidate_target_table, service_property_array, service_property, "shared");
     
     /* Remove all port reservations for a machine, if it does not exist anymore */
     g_hash_table_foreach_remove(port_configuration->target_configs, remove_obsolete_target_config, target_mapping_array);
@@ -436,7 +436,7 @@ void clean_obsolete_reservations(PortConfiguration *port_configuration, GPtrArra
         TargetMappingItem *target_mapping_item = find_target_mapping_item(target_mapping_array, target);
         
         if(target_mapping_item != NULL)
-            clean_obsolete_services_to_ports(target_config, candidate_target_array, service_property_array, service_property, "private");
+            clean_obsolete_services_to_ports(target_config, candidate_target_table, service_property_array, service_property, "private");
     }
     
     /* Clean inverse mapping array from memory */

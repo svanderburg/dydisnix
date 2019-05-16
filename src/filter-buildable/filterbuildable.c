@@ -1,3 +1,4 @@
+#include "filterbuildable.h"
 #include "candidatetargetmapping.h"
 #include <unistd.h>
 #include <procreact_pid.h>
@@ -37,60 +38,66 @@ static int instantiate(gchar *services_expr, gchar *infrastructure_expr, gchar *
         return exit_status;
 }
 
-static void delete_filtered_target_array(GPtrArray *filtered_target_array)
+static void delete_filtered_target_table(GHashTable *filtered_target_table)
 {
-    unsigned int i;
-    
-    for(i = 0; i < filtered_target_array->len; i++)
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, filtered_target_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
-	DistributionItem *item = g_ptr_array_index(filtered_target_array, i);
-	g_free(item);
+        GPtrArray *targets = (GPtrArray*)value;
+        g_ptr_array_free(targets, TRUE);
     }
-    
-    g_ptr_array_free(filtered_target_array, TRUE);
+
+    g_hash_table_destroy(filtered_target_table);
 }
 
-int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, int xml, char *interface, char *target_property)
+int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, const unsigned int flags, char *interface, char *target_property)
 {
-    unsigned int i;
-    GPtrArray *candidate_target_array = create_candidate_target_array(distribution_expr, infrastructure_expr, xml);
+    GHashTable *candidate_target_table = create_candidate_target_table(distribution_expr, infrastructure_expr, flags & DYDISNIX_FLAG_XML);
 
-    if(candidate_target_array == NULL)
+    if(candidate_target_table == NULL)
     {
-	g_printerr("Error opening candidate host mapping!\n");
-	return 1;
+        g_printerr("Error opening candidate host mapping!\n");
+        return 1;
     }
     else
     {
-	GPtrArray *filtered_target_array = g_ptr_array_new();
-    
-	for(i = 0; i < candidate_target_array->len; i++)
-	{
-	    DistributionItem *filter_item = g_malloc(sizeof(DistributionItem));
-    	    DistributionItem *item = g_ptr_array_index(candidate_target_array, i);
-	    unsigned int j;
-	
-	    filter_item->service = item->service;
-	    filter_item->targets = g_ptr_array_new();
-	
-	    for(j = 0; j < item->targets->len; j++)
-	    {
-		gchar *target = g_ptr_array_index(item->targets, j);
-	    
-		if(instantiate(services_expr, infrastructure_expr, distribution_expr, item->service, target, interface, target_property) == 0)
-	    	    g_ptr_array_add(filter_item->targets, target);
-	    }
-	
-	    g_ptr_array_add(filtered_target_array, filter_item);
-	}
-    
-	/* Print resulting expression */
-	print_expr_of_candidate_target_array(filtered_target_array);
-    
-	/* Cleanup */
-	delete_filtered_target_array(filtered_target_array);
-	delete_candidate_target_array(candidate_target_array);
-	
-	return 0;
+        GHashTable *filtered_target_table = g_hash_table_new(g_str_hash, g_str_equal);
+
+        GHashTableIter iter;
+        gpointer key, value;
+
+        g_hash_table_iter_init(&iter, candidate_target_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+        {
+            gchar *service = (gchar*)key;
+            GPtrArray *targets = (GPtrArray*)value;
+            unsigned int i;
+            GPtrArray *filtered_targets = g_ptr_array_new();
+
+            for(i = 0; i < targets->len; i++)
+            {
+                gchar *target = g_ptr_array_index(targets, i);
+
+                if(instantiate(services_expr, infrastructure_expr, distribution_expr, service, target, interface, target_property) == 0)
+                    g_ptr_array_add(filtered_targets, target);
+            }
+
+            g_hash_table_insert(filtered_target_table, service, filtered_targets);
+        }
+
+        /* Print resulting expression */
+        if(flags & DYDISNIX_FLAG_OUTPUT_XML)
+            print_candidate_target_table_xml(filtered_target_table);
+        else
+            print_candidate_target_table_nix(filtered_target_table);
+
+        /* Cleanup */
+        delete_filtered_target_table(filtered_target_table);
+        delete_candidate_target_table(candidate_target_table);
+
+        return 0;
     }
 }

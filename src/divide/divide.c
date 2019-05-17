@@ -75,7 +75,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		    exit_status = 1;
 		    break;
 		}
-	    
+
 		if(strategy == STRATEGY_GREEDY)
 		{
 		    if(atoi(service_value) <= atoi(target_value))

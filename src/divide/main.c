@@ -120,5 +120,12 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return divide(strategy, services, infrastructure, distribution, service_property, target_property, flags);
+
+    if(strategy == STRATEGY_NONE)
+    {
+        fprintf(stderr, "ERROR: A strategy must be provided!\n");
+        return 1;
+    }
+    else
+        return divide(strategy, services, infrastructure, distribution, service_property, target_property, flags);
 }

@@ -3,8 +3,51 @@
 #include "infrastructureproperties.h"
 #include "candidatetargetmapping.h"
 #include "portconfiguration.h"
+#include "portdistribution.h"
 #include <unistd.h>
 #include <string.h>
+#include <nixxml-print-nix.h>
+#include <nixxml-print-xml.h>
+
+typedef struct
+{
+    GHashTable *port_distribution_table;
+
+    PortConfiguration *port_configuration;
+}
+PortsAssignment;
+
+static void clean_ports_assignment(PortsAssignment *assignment)
+{
+    delete_port_distribution_table(assignment->port_distribution_table);
+    delete_port_configuration(assignment->port_configuration);
+}
+
+static void print_ports_assignment_attributes_nix(FILE *file, const void *value, const int indent_level, void *userdata, NixXML_PrintValueFunc print_value)
+{
+    const PortsAssignment *assignment = (const PortsAssignment*)value;
+    NixXML_print_attribute_nix(file, "ports", assignment->port_distribution_table, indent_level, userdata, print_port_distribution_table_nix);
+    NixXML_print_attribute_nix(file, "portConfiguration", assignment->port_configuration, indent_level, userdata, print_port_configuration_nix);
+}
+
+static void print_ports_assignment_nix(const PortsAssignment *assignment)
+{
+    NixXML_print_attrset_nix(stdout, assignment, 0, NULL, print_ports_assignment_attributes_nix, NULL);
+}
+
+static void print_ports_assignment_attributes_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata, NixXML_PrintXMLValueFunc print_value)
+{
+    const PortsAssignment *assignment = (const PortsAssignment*)value;
+    NixXML_print_simple_attribute_xml(file, "ports", assignment->port_distribution_table, indent_level, type_property_name, userdata, print_port_distribution_table_xml);
+    NixXML_print_simple_attribute_xml(file, "portConfiguration", assignment->port_configuration, indent_level, type_property_name, userdata, print_port_configuration_xml);
+}
+
+static void print_ports_assignment_xml(const PortsAssignment *assignment)
+{
+    NixXML_print_open_root_tag(stdout, "portAssignment");
+    NixXML_print_simple_attrset_xml(stdout, assignment, 0, NULL, NULL, print_ports_assignment_attributes_xml, NULL);
+    NixXML_print_close_root_tag(stdout, "portAssignment");
+}
 
 int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *ports, gchar *service_property, const unsigned int flags)
 {
@@ -20,65 +63,27 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
     }
     else
     {
-        PortConfiguration *port_configuration;
+        PortsAssignment assignment;
 
         if(ports == NULL)
-            port_configuration = create_empty_port_configuration(); /* If no ports config is given, initialise an empty one */
+            assignment.port_configuration = create_empty_port_configuration(); /* If no ports config is given, initialise an empty one */
         else
-            port_configuration = open_port_configuration(ports, xml); /* Otherwise, open the ports config */
+            assignment.port_configuration = open_port_configuration(ports, xml); /* Otherwise, open the ports config */
 
         /* Clean obsolete reservations */
-        clean_obsolete_reservations(port_configuration, candidate_target_table, service_property_array, service_property);
+        clean_obsolete_reservations(assignment.port_configuration, candidate_target_table, service_property_array, service_property);
 
-        g_print("{\n");
-        g_print("  ports = {\n");
+        /* Create ports distribution table */
+        assignment.port_distribution_table = create_port_distribution_table(assignment.port_configuration, service_property_array, candidate_target_table, service_property);
 
-        GHashTableIter iter;
-        gpointer key, value;
-
-        g_hash_table_iter_init(&iter, candidate_target_table);
-        while(g_hash_table_iter_next(&iter, &key, &value))
-        {
-            gchar *service_name = (gchar*)key;
-            GPtrArray *targets = (GPtrArray*)value;
-
-            Service *service = find_service(service_property_array, service_name);
-            gchar *prop_value;
-
-            if(service == NULL)
-                prop_value = NULL;
-            else
-                prop_value = find_service_property(service, service_property);
-
-            /* For each service that has a port property that is unassigned, assign a port */
-
-            if(prop_value != NULL)
-            {
-                if(g_strcmp0(prop_value, "shared") == 0) /* If a shared port is requested, consult the shared ports pool */
-                {
-                    gint port = assign_or_reuse_port(port_configuration, NULL, service_name);
-                    g_print("    %s = %d;\n", service_name, port);
-                }
-                else if(g_strcmp0(prop_value, "private") == 0) /* If a private port is requested, consult the machine's ports pool */
-                {
-                    if(targets->len > 0)
-                    {
-                        gchar *target = g_ptr_array_index(targets, 0);
-                        gint port = assign_or_reuse_port(port_configuration, target, service_name);
-                        g_print("    %s = %d;\n", service_name, port);
-                    }
-                    else
-                        g_printerr("WARNING: %s is not distributed to any machine. Skipping port assignment...\n", service_name);
-                }
-            }
-        }
-
-        g_print("  };\n");
-        print_port_configuration(port_configuration);
-        g_print("}\n");
+        /* Print ports configuration */
+        if(flags & DYDISNIX_OPTION_OUTPUT_XML)
+            print_ports_assignment_xml(&assignment);
+        else
+            print_ports_assignment_nix(&assignment);
 
         /* Cleanup */
-        delete_port_configuration(port_configuration);
+        clean_ports_assignment(&assignment);
         delete_service_property_array(service_property_array);
         delete_target_array(targets_array);
         delete_candidate_target_table(candidate_target_table);

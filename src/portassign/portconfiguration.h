@@ -1,21 +1,13 @@
 #ifndef __DYDISNIX_PORTCONFIGURATION_H
 #define __DYDISNIX_PORTCONFIGURATION_H
+#include <stdio.h>
 #include <glib.h>
-
-typedef struct
-{
-    GHashTable *services_to_ports;
-    GHashTable *ports_to_services;
-    gint last_port;
-    gint min_port;
-    gint max_port;
-}
-TargetConfig;
+#include "targetconfig.h"
 
 typedef struct
 {
     TargetConfig *global_config;
-    
+
     GHashTable *target_configs;
 }
 PortConfiguration;
@@ -42,7 +34,9 @@ void delete_port_configuration(PortConfiguration *port_configuration);
  */
 gint assign_or_reuse_port(PortConfiguration *port_configuration, gchar *target, gchar *service);
 
-void print_port_configuration(PortConfiguration *port_configuration);
+void print_port_configuration_nix(FILE *file, const void *value, const int indent_level, void *userdata);
+
+void print_port_configuration_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata);
 
 void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property);
 

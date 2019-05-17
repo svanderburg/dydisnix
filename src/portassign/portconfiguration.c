@@ -6,6 +6,8 @@
 #include <candidatetargetmapping.h>
 #include <procreact_future.h>
 #include <nixxml-parse.h>
+#include <nixxml-print-nix.h>
+#include <nixxml-print-xml.h>
 #include <nixxml-ghashtable.h>
 
 static ProcReact_Future generate_ports_xml_from_expr_async(char *ports_expr)
@@ -32,44 +34,6 @@ char *generate_ports_xml_from_expr(char *ports_expr)
     return path;
 }
 
-static void delete_port_value(gpointer data)
-{
-    g_free(data);
-}
-
-static void delete_service_value(gpointer data)
-{
-    g_free(data);
-}
-
-static TargetConfig *create_target_config(gint last_port, gint min_port, gint max_port)
-{
-    TargetConfig *target_config = (TargetConfig*)g_malloc(sizeof(TargetConfig));
-    
-    target_config->last_port = last_port;
-    target_config->min_port = min_port;
-    target_config->max_port = max_port;
-    target_config->services_to_ports = g_hash_table_new_full(g_str_hash, g_str_equal, delete_service_value, delete_port_value);
-    target_config->ports_to_services = g_hash_table_new(g_int_hash, g_int_equal);
-    
-    return target_config;
-}
-
-static void delete_target_config(TargetConfig *target_config)
-{
-    if(target_config != NULL)
-    {
-        g_hash_table_destroy(target_config->services_to_ports);
-        g_hash_table_destroy(target_config->ports_to_services);
-        g_free(target_config);
-    }
-}
-
-static void delete_target_key(gpointer data)
-{
-    g_free(data);
-}
-
 static void delete_config_value(gpointer data)
 {
     TargetConfig *target_config = (TargetConfig*)data;
@@ -80,53 +44,8 @@ PortConfiguration *create_empty_port_configuration(void)
 {
     PortConfiguration *port_configuration = (PortConfiguration*)g_malloc(sizeof(PortConfiguration));
     port_configuration->global_config = NULL;
-    port_configuration->target_configs = g_hash_table_new_full(g_str_hash, g_str_equal, delete_target_key, delete_config_value);
+    port_configuration->target_configs = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, delete_config_value);
     return port_configuration;
-}
-
-static void *parse_int(xmlNodePtr element, void *userdata)
-{
-    gchar *value = NixXML_parse_value(element, userdata);
-    int *value_int = (int*)g_malloc(sizeof(int));
-    *value_int = atoi(value);
-    g_free(value);
-    return value_int;
-}
-
-static void *create_target_config_from_element(xmlNodePtr element, void *userdata)
-{
-    return create_target_config(0, 0, 0);
-}
-
-static void parse_and_insert_target_config_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
-{
-    TargetConfig *target_config = (TargetConfig*)table;
-
-    if(xmlStrcmp(key, (xmlChar*) "lastPort") == 0)
-    {
-        gchar *value = NixXML_parse_value(element, NULL);
-        target_config->last_port = atoi(value);
-        g_free(value);
-    }
-    else if(xmlStrcmp(key, (xmlChar*) "minPort") == 0)
-    {
-        gchar *value = NixXML_parse_value(element, NULL);
-        target_config->min_port = atoi(value);
-        g_free(value);
-    }
-    else if(xmlStrcmp(key, (xmlChar*) "maxPort") == 0)
-    {
-        gchar *value = NixXML_parse_value(element, NULL);
-        target_config->max_port = atoi(value);
-        g_free(value);
-    }
-    else if(xmlStrcmp(key, (xmlChar*) "servicesToPorts") == 0)
-        target_config->services_to_ports = NixXML_parse_g_hash_table_simple(element, userdata, parse_int);
-}
-
-static void *parse_config(xmlNodePtr element, void *userdata)
-{
-    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_target_config_from_element, parse_and_insert_target_config_attributes);
 }
 
 static void *create_port_configuration_from_element(xmlNodePtr element, void *userdata)
@@ -134,19 +53,19 @@ static void *create_port_configuration_from_element(xmlNodePtr element, void *us
     return g_malloc0(sizeof(PortConfiguration));
 }
 
-static void parse_and_insert_port_configuration_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
+static void parse_and_insert_port_configuration_attributes_nix(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
 {
     PortConfiguration *port_configuration = (PortConfiguration*)table;
 
     if(xmlStrcmp(key, (xmlChar*) "globalConfig") == 0)
-        port_configuration->global_config = parse_config(element, NULL);
+        port_configuration->global_config = parse_target_config(element, NULL);
     else if(xmlStrcmp(key, (xmlChar*) "targetConfigs") == 0)
-        port_configuration->target_configs = NixXML_parse_g_hash_table_simple(element, NULL, parse_config);
+        port_configuration->target_configs = NixXML_parse_g_hash_table_simple(element, NULL, parse_target_config);
 }
 
 void *parse_port_configuration(xmlNodePtr element, void *userdata)
 {
-    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_port_configuration_from_element, parse_and_insert_port_configuration_attributes);
+    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_port_configuration_from_element, parse_and_insert_port_configuration_attributes_nix);
 }
 
 PortConfiguration *open_port_configuration_from_xml(const gchar *port_configuration_file)
@@ -278,130 +197,46 @@ gint assign_or_reuse_port(PortConfiguration *port_configuration, gchar *target, 
         return *port; /* If port reservation exist already, return it */
 }
 
-static void print_indent(unsigned int indent_level)
+/* Print Nix */
+
+static void print_target_configs_nix(FILE *file, const void *value, const int indent_level, void *userdata)
 {
-    unsigned int i;
-    
-    for(i = 0; i < indent_level; i++)
-        g_print("  ");
+    NixXML_print_g_hash_table_nix(file, (GHashTable*)value, indent_level, userdata, print_target_config_nix);
 }
 
-static void print_target_config(TargetConfig *target_config, unsigned int indent_level)
+static void print_port_configuration_attributes_nix(FILE *file, const void *value, const int indent_level, void *userdata, NixXML_PrintValueFunc print_value)
 {
-    GHashTableIter iter;
-    gpointer key, value;
+    const PortConfiguration *port_configuration = (const PortConfiguration*)value;
 
-    print_indent(indent_level);
-    g_print("lastPort = %d;\n", target_config->last_port);
-    print_indent(indent_level);
-    g_print("minPort = %d;\n", target_config->min_port);
-    print_indent(indent_level);
-    g_print("maxPort = %d;\n", target_config->max_port);
-    print_indent(indent_level);
-    g_print("servicesToPorts = {\n");
-    
-    g_hash_table_iter_init(&iter, target_config->services_to_ports);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        gint *port = (gint*)value;
-        print_indent(indent_level + 1);
-        g_print("%s = %d;\n", (gchar*)key, *port);
-    }
-
-    print_indent(indent_level);
-    g_print("};\n");
-}
-
-void print_port_configuration(PortConfiguration *port_configuration)
-{
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_print("  portConfiguration = {\n");
-    
     if(port_configuration->global_config != NULL)
-    {
-        g_print("    globalConfig = {\n");
-        print_target_config(port_configuration->global_config, 3);
-        g_print("    };\n");
-    }
-    
-    g_print("    targetConfigs = {\n");
-    g_hash_table_iter_init(&iter, port_configuration->target_configs);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        TargetConfig *target_config = (TargetConfig*)value;
-        
-        g_print("      %s = {\n", (gchar*)key);
-        print_target_config(target_config, 4);
-        g_print("      };\n");
-    }
-    g_print("    };\n");
-    
-    g_print("  };\n");
+        NixXML_print_attribute_nix(file, "globalConfig", port_configuration->global_config, indent_level, userdata, print_target_config_nix);
+    NixXML_print_attribute_nix(file, "targetConfigs", port_configuration->target_configs, indent_level, userdata, print_target_configs_nix);
 }
 
-typedef struct
+void print_port_configuration_nix(FILE *file, const void *value, const int indent_level, void *userdata)
 {
-    GHashTable *candidate_target_table;
-    GPtrArray *service_property_array;
-    gchar *service_property;
-    gchar *service_property_value;
-}
-RemoveParams;
-
-static gboolean remove_service_port_pair(gchar *service_name, RemoveParams *params)
-{
-    GPtrArray *targets = g_hash_table_lookup(params->candidate_target_table, service_name);
-
-    if(targets == NULL)
-        return TRUE;
-    else
-    {
-        Service *service = find_service(params->service_property_array, service_name);
-
-        if(service == NULL)
-            return TRUE;
-        else
-        {
-            gchar *value = find_service_property(service, params->service_property);
-
-            if(value == NULL)
-                return TRUE;
-            else
-                return (g_strcmp0(value, params->service_property_value) != 0);
-        }
-    }
+    NixXML_print_attrset_nix(file, value, indent_level, userdata, print_port_configuration_attributes_nix, NULL);
 }
 
-static gboolean remove_service_to_port_mapping(gpointer key, gpointer value, gpointer user_data)
+/* Print XML */
+
+static void print_target_configs_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata)
 {
-    gchar *service = (gchar*)key;
-    RemoveParams *params = (RemoveParams*)user_data;
-    return remove_service_port_pair(service, params);
+    NixXML_print_g_hash_table_simple_xml(file, (GHashTable*)value, indent_level, type_property_name, userdata, print_target_config_xml);
 }
 
-static gboolean remove_port_to_service_mapping(gpointer key, gpointer value, gpointer user_data)
+static void print_port_configuration_attributes_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata, NixXML_PrintXMLValueFunc print_value)
 {
-    gchar *service = (gchar*)value;
-    RemoveParams *params = (RemoveParams*)user_data;
-    return remove_service_port_pair(service, params);
+    const PortConfiguration *port_configuration = (const PortConfiguration*)value;
+
+    if(port_configuration->global_config != NULL)
+        NixXML_print_simple_attribute_xml(file, "globalConfig", port_configuration->global_config, indent_level, type_property_name, userdata, print_target_config_xml);
+    NixXML_print_simple_attribute_xml(file, "targetConfigs", port_configuration->target_configs, indent_level, type_property_name, userdata, print_target_configs_xml);
 }
 
-/** Remove global port reservations for services that are no longer deployed */
-
-static void clean_obsolete_services_to_ports(TargetConfig *target_config, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property, gchar *service_property_value)
+void print_port_configuration_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata)
 {
-    RemoveParams params;
-    
-    /* Remove obsolete service to port mappings */
-    params.candidate_target_table = candidate_target_table;
-    params.service_property_array = service_property_array;
-    params.service_property = service_property;
-    params.service_property_value = service_property_value;
-    
-    g_hash_table_foreach_remove(target_config->ports_to_services, remove_port_to_service_mapping, &params);
-    g_hash_table_foreach_remove(target_config->services_to_ports, remove_service_to_port_mapping, &params);
+    NixXML_print_simple_attrset_xml(file, value, indent_level, type_property_name, userdata, print_port_configuration_attributes_xml, NULL);
 }
 
 static gboolean remove_obsolete_target_config(gpointer key, gpointer value, gpointer user_data)

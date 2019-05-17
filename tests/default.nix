@@ -487,8 +487,8 @@ in
         $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-port-assign -s ${tests}/services-sharedports2.nix -i ${tests}/infrastructure.nix -d ${tests}/distribution2.nix -p ports2.nix > ports3.nix");
 
         $machine->mustFail("grep '    testService1 =' ports3.nix");
-        $machine->mustSucceed("grep \"\$(grep '    testService2 ='  ports.nix | head -1)\" ports3.nix");
-        $machine->mustSucceed("grep \"\$(grep '    testService3 ='  ports.nix | head -1)\" ports3.nix");
+        $machine->mustSucceed("grep \"\$(grep '    \"testService2\" ='  ports.nix | head -1)\" ports3.nix");
+        $machine->mustSucceed("grep \"\$(grep '    \"testService3\" ='  ports.nix | head -1)\" ports3.nix");
 
         # We add the first service again. It should have received a new port
         # number.
@@ -498,26 +498,26 @@ in
         # We now remove the portAssign attribute for the first service. It
         # should disappear from the ports configuration.
         $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-port-assign -s ${tests}/services-sharedports3.nix -i ${tests}/infrastructure.nix -d ${tests}/distribution.nix -p ports4.nix > ports5.nix");
-        $machine->mustFail("grep '    testService1 =' ports5.nix");
+        $machine->mustFail("grep '    \"testService1\" =' ports5.nix");
 
         # Map two services with private port assignments to the same
         # machine. They should have different port numbers
         $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-port-assign -s ${tests}/services-privateports.nix -i ${tests}/infrastructure.nix -d ${tests}/distribution2.nix > ports.nix");
-        $machine->mustSucceed("grep 'testService2 = 8001;' ports.nix");
-        $machine->mustSucceed("grep 'testService3 = 8002;' ports.nix");
+        $machine->mustSucceed("grep '\"testService2\" = 8001;' ports.nix");
+        $machine->mustSucceed("grep '\"testService3\" = 8002;' ports.nix");
 
         # Map two services with private port assignments to different
         # machines. They should have the same port number
         $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-port-assign -s ${tests}/services-privateports.nix -i ${tests}/infrastructure.nix -d ${tests}/distribution3.nix > ports.nix");
-        $machine->mustSucceed("grep 'testService2 = 8001;' ports.nix");
-        $machine->mustSucceed("grep 'testService3 = 8001;' ports.nix");
+        $machine->mustSucceed("grep '\"testService2\" = 8001;' ports.nix");
+        $machine->mustSucceed("grep '\"testService3\" = 8001;' ports.nix");
 
         # Make the testService3 reservation private. It should have a
         # different port number, while testService2's port number remains
         # the same.
         $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-port-assign -s ${tests}/services-sharedprivateport.nix -i ${tests}/infrastructure.nix -d ${tests}/distribution3.nix -p ports.nix > ports2.nix");
-        $machine->mustSucceed("grep 'testService2 = 8001;' ports2.nix");
-        $machine->mustSucceed("grep 'testService3 = 3001;' ports2.nix");
+        $machine->mustSucceed("grep '\"testService2\" = 8001;' ports2.nix");
+        $machine->mustSucceed("grep '\"testService3\" = 3001;' ports2.nix");
 
         # Generate a documentation catalog
         $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-generate-services-docs -s ${tests}/visualize/services.nix -f svg --output-dir \$TMPDIR/out1");

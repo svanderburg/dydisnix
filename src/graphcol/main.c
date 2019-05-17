@@ -27,6 +27,8 @@ static void print_usage(const char *command)
     "                           properties of machines in the network\n"
     "      --xml                Specifies that the configurations are in XML not the\n"
     "                           Nix expression language.\n"
+    "      --output-xml         Specifies that the output should be in XML not the\n"
+    "                           Nix expression language\n"
     "  -h, --help               Shows the usage of this command to the user\n"
     );
 }
@@ -40,6 +42,7 @@ int main(int argc, char *argv[])
         {"services", required_argument, 0, DYDISNIX_OPTION_SERVICES},
         {"infrastructure", required_argument, 0, DYDISNIX_OPTION_INFRASTRUCTURE},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
+        {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
         {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
         {0, 0, 0, 0}
     };
@@ -60,6 +63,9 @@ int main(int argc, char *argv[])
                 break;
             case DYDISNIX_OPTION_XML:
                 flags |= DYDISNIX_FLAG_XML;
+                break;
+            case DYDISNIX_OPTION_OUTPUT_XML:
+                flags |= DYDISNIX_FLAG_OUTPUT_XML;
                 break;
             case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);

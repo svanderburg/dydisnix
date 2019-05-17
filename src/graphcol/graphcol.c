@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
+#include "candidatetargetmapping.h"
 
 typedef struct
 {
@@ -62,6 +63,12 @@ static void add_interdependent_services_to_adjacency_array(GPtrArray *dependenci
         VertexAdjacency *vertex_adjacency = find_vertex_adjacency_item(adjacency_array, dependency);
         g_ptr_array_add(vertex_adjacency->adjacentServices, current_service->name);
     }
+}
+
+static void delete_targets(gpointer data)
+{
+    GPtrArray *targets = (GPtrArray*)data;
+    g_ptr_array_free(targets, TRUE);
 }
 
 int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int flags)
@@ -208,24 +215,31 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     }
     
     /* Print output expression */
-    
-    g_print("{\n");
-    
+
+    GHashTable *candidate_target_table = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, delete_targets);
+
     for(i = 0; i < adjacency_array->len; i++)
     {
-	VertexAdjacency *current_adjacency = g_ptr_array_index(adjacency_array, i);
-	
-	if(current_adjacency->target == NULL)
-	    g_print("  %s = [];\n", current_adjacency->service);
-	else
-	    g_print("  %s = [ \"%s\" ];\n", current_adjacency->service, current_adjacency->target);
+        VertexAdjacency *current_adjacency = g_ptr_array_index(adjacency_array, i);
+
+        GPtrArray *targets = g_ptr_array_new();
+
+        if(current_adjacency->target != NULL)
+            g_ptr_array_add(targets, current_adjacency->target);
+
+        g_hash_table_insert(candidate_target_table, current_adjacency->service, targets);
     }
-    
-    g_print("}\n");
-    
+
+    if(flags & DYDISNIX_FLAG_OUTPUT_XML)
+        print_candidate_target_table_xml(candidate_target_table);
+    else
+        print_candidate_target_table_nix(candidate_target_table);
+
+    g_hash_table_destroy(candidate_target_table);
+
     /* Cleanup */
     delete_service_property_array(service_property_array);
     delete_target_array(targets_array);
-    
+
     return 0;
 }

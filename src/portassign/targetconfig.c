@@ -21,6 +21,13 @@ void delete_target_config(TargetConfig *target_config)
 {
     if(target_config != NULL)
     {
+        GHashTableIter iter;
+        gpointer key, value;
+
+        g_hash_table_iter_init(&iter, target_config->services_to_ports);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+            free(value);
+
         g_hash_table_destroy(target_config->services_to_ports);
         g_hash_table_destroy(target_config->ports_to_services);
         g_free(target_config);
@@ -30,15 +37,6 @@ void delete_target_config(TargetConfig *target_config)
 static void *create_target_config_from_element(xmlNodePtr element, void *userdata)
 {
     return create_target_config(0, 0, 0);
-}
-
-static void *parse_int(xmlNodePtr element, void *userdata)
-{
-    gchar *value = NixXML_parse_value(element, userdata);
-    int *value_int = (int*)g_malloc(sizeof(int));
-    *value_int = atoi(value);
-    g_free(value);
-    return value_int;
 }
 
 static void parse_and_insert_target_config_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
@@ -64,7 +62,7 @@ static void parse_and_insert_target_config_attributes(xmlNodePtr element, void *
         g_free(value);
     }
     else if(xmlStrcmp(key, (xmlChar*) "servicesToPorts") == 0)
-        target_config->services_to_ports = NixXML_parse_g_hash_table_simple(element, userdata, parse_int);
+        target_config->services_to_ports = NixXML_parse_g_hash_table_simple(element, userdata, NixXML_parse_int);
 }
 
 void *parse_target_config(xmlNodePtr element, void *userdata)
@@ -119,7 +117,7 @@ void print_target_config_xml(FILE *file, const void *value, const int indent_lev
 typedef struct
 {
     GHashTable *candidate_target_table;
-    GPtrArray *service_property_array;
+    GHashTable *service_table;
     gchar *service_property;
     gchar *service_property_value;
 }
@@ -133,18 +131,18 @@ static gboolean remove_service_port_pair(gchar *service_name, RemoveParams *para
         return TRUE;
     else
     {
-        Service *service = find_service(params->service_property_array, service_name);
+        Service *service = g_hash_table_lookup(params->service_table, service_name);
 
         if(service == NULL)
             return TRUE;
         else
         {
-            gchar *value = find_service_property(service, params->service_property);
+            xmlChar *value = g_hash_table_lookup(service->properties, params->service_property);
 
             if(value == NULL)
                 return TRUE;
             else
-                return (g_strcmp0(value, params->service_property_value) != 0);
+                return (xmlStrcmp(value, (xmlChar*) params->service_property_value) != 0);
         }
     }
 }
@@ -165,13 +163,13 @@ static gboolean remove_port_to_service_mapping(gpointer key, gpointer value, gpo
 
 /* Remove global port reservations for services that are no longer deployed */
 
-void clean_obsolete_services_to_ports(TargetConfig *target_config, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property, gchar *service_property_value)
+void clean_obsolete_services_to_ports(TargetConfig *target_config, GHashTable *candidate_target_table, GHashTable *service_table, gchar *service_property, gchar *service_property_value)
 {
     RemoveParams params;
 
     /* Remove obsolete service to port mappings */
     params.candidate_target_table = candidate_target_table;
-    params.service_property_array = service_property_array;
+    params.service_table = service_table;
     params.service_property = service_property;
     params.service_property_value = service_property_value;
 

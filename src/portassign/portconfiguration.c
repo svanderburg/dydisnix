@@ -247,33 +247,33 @@ static gboolean remove_obsolete_target_config(gpointer key, gpointer value, gpoi
     return (find_target_mapping_item(target_mapping_array, target) == NULL);
 }
 
-void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property)
+void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GHashTable *service_table, gchar *service_property)
 {
     /* Generate inverse mapping to determine which machines are in use */
     GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_table);
-    
+
     GHashTableIter iter;
     gpointer key, value;
-    
+
     /* Clean the global target config */
     if(port_configuration->global_config != NULL)
-        clean_obsolete_services_to_ports(port_configuration->global_config, candidate_target_table, service_property_array, service_property, "shared");
-    
+        clean_obsolete_services_to_ports(port_configuration->global_config, candidate_target_table, service_table, service_property, "shared");
+
     /* Remove all port reservations for a machine, if it does not exist anymore */
     g_hash_table_foreach_remove(port_configuration->target_configs, remove_obsolete_target_config, target_mapping_array);
-    
+
     g_hash_table_iter_init(&iter, port_configuration->target_configs);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         gchar *target = (gchar*)key;
         TargetConfig *target_config = (TargetConfig*)value;
-        
+
         TargetMappingItem *target_mapping_item = find_target_mapping_item(target_mapping_array, target);
-        
+
         if(target_mapping_item != NULL)
-            clean_obsolete_services_to_ports(target_config, candidate_target_table, service_property_array, service_property, "private");
+            clean_obsolete_services_to_ports(target_config, candidate_target_table, service_table, service_property, "private");
     }
-    
+
     /* Clean inverse mapping array from memory */
     delete_target_mapping_array(target_mapping_array);
 }

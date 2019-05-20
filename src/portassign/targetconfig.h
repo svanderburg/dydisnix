@@ -23,6 +23,6 @@ void print_target_config_nix(FILE *file, const void *value, const int indent_lev
 
 void print_target_config_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata);
 
-void clean_obsolete_services_to_ports(TargetConfig *target_config, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property, gchar *service_property_value);
+void clean_obsolete_services_to_ports(TargetConfig *target_config, GHashTable *candidate_target_table, GHashTable *service_table, gchar *service_property, gchar *service_property_value);
 
 #endif

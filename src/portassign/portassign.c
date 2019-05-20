@@ -52,11 +52,11 @@ static void print_ports_assignment_xml(const PortsAssignment *assignment)
 int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *ports, gchar *service_property, const unsigned int flags)
 {
     int xml = flags & DYDISNIX_FLAG_XML;
-    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GHashTable *service_table = create_service_table(services, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
 
-    if(service_property_array == NULL || targets_array == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_array == NULL || candidate_target_table == NULL)
     {
         g_printerr("Error with opening one of the models!\n");
         return 1;
@@ -71,10 +71,10 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
             assignment.port_configuration = open_port_configuration(ports, xml); /* Otherwise, open the ports config */
 
         /* Clean obsolete reservations */
-        clean_obsolete_reservations(assignment.port_configuration, candidate_target_table, service_property_array, service_property);
+        clean_obsolete_reservations(assignment.port_configuration, candidate_target_table, service_table, service_property);
 
         /* Create ports distribution table */
-        assignment.port_distribution_table = create_port_distribution_table(assignment.port_configuration, service_property_array, candidate_target_table, service_property);
+        assignment.port_distribution_table = create_port_distribution_table(assignment.port_configuration, service_table, candidate_target_table, service_property);
 
         /* Print ports configuration */
         if(flags & DYDISNIX_OPTION_OUTPUT_XML)
@@ -84,7 +84,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
 
         /* Cleanup */
         clean_ports_assignment(&assignment);
-        delete_service_property_array(service_property_array);
+        delete_service_table(service_table);
         delete_target_array(targets_array);
         delete_candidate_target_table(candidate_target_table);
 

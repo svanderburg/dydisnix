@@ -38,6 +38,6 @@ void print_port_configuration_nix(FILE *file, const void *value, const int inden
 
 void print_port_configuration_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata);
 
-void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GPtrArray *service_property_array, gchar *service_property);
+void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GHashTable *service_table, gchar *service_property);
 
 #endif

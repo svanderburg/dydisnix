@@ -6,7 +6,7 @@
 
 static void display_property(FILE *fd, Service *service, gchar *name)
 {
-    gchar *prop_value = find_service_property(service, name);
+    gchar *prop_value = g_hash_table_lookup(service->properties, name);
 
     fprintf(fd, "                <td>");
     if(prop_value != NULL)
@@ -59,13 +59,15 @@ static void print_title(FILE *fd, gchar *group, gchar *group_description)
     }
 }
 
-static int generate_architecture_description(gchar *filepath, gchar *image_format, gchar *group, void *data, const GPtrArray *service_property_array)
+static int generate_architecture_description(gchar *filepath, gchar *image_format, gchar *group, void *data, GHashTable *service_table)
 {
-    unsigned int i;
     FILE *fd;
     int first = TRUE;
     gchar *root_path = compose_relative_root_path(group);
     DocsConfig *docs_config = (DocsConfig*)data;
+    GHashTableIter iter;
+    gpointer *key;
+    gpointer *value;
 
     gchar *group_description;
 
@@ -116,9 +118,10 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
         fprintf(fd, "        </p>\n");
     }
 
-    for(i = 0; i < service_property_array->len; i++)
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
     {
-        Service *current_service = g_ptr_array_index(service_property_array, i);
+        Service *current_service = (Service*)value;
 
         if(!current_service->group_node)
         {
@@ -182,9 +185,10 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
 
     first = TRUE;
 
-    for(i = 0; i < service_property_array->len; i++)
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
     {
-        Service *current_service = g_ptr_array_index(service_property_array, i);
+        Service *current_service = (Service*)value;
 
         if(current_service->group_node)
         {
@@ -209,9 +213,9 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
                 gchar *full_group;
 
                 if(g_strcmp0(group, "") == 0)
-                    full_group = g_strdup(current_service->name);
+                    full_group = g_strdup((gchar*)current_service->name);
                 else
-                    full_group = g_strjoin("/", group, current_service->name, NULL);
+                    full_group = g_strjoin("/", group, (gchar*)current_service->name, NULL);
 
                 gchar *group_description = find_group(docs_config, full_group);
 
@@ -249,9 +253,9 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
 int document_services(gchar *services, gchar *group, const unsigned int flags, gchar *docs)
 {
     int xml = flags & DYDISNIX_FLAG_XML;
-    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GHashTable *service_table = create_service_table(services, xml);
 
-    if(service_property_array == NULL)
+    if(service_table == NULL)
     {
         g_printerr("Cannot open services XML file!\n");
         return 1;
@@ -267,34 +271,31 @@ int document_services(gchar *services, gchar *group, const unsigned int flags, g
             docs_config = create_docs_config(docs, xml);
 
         // HACK
-        GHashTable *table = query_services_in_group(service_property_array, group);
-        delete_service_property_array(service_property_array);
+        GHashTable *table = query_services_in_group(service_table, group);
 
         if(flags & DYDISNIX_FLAG_GROUP_SUBSERVICES)
         {
             GHashTable *group_table = group_services(table, group);
-            delete_services_table(table);
+            delete_service_table(table);
             table = group_table;
         }
 
-        service_property_array = create_service_property_array_from_table(table);
+        status = generate_architecture_description(NULL, NULL, "", docs_config, table);
 
-        status = generate_architecture_description(NULL, NULL, "", docs_config, service_property_array);
-
-        delete_services_table(table);
+        delete_service_table(table);
         delete_docs_config(docs_config);
-        g_ptr_array_free(service_property_array, TRUE);
+        g_hash_table_destroy(service_table);
 
         return !status;
     }
 }
 
-static int generate_architecture_descriptions_for_group(GPtrArray *service_property_array, gchar *group, gchar *output_dir, gchar *image_format, DocsConfig *docs_config)
+static int generate_architecture_descriptions_for_group(GHashTable *service_table, gchar *group, gchar *output_dir, gchar *image_format, DocsConfig *docs_config)
 {
     int status;
-    GHashTable *table = query_services_in_group(service_property_array, group);
+    GHashTable *table = query_services_in_group(service_table, group);
     status = generate_group_artifacts(table, group, output_dir, "index.html", image_format, docs_config, generate_architecture_description);
-    delete_services_table(table);
+    delete_service_table(table);
     return status;
 }
 
@@ -334,9 +335,9 @@ static int copy_stylesheet(gchar *output_dir)
 int document_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format, gchar *docs)
 {
     int xml = flags & DYDISNIX_FLAG_XML;
-    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GHashTable *service_table = create_service_table(services, xml);
 
-    if(service_property_array == NULL)
+    if(service_table == NULL)
     {
         g_printerr("Cannot open services XML file!\n");
         return 1;
@@ -351,21 +352,22 @@ int document_services_batch(gchar *services, const unsigned int flags, gchar *ou
         else
             docs_config = create_docs_config(docs, xml);
 
-        if((status = generate_architecture_descriptions_for_group(service_property_array, "", output_dir ,image_format, docs_config)))
+        if((status = generate_architecture_descriptions_for_group(service_table, "", output_dir ,image_format, docs_config)))
         {
-            GPtrArray *unique_groups_array = query_unique_groups(service_property_array);
+            GPtrArray *unique_groups_array = query_unique_groups(service_table);
             unsigned int i;
 
             for(i = 0; i < unique_groups_array->len; i++)
             {
                 gchar *group = g_ptr_array_index(unique_groups_array, i);
-                status = generate_architecture_descriptions_for_group(service_property_array, group, output_dir, image_format, docs_config);
+                status = generate_architecture_descriptions_for_group(service_table, group, output_dir, image_format, docs_config);
                 if(!status)
                     break;
             }
 
+            g_ptr_array_free(unique_groups_array, TRUE);
             delete_docs_config(docs_config);
-            delete_service_property_array(service_property_array);
+            delete_service_table(service_table);
         }
 
         if(status)

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "portconfiguration.h"
 
-GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GPtrArray *service_property_array, GHashTable *candidate_target_table, gchar *service_property);
+GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GHashTable *service_table, GHashTable *candidate_target_table, gchar *service_property);
 
 void delete_port_distribution_table(GHashTable *port_distribution_table);
 

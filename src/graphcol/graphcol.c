@@ -13,7 +13,7 @@ ServiceDegree;
 
 typedef struct
 {
-    gchar *service;
+    xmlChar *service;
     GPtrArray *adjacentServices;
     gchar *target;
 }
@@ -24,7 +24,7 @@ static gint compare_vertex_adjacency_keys(const VertexAdjacency **l, const Verte
     const VertexAdjacency *left = *l;
     const VertexAdjacency *right = *r;
     
-    return g_strcmp0(left->service, right->service);
+    return xmlStrcmp(left->service, right->service);
 }
 
 static VertexAdjacency *find_vertex_adjacency_item(GPtrArray *adjacency_array, gchar *service)
@@ -32,7 +32,7 @@ static VertexAdjacency *find_vertex_adjacency_item(GPtrArray *adjacency_array, g
     VertexAdjacency vertexAdjacency;
     VertexAdjacency **ret, *vertexAdjacencyPtr = &vertexAdjacency;
     
-    vertexAdjacencyPtr->service = service;
+    vertexAdjacencyPtr->service = (xmlChar*)service;
     
     ret = bsearch(&vertexAdjacencyPtr, adjacency_array->pdata, adjacency_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_vertex_adjacency_keys);
 
@@ -74,19 +74,22 @@ static void delete_targets(gpointer data)
 int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int flags)
 {
     int xml = flags & DYDISNIX_FLAG_XML;
-    GPtrArray *service_property_array = create_service_property_array(services_xml, xml);
+    GHashTable *service_table = create_service_table(services_xml, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure_xml, xml);
     GPtrArray *adjacency_array = g_ptr_array_new();
     VertexAdjacency *max_adjacency = NULL;
+    GHashTableIter iter;
+    gpointer key, value;
     unsigned int i;
-    
+
     int colored_vertices = 0;
-    
+
     /* Create adjacency array */
-    
-    for(i = 0; i < service_property_array->len; i++)
+
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
-	Service *current_service = g_ptr_array_index(service_property_array, i);
+	Service *current_service = (Service*)value;
 
 	VertexAdjacency *vertex_adjacency = (VertexAdjacency*)g_malloc(sizeof(VertexAdjacency));
 
@@ -102,9 +105,10 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     }
     
     /* Add interdependent services on given service to the adjacency array */
-    for(i = 0; i < service_property_array->len; i++)
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
-	Service *current_service = g_ptr_array_index(service_property_array, i);
+	Service *current_service = (Service*)value;
 
 	add_interdependent_services_to_adjacency_array(current_service->depends_on, adjacency_array, current_service);
 	add_interdependent_services_to_adjacency_array(current_service->connects_to, adjacency_array, current_service);
@@ -238,7 +242,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     g_hash_table_destroy(candidate_target_table);
 
     /* Cleanup */
-    delete_service_property_array(service_property_array);
+    delete_service_table(service_table);
     delete_target_array(targets_array);
 
     return 0;

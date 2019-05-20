@@ -3,43 +3,45 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-int is_subgroup_of(gchar *current_group, gchar *group)
+int is_subgroup_of(xmlChar *current_group, gchar *group)
 {
-    if(strcmp(group, "") == 0)
+    if(g_strcmp0(group, "") == 0)
         return TRUE;
     else
     {
         gchar *prefix = g_strjoin("", group, "/", NULL);
-        int status = g_str_has_prefix(current_group, prefix);
+        int status = g_str_has_prefix((gchar*)current_group, prefix);
         g_free(prefix);
         return status;
     }
 }
 
-static int is_in_group(gchar *current_group, gchar *group)
+static int is_in_group(xmlChar *current_group, gchar *group)
 {
     if(current_group == NULL)
         return FALSE;
     else
     {
-        if(g_strcmp0(current_group, group) == 0)
+        if(xmlStrcmp(current_group, (xmlChar*) group) == 0)
             return TRUE;
         else
             return is_subgroup_of(current_group, group);
     }
 }
 
-GHashTable *query_services_in_group(GPtrArray *service_property_array, gchar *group)
+GHashTable *query_services_in_group(GHashTable *service_table, gchar *group)
 {
-    unsigned int i;
     GHashTable *queried_services_table = g_hash_table_new(g_str_hash, g_str_equal);
 
-    for(i = 0; i < service_property_array->len; i++)
-    {
-        Service *current_service = g_ptr_array_index(service_property_array, i);
-        gchar *current_group = find_service_property(current_service, "group");
+    GHashTableIter iter;
+    gpointer key, value;
 
-        if(g_strcmp0(group, "") == 0 || is_in_group(current_group, group))
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
+    {
+        Service *current_service = (Service*)value;
+
+        if(xmlStrcmp(current_service->group, (xmlChar*) "") == 0 || is_in_group(current_service->group, group))
         {
             Service *new_service = copy_service(current_service);
             g_hash_table_insert(queried_services_table, new_service->name, new_service);
@@ -49,36 +51,7 @@ GHashTable *query_services_in_group(GPtrArray *service_property_array, gchar *gr
     return queried_services_table;
 }
 
-GPtrArray *create_service_property_array_from_table(GHashTable *table)
-{
-    GPtrArray *copy_array = g_ptr_array_new();
-    GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
-
-    g_hash_table_iter_init(&iter, table);
-
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
-        g_ptr_array_add(copy_array, value);
-
-    return copy_array;
-}
-
-void delete_services_table(GHashTable *services_table)
-{
-    GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
-
-    g_hash_table_iter_init(&iter, services_table);
-
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
-        delete_service((Service*)value);
-
-    g_hash_table_destroy(services_table);
-}
-
-static void merge_dependencies(GPtrArray *service_dependencies, GPtrArray *group_dependencies, gchar *current_group)
+static void merge_dependencies(GPtrArray *service_dependencies, GPtrArray *group_dependencies, xmlChar *current_group)
 {
     unsigned int i;
 
@@ -86,7 +59,7 @@ static void merge_dependencies(GPtrArray *service_dependencies, GPtrArray *group
     {
         gchar *dependency = g_ptr_array_index(service_dependencies, i);
 
-        if(g_strcmp0(dependency, current_group) != 0) /* Ignore dependency on itself */
+        if(xmlStrcmp((xmlChar*) dependency, current_group) != 0) /* Ignore dependency on itself */
         {
             unsigned int j;
             int found = FALSE;
@@ -112,7 +85,7 @@ static void merge_dependencies(GPtrArray *service_dependencies, GPtrArray *group
     }
 }
 
-static void remove_self_reference(GPtrArray *dependencies, gchar *current_group)
+static void remove_self_reference(GPtrArray *dependencies, xmlChar *current_group)
 {
     unsigned int i;
 
@@ -120,7 +93,7 @@ static void remove_self_reference(GPtrArray *dependencies, gchar *current_group)
     {
         gchar *dependency = g_ptr_array_index(dependencies, i);
 
-        if(g_strcmp0(dependency, current_group) == 0)
+        if(xmlStrcmp((xmlChar*) dependency, current_group) == 0)
         {
             g_ptr_array_remove_index(dependencies, i);
             break;
@@ -128,7 +101,7 @@ static void remove_self_reference(GPtrArray *dependencies, gchar *current_group)
     }
 }
 
-static GPtrArray *replace_service_dependency_by_group_dependency(Service *service, GPtrArray *dependencies, gchar *current_group)
+static GPtrArray *replace_service_dependency_by_group_dependency(Service *service, GPtrArray *dependencies, xmlChar *current_group)
 {
     unsigned int i;
     GPtrArray *replaced_dependencies = g_ptr_array_new();
@@ -138,19 +111,19 @@ static GPtrArray *replace_service_dependency_by_group_dependency(Service *servic
     {
         gchar *dependency = g_ptr_array_index(dependencies, i);
 
-        if(g_strcmp0(dependency, current_group) == 0)
+        if(xmlStrcmp((xmlChar*) dependency, current_group) == 0)
         {
             if(!has_group)
-                g_ptr_array_add(replaced_dependencies, g_strdup(current_group));
+                g_ptr_array_add(replaced_dependencies, xmlStrdup(current_group));
 
             has_group = TRUE;
             g_free(dependency);
         }
-        else if(g_strcmp0(dependency, service->name) == 0)
+        else if(xmlStrcmp((xmlChar*) dependency, service->name) == 0)
         {
             if(!has_group)
             {
-                g_ptr_array_add(replaced_dependencies, g_strdup(current_group));
+                g_ptr_array_add(replaced_dependencies, xmlStrdup(current_group));
                 has_group = TRUE;
             }
             g_free(dependency);
@@ -164,7 +137,7 @@ static GPtrArray *replace_service_dependency_by_group_dependency(Service *servic
     return replaced_dependencies;
 }
 
-static void replace_service_dependencies_by_groups(Service *service, GHashTable *table, gchar *subgroup_root)
+static void replace_service_dependencies_by_groups(Service *service, GHashTable *table, xmlChar *subgroup_root)
 {
     GHashTableIter iter;
     gpointer *key;
@@ -207,14 +180,14 @@ static int exactly_fits_in_group(gchar **current_group_tokens, gchar **group_tok
         return FALSE;
 }
 
-static gchar *derive_sub_group_root(gchar **current_group_tokens, gchar **group_tokens)
+static xmlChar *derive_sub_group_root(gchar **current_group_tokens, gchar **group_tokens)
 {
     unsigned int i = 0;
 
     while(current_group_tokens[i] != NULL && group_tokens[i] != NULL)
     {
         if(g_strcmp0(current_group_tokens[i], group_tokens[i]) != 0)
-            return g_strdup(current_group_tokens[i]);
+            return xmlStrdup((xmlChar*)current_group_tokens[i]);
 
         i++;
     }
@@ -222,21 +195,19 @@ static gchar *derive_sub_group_root(gchar **current_group_tokens, gchar **group_
     if(current_group_tokens[i] == NULL)
         return NULL;
     else
-        return g_strdup(current_group_tokens[i]);
+        return xmlStrdup((xmlChar*) current_group_tokens[i]);
 }
 
 static void group_service(GHashTable *queried_services_table, GHashTable *grouped_services_table, Service *service, gchar **group_tokens)
 {
-    gchar *current_group = find_service_property(service, "group");
-
     gchar **current_group_tokens;
 
-    if(current_group == NULL)
+    if(service->group == NULL)
         current_group_tokens = NULL;
     else
-        current_group_tokens = g_strsplit(current_group, "/", -1);
+        current_group_tokens = g_strsplit((gchar*)service->group, "/", -1);
 
-    if(current_group == NULL || g_strcmp0(current_group, "") == 0 || exactly_fits_in_group(current_group_tokens, group_tokens))
+    if(service->group == NULL || xmlStrcmp(service->group, (xmlChar*) "") == 0 || exactly_fits_in_group(current_group_tokens, group_tokens))
     {
         /* If a service exactly fits in this group, just add it verbatim */
         Service *leaf_service = copy_service(service);
@@ -244,7 +215,7 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
     }
     else
     {
-        gchar *subgroup_root = derive_sub_group_root(current_group_tokens, group_tokens);
+        xmlChar *subgroup_root = derive_sub_group_root(current_group_tokens, group_tokens);
 
         /* If a service is part of a subgroup in this group, then create a single sub group node that abstracts over its properties */
         Service *group_service = g_hash_table_lookup(grouped_services_table, subgroup_root);
@@ -253,7 +224,9 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
         {
             group_service = (Service*)g_malloc(sizeof(Service));
             group_service->name = subgroup_root;
-            group_service->property = g_hash_table_new(g_str_hash, g_str_equal);
+            group_service->type = NULL;
+            group_service->group = NULL;
+            group_service->properties = g_hash_table_new(g_str_hash, g_str_equal);
             group_service->connects_to = g_ptr_array_new();
             group_service->depends_on = g_ptr_array_new();
             group_service->group_node = TRUE;
@@ -303,24 +276,24 @@ GHashTable *group_services(GHashTable *queried_services_table, gchar *group)
     return grouped_services_table;
 }
 
-GPtrArray *query_unique_groups(GPtrArray *service_property_array)
+GPtrArray *query_unique_groups(GHashTable *service_table)
 {
-    unsigned int i;
     GHashTable *unique_groups_table = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTableIter iter;
     gpointer *key;
     gpointer *value;
     GPtrArray *unique_groups_array = g_ptr_array_new();
 
-    for(i = 0; i < service_property_array->len; i++)
-    {
-        Service *current_service = g_ptr_array_index(service_property_array, i);
-        gchar *current_group = find_service_property(current_service, "group");
+    g_hash_table_iter_init(&iter, service_table);
 
-        if(current_group != NULL && g_strcmp0(current_group, "") != 0)
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    {
+        Service *current_service = (Service*)value;
+
+        if(current_service->group != NULL && xmlStrcmp(current_service->group, (xmlChar*) "") != 0)
         {
-            if(g_hash_table_lookup(unique_groups_table, current_group) == NULL)
-                g_hash_table_insert(unique_groups_table, current_group, NULL);
+            if(g_hash_table_lookup(unique_groups_table, current_service->group) == NULL)
+                g_hash_table_insert(unique_groups_table, current_service->group, NULL);
         }
     }
 
@@ -357,10 +330,9 @@ void mkdirp(const char *dir)
     g_free(tmp);
 }
 
-int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir, gchar *filename, gchar *image_format, void *data, int (*generate_artifact) (gchar *filepath, gchar *image_format, gchar *group, void *data, const GPtrArray *service_property_array) )
+int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir, gchar *filename, gchar *image_format, void *data, int (*generate_artifact) (gchar *filepath, gchar *image_format, gchar *group, void *data, GHashTable *service_table) )
 {
     GHashTable *group_table = group_services(table, group);
-    GPtrArray *grouped_service_property_array = create_service_property_array_from_table(group_table);
 
     gchar *basedir = g_strjoin("", output_dir, "/", group, NULL);
     gchar *filepath = g_strjoin("", basedir, "/", filename, NULL);
@@ -368,12 +340,11 @@ int generate_group_artifacts(GHashTable *table, gchar *group, gchar *output_dir,
     int status;
 
     mkdirp(basedir);
-    status = generate_artifact(filepath, image_format, group, data, grouped_service_property_array);
+    status = generate_artifact(filepath, image_format, group, data, group_table);
 
     g_free(filepath);
     g_free(basedir);
-    delete_services_table(group_table);
-    g_ptr_array_free(grouped_service_property_array, TRUE);
+    delete_service_table(group_table);
 
     return status;
 }

@@ -8,12 +8,12 @@
 int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, const unsigned int flags)
 {
     int xml = flags & DYDISNIX_FLAG_XML;
-    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GHashTable *service_table = create_service_table(services, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
     int exit_status = 0;
     
-    if(service_property_array == NULL || targets_array == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_array == NULL || candidate_target_table == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");
 	exit_status = 1;
@@ -38,7 +38,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 
         /* Execute minimum set cover approximation */
 
-	while(g_hash_table_size(covered_services_table) < service_property_array->len)
+	while(g_hash_table_size(covered_services_table) < g_hash_table_size(service_table))
 	{
 	    unsigned int i;
 	    double min_cost = -1;
@@ -106,7 +106,8 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
         while(g_hash_table_iter_next(&iter, &key, &value))
         {
             GPtrArray *targets = (GPtrArray*)targets;
-            g_ptr_array_free(targets, TRUE);
+            if(targets != NULL)
+                g_ptr_array_free(targets, TRUE);
         }
 
         g_hash_table_destroy(result_table);
@@ -118,7 +119,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
     /* Cleanup */
     delete_candidate_target_table(candidate_target_table);
     delete_target_array(targets_array);
-    delete_service_property_array(service_property_array);
+    delete_service_table(service_table);
 
     return exit_status;
 }

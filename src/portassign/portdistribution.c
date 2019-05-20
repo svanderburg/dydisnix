@@ -2,7 +2,7 @@
 #include <nixxml-ghashtable.h>
 #include "serviceproperties.h"
 
-GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GPtrArray *service_property_array, GHashTable *candidate_target_table, gchar *service_property)
+GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GHashTable *service_table, GHashTable *candidate_target_table, gchar *service_property)
 {
     GHashTable *port_distribution_table = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, g_free);
 
@@ -15,13 +15,13 @@ GHashTable *create_port_distribution_table(PortConfiguration *port_configuration
         gchar *service_name = (gchar*)key;
         GPtrArray *targets = (GPtrArray*)value;
 
-        Service *service = find_service(service_property_array, service_name);
+        Service *service = g_hash_table_lookup(service_table, service_name);
         gchar *prop_value;
 
         if(service == NULL)
             prop_value = NULL;
         else
-            prop_value = find_service_property(service, service_property);
+            prop_value = g_hash_table_lookup(service->properties, service_property);
 
         /* For each service that has a port property that is unassigned, assign a port */
 

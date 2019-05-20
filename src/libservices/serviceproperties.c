@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <procreact_future.h>
-#include <nixxml-parse.h>
 #include <nixxml-gptrarray.h>
 #include <nixxml-ghashtable.h>
 
@@ -32,7 +31,15 @@ char *generate_service_xml_from_expr(char *service_expr)
 
 static void *create_service(xmlNodePtr element, void *userdata)
 {
-    return g_malloc0(sizeof(Service));
+    Service *service = (Service*)g_malloc(sizeof(Service));
+    service->name = NULL;
+    service->type = NULL;
+    service->group = NULL;
+    service->depends_on = NULL;
+    service->connects_to = NULL;
+    service->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, xmlFree);
+    service->group_node = FALSE;
+    return service;
 }
 
 void parse_and_insert_service_attributes(xmlNodePtr element, void *table, const xmlChar *key, void *userdata)
@@ -41,25 +48,32 @@ void parse_and_insert_service_attributes(xmlNodePtr element, void *table, const 
 
     if(xmlStrcmp(key, (xmlChar*) "name") == 0)
         service->name = NixXML_parse_value(element, userdata);
-    else if(xmlStrcmp(key, (xmlChar*) "properties") == 0)
-        service->property = NixXML_parse_g_hash_table_simple(element, userdata, NixXML_parse_value);
+    else if(xmlStrcmp(key, (xmlChar*) "type") == 0)
+        service->type = NixXML_parse_value(element, userdata);
+    else if(xmlStrcmp(key, (xmlChar*) "group") == 0)
+        service->group = NixXML_parse_value(element, userdata);
     else if(xmlStrcmp(key, (xmlChar*) "connectsTo") == 0)
         service->connects_to = NixXML_parse_g_ptr_array(element, "dependency", userdata, NixXML_parse_value);
     else if(xmlStrcmp(key, (xmlChar*) "dependsOn") == 0)
         service->depends_on = NixXML_parse_g_ptr_array(element, "dependency", userdata, NixXML_parse_value);
+    else
+    {
+        gchar *value = NixXML_parse_value(element, userdata);
+        g_hash_table_insert(service->properties, g_strdup((gchar*)key), value);
+    }
 }
 
 static void *parse_service(xmlNodePtr element, void *userdata)
 {
-    return NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_service, parse_and_insert_service_attributes);
+    return NixXML_parse_verbose_heterogeneous_attrset(element, "property", "name", NULL, create_service, parse_and_insert_service_attributes);
 }
 
-GPtrArray *create_service_property_array_from_xml(const gchar *services_xml_file)
+GHashTable *create_service_table_from_xml(const gchar *services_xml_file)
 {
     /* Declarations */
     xmlDocPtr doc;
     xmlNodePtr node_root;
-    GPtrArray *service_property_array;
+    GHashTable *service_table;
 
     /* Parse the XML document */
 
@@ -82,61 +96,55 @@ GPtrArray *create_service_property_array_from_xml(const gchar *services_xml_file
     }
 
     /* Parse the services */
-    service_property_array = NixXML_parse_g_ptr_array(node_root, "service", NULL, parse_service);
+    service_table = NixXML_parse_g_hash_table_verbose(node_root, "service", "name", NULL, parse_service);
 
     /* Cleanup */
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    /* Return the service property array */
-    return service_property_array;
+    /* Return the service table */
+    return service_table;
 }
 
-GPtrArray *create_service_property_array_from_nix(gchar *services_nix)
+GHashTable *create_service_table_from_nix(gchar *services_nix)
 {
     char *services_xml = generate_service_xml_from_expr(services_nix);
-    GPtrArray *service_property_array = create_service_property_array_from_xml(services_xml);
+    GHashTable *service_table = create_service_table_from_xml(services_xml);
     free(services_xml);
-    return service_property_array;
+    return service_table;
 }
 
-GPtrArray *create_service_property_array(gchar *services, const int xml)
+GHashTable *create_service_table(gchar *services, const int xml)
 {
     if(xml)
-        return create_service_property_array_from_xml(services);
+        return create_service_table_from_xml(services);
     else
-        return create_service_property_array_from_nix(services);
+        return create_service_table_from_nix(services);
+}
+
+static void delete_dependencies(GPtrArray *dependencies)
+{
+    unsigned int i;
+
+    for(i = 0; i < dependencies->len; i++)
+    {
+        gchar *dependency = g_ptr_array_index(dependencies, i);
+        g_free(dependency);
+    }
+
+    g_ptr_array_free(dependencies, TRUE);
 }
 
 void delete_service(Service *service)
 {
-    unsigned int i;
-    GHashTableIter iter;
-    gpointer key, value;
+    xmlFree(service->name);
+    xmlFree(service->type);
+    xmlFree(service->group);
 
-    g_free(service->name);
+    g_hash_table_destroy(service->properties);
 
-    g_hash_table_iter_init(&iter, service->property);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-        g_free(value);
-
-    g_hash_table_destroy(service->property);
-
-    for(i = 0; i < service->connects_to->len; i++)
-    {
-        gchar *dependency = g_ptr_array_index(service->connects_to, i);
-        g_free(dependency);
-    }
-
-    g_ptr_array_free(service->connects_to, TRUE);
-
-    for(i = 0; i < service->depends_on->len; i++)
-    {
-        gchar *dependency = g_ptr_array_index(service->depends_on, i);
-        g_free(dependency);
-    }
-
-    g_ptr_array_free(service->depends_on, TRUE);
+    delete_dependencies(service->connects_to);
+    delete_dependencies(service->depends_on);
 
     g_free(service);
 }
@@ -160,11 +168,11 @@ GHashTable *copy_properties(GHashTable *properties)
     GHashTableIter iter;
     gpointer key, value;
 
-    GHashTable *copy_hash_table = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTable *copy_hash_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, xmlFree);
 
     g_hash_table_iter_init(&iter, properties);
     while(g_hash_table_iter_next(&iter, &key, &value))
-        g_hash_table_insert(copy_hash_table, g_strdup((gchar*)key), g_strdup((gchar*)value));
+        g_hash_table_insert(copy_hash_table, g_strdup((gchar*)key), xmlStrdup((xmlChar*)value));
 
     return copy_hash_table;
 }
@@ -172,8 +180,10 @@ GHashTable *copy_properties(GHashTable *properties)
 Service *copy_service(const Service *service)
 {
     Service *new_service = (Service*)g_malloc(sizeof(Service));
-    new_service->name = g_strdup(service->name);
-    new_service->property = copy_properties(service->property);
+    new_service->name = xmlStrdup(service->name);
+    new_service->type = xmlStrdup(service->type);
+    new_service->group = xmlStrdup(service->group);
+    new_service->properties = copy_properties(service->properties);
     new_service->depends_on = copy_dependencies(service->depends_on);
     new_service->connects_to = copy_dependencies(service->connects_to);
     new_service->group_node = service->group_node;
@@ -181,71 +191,20 @@ Service *copy_service(const Service *service)
     return new_service;
 }
 
-void delete_service_property_array(GPtrArray *service_property_array)
+void delete_service_table(GHashTable *service_table)
 {
-    if(service_property_array != NULL)
+    if(service_table != NULL)
     {
-        unsigned int i;
+        GHashTableIter iter;
+        gpointer key, value;
 
-        for(i = 0; i < service_property_array->len; i++)
+        g_hash_table_iter_init(&iter, service_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
         {
-            Service *service = g_ptr_array_index(service_property_array, i);
+            Service *service = (Service*)value;
             delete_service(service);
         }
 
-        g_ptr_array_free(service_property_array, TRUE);
+        g_hash_table_destroy(service_table);
     }
-}
-
-void print_service_property_array(const GPtrArray *service_property_array)
-{
-    if(service_property_array != NULL)
-    {
-        unsigned int i;
-
-        for(i = 0; i < service_property_array->len; i++)
-        {
-            Service *service = g_ptr_array_index(service_property_array, i);
-            GHashTableIter iter;
-            gpointer key, value;
-
-            g_print("Service name: %s\n", service->name);
-            g_print("Properties:\n");
-
-            g_hash_table_iter_init(&iter, service->property);
-            while(g_hash_table_iter_next(&iter, &key, &value))
-                g_print("  name: %s, value: %s\n", (gchar*)key, (gchar*)value);
-        }
-    }
-}
-
-static gint compare_service_keys(const Service **l, const Service **r)
-{
-    const Service *left = *l;
-    const Service *right = *r;
-    
-    return g_strcmp0(left->name, right->name);
-}
-
-Service *find_service(GPtrArray *service_array, gchar *name)
-{
-    Service service;
-    Service **ret, *servicePtr = &service;
-    
-    servicePtr->name = name;
-    
-    ret = bsearch(&servicePtr, service_array->pdata, service_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_service_keys);
-    
-    if(ret == NULL)
-        return NULL;
-    else
-        return *ret;
-}
-
-gchar *find_service_property(const Service *service, gchar *name)
-{
-    if(service->property == NULL)
-        return NULL;
-    else
-        return g_hash_table_lookup(service->property, name);
 }

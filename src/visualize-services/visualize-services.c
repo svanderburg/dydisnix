@@ -34,16 +34,19 @@ static int run_dot(gchar *filename, gchar *image_format)
 
 static void print_type(FILE *fd, const Service *service)
 {
-    gchar *prop_value = find_service_property(service, "type");
+    gchar *prop_value = g_hash_table_lookup(service->properties, "type");
 
     if(prop_value != NULL)
         fprintf(fd, "\\n(%s)", prop_value);
 }
 
-static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, void *data, const GPtrArray *service_property_array)
+static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, void *data, GHashTable *service_table)
 {
-    unsigned int i;
     FILE *fd;
+
+    GHashTableIter iter;
+    gpointer *key;
+    gpointer *value;
 
     if(filepath == NULL)
         fd = stdout;
@@ -62,9 +65,10 @@ static int generate_architecture_diagram(gchar *filepath, gchar *image_format, g
     fprintf(fd, "node [style=filled,fillcolor=white,color=black];\n");
 
     /* Generate vertexes */
-    for(i = 0; i < service_property_array->len; i++)
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
     {
-         Service *current_service = g_ptr_array_index(service_property_array, i);
+         Service *current_service = (Service*)value;
          fprintf(fd, "\"%s\" [ label = \"%s", current_service->name, current_service->name);
          print_type(fd, current_service);
          fprintf(fd, "\"");
@@ -78,9 +82,10 @@ static int generate_architecture_diagram(gchar *filepath, gchar *image_format, g
     /* Generate edges */
     fprintf(fd, "\n");
 
-    for(i = 0; i < service_property_array->len; i++)
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
     {
-         Service *current_service = g_ptr_array_index(service_property_array, i);
+         Service *current_service = (Service*)value;
          unsigned int j;
 
          /* Inter-dependencies with ordering requirement */
@@ -121,7 +126,7 @@ static int generate_architecture_diagram(gchar *filepath, gchar *image_format, g
     return TRUE;
 }
 
-static void add_outside_group_dependencies(GHashTable *queried_services_table, GPtrArray *dependencies, GPtrArray *service_property_array, GPtrArray *dep_service_property_array)
+static void add_outside_group_dependencies(GHashTable *queried_services_table, GPtrArray *dependencies, GHashTable *service_table, GHashTable *dep_service_table)
 {
     unsigned int i;
 
@@ -131,17 +136,19 @@ static void add_outside_group_dependencies(GHashTable *queried_services_table, G
 
         if(g_hash_table_lookup(queried_services_table, dependency) == NULL)
         {
-            Service *dependency_service = find_service(service_property_array, dependency); // TODO: NULL check
+            Service *dependency_service = g_hash_table_lookup(service_table, dependency); // TODO: NULL check
 
             Service *service = (Service*)g_malloc(sizeof(Service));
-            service->name = g_strdup(dependency_service->name);
-            service->property = copy_properties(dependency_service->property);
+            service->name = xmlStrdup(dependency_service->name);
+            service->type = xmlStrdup(dependency_service->type);
+            service->group = xmlStrdup(dependency_service->group);
+            service->properties = copy_properties(dependency_service->properties);
             /* Disregard its dependencies, because they are an implementation detail */
             service->depends_on = g_ptr_array_new();
             service->connects_to = g_ptr_array_new();
             service->group_node = FALSE;
 
-            g_ptr_array_add(dep_service_property_array, service);
+            g_hash_table_insert(dep_service_table, xmlStrdup(service->name), service);
         }
     }
 }
@@ -175,34 +182,37 @@ static GPtrArray *copy_non_dangling_dependencies(GPtrArray *dependencies, GHashT
     return copy_array;
 }
 
-static GPtrArray *query_direct_dependencies(GHashTable *queried_services_table, GPtrArray *service_property_array)
+static GHashTable *query_direct_dependencies(GHashTable *queried_services_table, GHashTable *service_table)
 {
     GHashTableIter iter;
     gpointer *key;
     gpointer *value;
 
-    GPtrArray *dep_service_property_array = g_ptr_array_new();
+    GHashTable *dep_service_table = g_hash_table_new_full(g_str_hash, g_str_equal, xmlFree, NULL);
 
     g_hash_table_iter_init(&iter, queried_services_table);
 
     while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
     {
         Service *current_service = (Service*)value;
-        add_outside_group_dependencies(queried_services_table, current_service->connects_to, service_property_array, dep_service_property_array);
-        add_outside_group_dependencies(queried_services_table, current_service->depends_on, service_property_array, dep_service_property_array);
+        add_outside_group_dependencies(queried_services_table, current_service->connects_to, service_table, dep_service_table);
+        add_outside_group_dependencies(queried_services_table, current_service->depends_on, service_table, dep_service_table);
     }
 
-    return dep_service_property_array;
+    return dep_service_table;
 }
 
-static GHashTable *query_inderdependent_services(GHashTable *queried_services_table, GPtrArray *service_property_array)
+static GHashTable *query_interdependent_services(GHashTable *queried_services_table, GHashTable *service_table)
 {
-    unsigned int i;
     GHashTable *interdependent_services_table = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTableIter iter;
+    gpointer *key;
+    gpointer *value;
 
-    for(i = 0; i < service_property_array->len; i++)
+    g_hash_table_iter_init(&iter, service_table);
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
     {
-        Service *current_service = g_ptr_array_index(service_property_array, i);
+        Service *current_service = (Service*)value;
         add_interdependent_services(current_service, current_service->connects_to, interdependent_services_table, queried_services_table);
         add_interdependent_services(current_service, current_service->depends_on, interdependent_services_table, queried_services_table);
     }
@@ -210,13 +220,16 @@ static GHashTable *query_inderdependent_services(GHashTable *queried_services_ta
     return interdependent_services_table;
 }
 
-static void append_dependencies_to_table(GHashTable *queried_services_table, GPtrArray *dep_service_property_array)
+static void append_dependencies_to_table(GHashTable *queried_services_table, GHashTable *dep_service_table)
 {
-    unsigned int i;
+    GHashTableIter iter;
+    gpointer *key;
+    gpointer *value;
 
-    for(i = 0; i < dep_service_property_array->len; i++)
+    g_hash_table_iter_init(&iter, dep_service_table);
+    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
     {
-        Service *current_service = g_ptr_array_index(dep_service_property_array, i);
+        Service *current_service = (Service*)value;
         g_hash_table_insert(queried_services_table, current_service->name, current_service);
     }
 }
@@ -236,8 +249,10 @@ static void append_interdependent_services_to_table(GHashTable *queried_services
         if(g_hash_table_lookup(queried_services_table, current_service->name) == NULL)
         {
             Service *service = (Service*)g_malloc(sizeof(Service));
-            service->name = g_strdup(current_service->name);
-            service->property = copy_properties(current_service->property);
+            service->name = xmlStrdup(current_service->name);
+            service->type = xmlStrdup(current_service->type);
+            service->group = xmlStrdup(current_service->group);
+            service->properties = copy_properties(current_service->properties);
 
             /* Copy dependencies but drop non-existent dependencies */
             service->depends_on = copy_non_dangling_dependencies(current_service->depends_on, queried_services_table);
@@ -249,21 +264,21 @@ static void append_interdependent_services_to_table(GHashTable *queried_services
     }
 }
 
-static GHashTable *query_services_in_group_with_context(GPtrArray *service_property_array, gchar *group)
+static GHashTable *query_services_in_group_with_context(GHashTable *service_table, gchar *group)
 {
     /* Query all services that fit within the requested group */
-    GHashTable *queried_services_table = query_services_in_group(service_property_array, group);
+    GHashTable *queried_services_table = query_services_in_group(service_table, group);
 
     /* Query all the the dependencies (but not transitive dependencies) that are outside the requested group. */
     /* The dependencies of the outside group dependencies are discarded, because their internals should be disregarded */
-    GPtrArray *dep_service_property_array = query_direct_dependencies(queried_services_table, service_property_array);
+    GHashTable *dep_service_table = query_direct_dependencies(queried_services_table, service_table);
 
     /* Add all interdependent services that are outside the requested group and discard the dependencies on the services that are not in the group */
-    GHashTable *interdependent_services_table = query_inderdependent_services(queried_services_table, service_property_array);
+    GHashTable *interdependent_services_table = query_interdependent_services(queried_services_table, service_table);
 
     /* Add dependencies to queried services table */
-    append_dependencies_to_table(queried_services_table, dep_service_property_array);
-    g_ptr_array_free(dep_service_property_array, TRUE);
+    append_dependencies_to_table(queried_services_table, dep_service_table);
+    g_hash_table_destroy(dep_service_table);
 
     /* Add interdependent services to queried services table */
     append_interdependent_services_to_table(queried_services_table, interdependent_services_table);
@@ -275,9 +290,9 @@ static GHashTable *query_services_in_group_with_context(GPtrArray *service_prope
 
 int visualize_services(gchar *services, const unsigned int flags, gchar *group)
 {
-    GPtrArray *service_property_array = create_service_property_array(services, flags & DYDISNIX_FLAG_XML);
+    GHashTable *service_table = create_service_table(services, flags & DYDISNIX_FLAG_XML);
 
-    if(service_property_array == NULL)
+    if(service_table == NULL)
     {
         g_printerr("Cannot open services XML file!\n");
         return 1;
@@ -285,55 +300,54 @@ int visualize_services(gchar *services, const unsigned int flags, gchar *group)
     else
     {
         // HACK
-        GHashTable *table = query_services_in_group_with_context(service_property_array, group);
-        delete_service_property_array(service_property_array);
+        GHashTable *table = query_services_in_group_with_context(service_table, group);
+        delete_service_table(table);
 
         if(flags & DYDISNIX_FLAG_GROUP_SUBSERVICES)
         {
             GHashTable *group_table = group_services(table, group);
-            delete_services_table(table);
+            delete_service_table(table);
             table = group_table;
         }
 
-        service_property_array = create_service_property_array_from_table(table);
-        generate_architecture_diagram(NULL, NULL, "", NULL, service_property_array);
-        delete_services_table(table);
-        g_ptr_array_free(service_property_array, TRUE);
+        generate_architecture_diagram(NULL, NULL, "", NULL, table);
+        delete_service_table(table);
 
         return 0;
     }
 }
 
-void generate_architecute_diagrams_for_group(GPtrArray *service_property_array, gchar *group, gchar *output_dir, gchar *image_format)
+void generate_architecute_diagrams_for_group(GHashTable *service_table, gchar *group, gchar *output_dir, gchar *image_format)
 {
-    GHashTable *table = query_services_in_group_with_context(service_property_array, group);
+    GHashTable *table = query_services_in_group_with_context(service_table, group);
     generate_group_artifacts(table, group, output_dir, "diagram.dot", image_format, NULL, generate_architecture_diagram);
-    delete_services_table(table);
+    delete_service_table(table);
 }
 
 int visualize_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format)
 {
-    GPtrArray *service_property_array = create_service_property_array(services, flags & DYDISNIX_FLAG_XML);
+    GHashTable *service_table = create_service_table(services, flags & DYDISNIX_FLAG_XML);
 
-    if(service_property_array == NULL)
+    if(service_table == NULL)
     {
         g_printerr("Cannot open services XML file!\n");
         return 1;
     }
     else
     {
-        GPtrArray *unique_groups_array = query_unique_groups(service_property_array);
+        GPtrArray *unique_groups_array = query_unique_groups(service_table);
         unsigned int i;
 
-        generate_architecute_diagrams_for_group(service_property_array, "", output_dir, image_format);
+        generate_architecute_diagrams_for_group(service_table, "", output_dir, image_format);
 
         for(i = 0; i < unique_groups_array->len; i++)
         {
             gchar *group = g_ptr_array_index(unique_groups_array, i);
-            generate_architecute_diagrams_for_group(service_property_array, group, output_dir, image_format);
+            generate_architecute_diagrams_for_group(service_table, group, output_dir, image_format);
         }
 
-        delete_service_property_array(service_property_array);
+        g_ptr_array_free(unique_groups_array, TRUE);
+        delete_service_table(service_table);
 
         return 0;
     }

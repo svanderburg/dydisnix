@@ -23,11 +23,11 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 {
     int exit_status = 0;
     int xml = flags & DYDISNIX_FLAG_XML;
-    GPtrArray *service_property_array = create_service_property_array(services, xml);
+    GHashTable *service_table = create_service_table(services, xml);
     GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
 
-    if(service_property_array == NULL || targets_array == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_array == NULL || candidate_target_table == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");
 	exit_status = 1;
@@ -46,8 +46,8 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
             gchar *service_name = (gchar*)key;
             GPtrArray *targets = (GPtrArray*)value;
 
-            Service *service = find_service(service_property_array, service_name);
-            gchar *service_value = find_service_property(service, service_property);
+            Service *service = g_hash_table_lookup(service_table, service_name);
+            gchar *service_value = g_hash_table_lookup(service->properties, service_property);
             GPtrArray *result_targets = g_ptr_array_new();
 
 	    unsigned int j;
@@ -148,7 +148,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 
     /* Cleanup */
 
-    delete_service_property_array(service_property_array);
+    delete_service_table(service_table);
     delete_target_array(targets_array);
     delete_candidate_target_table(candidate_target_table);
 

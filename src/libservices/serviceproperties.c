@@ -208,3 +208,15 @@ void delete_service_table(GHashTable *service_table)
         g_hash_table_destroy(service_table);
     }
 }
+
+xmlChar *find_service_property(Service *service, gchar *service_name)
+{
+    if(g_strcmp0(service_name, "name") == 0)
+        return service->name;
+    else if(g_strcmp0(service_name, "type") == 0)
+        return service->type;
+    else if(g_strcmp0(service_name, "group") == 0)
+        return service->group;
+    else
+        return g_hash_table_lookup(service->properties, service_name);
+}

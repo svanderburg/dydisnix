@@ -6,7 +6,7 @@
 
 static void display_property(FILE *fd, Service *service, gchar *name)
 {
-    gchar *prop_value = g_hash_table_lookup(service->properties, name);
+    xmlChar *prop_value = find_service_property(service, name);
 
     fprintf(fd, "                <td>");
     if(prop_value != NULL)

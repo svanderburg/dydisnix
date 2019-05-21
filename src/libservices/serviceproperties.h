@@ -37,4 +37,6 @@ Service *copy_service(const Service *service);
 
 void delete_service_table(GHashTable *service_table);
 
+xmlChar *find_service_property(Service *service, gchar *service_name);
+
 #endif

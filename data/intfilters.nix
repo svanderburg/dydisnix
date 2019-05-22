@@ -1,8 +1,8 @@
-{lib}:
+{pkgs}:
 
 let
   inherit (builtins) listToAttrs attrNames getAttr hasAttr lessThan head tail length;
-  inherit (lib) filter elem;
+  inherit (pkgs.lib) filter elem mapAttrs sort;
 
   translateDependencyReferencesToNames = {services, dependencies}:
     map (dependencyName: (getAttr dependencyName dependencies).name) (attrNames dependencies)
@@ -112,7 +112,7 @@ rec {
               target = getAttr targetName infrastructure;
               targetPropertyValue = getAttr targetProperty target.properties;
             in
-              elem targetPropertyValue servicePropertyListValue
+            elem targetPropertyValue servicePropertyListValue
           ) targets;
       }
     ) (attrNames distribution))
@@ -280,8 +280,8 @@ rec {
    * A candidate target mapping in which each key refers to a service and each value to a list of machine names
    */
   order = {infrastructure, distribution, targetProperty}:
-    lib.mapAttrs (serviceName: mapping:
-      lib.sort (targetAName: targetBName:
+    mapAttrs (serviceName: mapping:
+      sort (targetAName: targetBName:
         let
           targetA = getAttr targetAName infrastructure;
           targetB = getAttr targetBName infrastructure;

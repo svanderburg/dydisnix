@@ -301,7 +301,6 @@ int visualize_services(gchar *services, const unsigned int flags, gchar *group)
     {
         // HACK
         GHashTable *table = query_services_in_group_with_context(service_table, group);
-        delete_service_table(table);
 
         if(flags & DYDISNIX_FLAG_GROUP_SUBSERVICES)
         {

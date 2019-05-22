@@ -22,8 +22,11 @@ Options:
                                   based on quality of service attributes
       --filter-buildable          Checks for each combination whether the
                                   service can be built (may take some time)
-      --xml                       Output XML version of the distribution instea
-                                  of a Nix expression
+      --output-xml                Specifies that the output should be in XML not
+                                  the Nix expression language.
+      --stdout                    Indicates that not the output filename, but
+                                  the output itself should be displayed on the
+                                  standard output.
   -p, --profile=PROFILE           Name of the profile that is used for this
                                   system. Defaults to: default
       --coordinator-profile-path=PATH
@@ -58,7 +61,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:p:h -l services:,infrastructure:,qos:,filter-buildable,xml,profile:,coordinator-profile-path:,interface:,target-property:,no-out-link,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:p:h -l services:,infrastructure:,qos:,filter-buildable,output-xml,stdout,profile:,coordinator-profile-path:,interface:,target-property:,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -86,8 +89,11 @@ do
         --filter-buildable)
             filterBuildable=1
             ;;
-        --xml)
+        --output-xml)
             exprArg="--arg outputExpr false"
+            ;;
+        --stdout)
+            displayStdout=1
             ;;
         -p|--profile)
             profile=$2
@@ -112,7 +118,7 @@ do
             exit 0
             ;;
     esac
-    
+
     shift
 done
 
@@ -152,7 +158,7 @@ then
     initialDistributionArg="--argstr distributionFile $filteredDistribution"
 fi
 
-nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
+result=$(nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
           --argstr infrastructureFile "$(readlink -f $infrastructureFile)" \
           $initialDistributionArg \
           $qosArg \
@@ -160,7 +166,14 @@ nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
           $coordinatorProfileArg \
           $noOutLinkArg \
           $showTraceArg \
-          "$(readlink -f @datadir@/@PACKAGE@/gendist.nix)"
+          "$(readlink -f @datadir@/@PACKAGE@/gendist.nix)")
+
+if [ "$displayStdout" = "1" ]
+then
+    cat "$result"
+else
+    echo "$result"
+fi
 
 if [ "$filterBuildable" = "1" ]
 then

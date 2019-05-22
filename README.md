@@ -228,6 +228,61 @@ following algorithms are provided:
 * An approximation algorithm for the multiway cut problem.
 * An approximation algorithm for the graph coloring problem.
 
+Using the external distribution filters on the command-line
+-----------------------------------------------------------
+Apart from QoS models, it is also possible to use some filter algorithms
+(that are implemented as external executables) directly from the command-line
+for experimentation purposes.
+
+External filter programs accept both Nix expression as well as XML
+representations of input models, and can write Nix or XML representations of
+filtered distributions to the standard output.
+
+For example, the following command will apply the one-dimensional division
+strategy on a set of input models:
+
+```bash
+$ dydisnix-divide --strategy greedy -s services.nix -i infrastructure.nix -d distribution.nix --service-property requireMem --target-property mem
+```
+
+The above command-line invocation reads services from the given service model
+(`services.nix`), uses the target machines in the infrastructure model
+(`infrastructure.nix`) considering all targets for each service in the
+distribution model (`distribution.nix`) candidate targets.
+
+It does a one-to-many mapping from the `requireMem` property of each service
+onto to the `mem` property of each target.
+
+It is also possible to use XML representations of all input models. Internally,
+all external filter programs will work with XML representations of the input
+models, converting them from Nix when necessary.
+
+The Nix representations of the inputs can also be explicitly converted to XML by
+running the `dydisnix-xml` command, such as:
+
+```bash
+$ dydisnix-xml -s services.nix
+```
+
+The above command-line instruction generates an XML representation of a service
+model implemented in the Nix expression language.
+
+Most tools can be instructed to accept XML versions of input models by passing
+the `--xml` parameter. For example, the following command does exactly the same
+as the previously shown `dydisnix-divide` invocation:
+
+```bash
+$ dydisnix-divide --xml --strategy greedy -s services.xml -i infrastructure.xml -d distribution.xml --service-property requireMem --target-property mem
+```
+
+By default, the filter programs will output a Nix expression representation of
+a new distribution. It is also possible to use XML by providing the
+`--output-xml` parameter:
+
+```bash
+$ dydisnix-divide --output-xml --xml --strategy greedy -s services.xml -i infrastructure.xml -d distribution.xml --service-property requireMem --target-property mem
+```
+
 Port assigner
 -------------
 Some services require unique TCP port assignments. We can automate this process

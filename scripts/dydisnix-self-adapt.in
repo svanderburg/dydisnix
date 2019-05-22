@@ -27,6 +27,8 @@ Options:
       --ports-service-property=PROP   The name of the attribute that indicates
                                       the port assign type (defaults to:
                                       portAssign)
+  -F, --filters=filters_nix           A Nix expression providing a catalog of
+                                      custom filter algorithms
   -p, --profile=PROFILE               Name of the profile that is used for this
                                       system. Defaults to: default
       --coordinator-profile-path=PATH Path where to store the coordinator
@@ -77,7 +79,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:q:a:p:m:h -l services:,qos:,augment:,ports:,ports-service-property:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:q:a:F:p:m:h -l services:,qos:,augment:,ports:,ports-service-property:,filters:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -106,6 +108,9 @@ do
             ;;
         --ports-service-property)
             portsServicePropertyArg="--service-property $2"
+            ;;
+        -F|--filters)
+            filtersArg="--filters $2"
             ;;
         --interval)
             interval=$2
@@ -228,7 +233,7 @@ do
         fi
         
         echo "[coordinator]: Generating a new distribution model..." >&2
-        distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $coordinatorProfilePathArg $interfaceArg $targetPropertyArg $showTraceArg`
+        distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $filtersArg $coordinatorProfilePathArg $interfaceArg $targetPropertyArg $showTraceArg`
         echo "[coordinator]: Using generated distribution model: $distribution" >&2
         
         if [ "$portsFile" != "" ]

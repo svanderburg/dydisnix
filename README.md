@@ -180,17 +180,17 @@ let
   # Filter the candidate distribution by types.
   # This prevents services of a type to get distributed to a machine that is
   # incapable of activating it.
-  
+
   distribution1 = filters.mapAttrOnList {
     inherit services infrastructure;
     distribution = initialDistribution;
     serviceProperty = "type";
     targetPropertyList = "supportedTypes";
   };
-  
+
   # Divide the services over the candidates based on their memory constraints
   # using the greedy division method.
-  
+
   distribution2 = filters.divide {
     strategy = "greedy";
     inherit services infrastructure;
@@ -227,6 +227,78 @@ following algorithms are provided:
 * An approximation alogrithm for the subset sum problem.
 * An approximation algorithm for the multiway cut problem.
 * An approximation algorithm for the graph coloring problem.
+
+Implementing custom filter functions
+------------------------------------
+In addition to using the deployment planning algorithms provided by the Dynamic
+Disnix framework, it is also possible to make a catalog of custom filter
+functions, such as:
+
+```nix
+{pkgs, referenceFilters}:
+
+{
+  clear = {distribution}:
+    pkgs.lib.mapAttrs (serviceName: target: []);
+}
+```
+
+A custom filter function catalog has the following structure:
+* It defines a function that takes two arguments: `pkgs` refers to the Nixpkgs
+  collection and `referenceFilters` refers to the set of reference filters
+  included with Dynamic Disnix. The body defines an attribute set of custom
+  filter functions.
+* The `clear` function is a (dummy) example function that takes an existing
+  distribution model and erases the targets for every service.
+
+The `clear` filter function is implemented in the Nix expression language, that
+is a domain-specific language less suitable for arbitrary programming tasks.
+For more complicated tasks, it is also possible to invoke external executables
+that generate Disnix distributions:
+
+```nix
+{pkgs, referenceFilters}:
+
+{
+  multiwaycut = {distribution}:
+    import "${(pkgs.stdenv.mkDerivation {
+      name = "distribution.nix";
+      buildInputs = [ dydisnix ];
+      buildCommand =
+      ''
+        dydisnix-multiwaycut \
+          --distribution ${referenceFilters.generateDistributionXML distribution} \
+          --xml \
+          > $out
+      '';
+    })}";
+}
+```
+
+The above example invokes the `dydisnix-multiwaycut` executable to calculate a
+distribution by using an approximation algorithm for the multiway cut problem.
+It uses the `referenceFilters.generateDistributionXML` function to convert the
+distribution model to a standardized XML file so that it can be consumed by the
+`dydisnix-multiwaycut` executable.
+
+Invoking a custom filter function from a QoS model can be done by referring to
+the `filters` parameter:
+
+```nix
+{services, infrastructure, initialDistribution, previousDistribution, filters, lib}:
+
+filters.clear {
+  distribution = initialDistribution;
+}
+```
+
+The filters catalog expression can be specified by providing the `-F`
+parameter to the appropriate command-line tools, such as `dydisnix-gendist` that
+dynamically generates a distribution model:
+
+```bash
+$ dydisnix-gendist -s services.nix -i infrastructure.nix -q qos.nix -F customfilters.nix
+```
 
 Using the external distribution filters on the command-line
 -----------------------------------------------------------

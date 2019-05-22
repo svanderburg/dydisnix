@@ -2,6 +2,7 @@
 , infrastructureFile
 , distributionFile ? null
 , qosFile ? null
+, filtersFile ? null
 , outputExpr ? true
 , nixpkgs ? <nixpkgs>
 , coordinatorProfile ? null
@@ -10,14 +11,14 @@
 let
   # Dependencies
   pkgs = import nixpkgs {};
-  filters = import ./filters.nix { inherit pkgs; };
+  referenceFilters = import ./filters.nix { inherit pkgs; };
   distributionXSL = if outputExpr then ./distribution_expr.xsl else ./distribution.xsl;
-  
+
   # Import files
   servicesFun = import servicesFile;
   infrastructure = import infrastructureFile;
   qosFun = import qosFile;
-  
+
   # Evaluations
   services = servicesFun {
     distribution = {};
@@ -25,23 +26,28 @@ let
     system = builtins.currentSystem;
     inherit pkgs;
   };
-  
-  serviceProperties = filters.filterDerivations services;
-  
+
+  serviceProperties = referenceFilters.filterDerivations services;
+
   initialDistribution =
     if distributionFile == null then
-      filters.createCartesianProduct {
+      referenceFilters.createCartesianProduct {
         services = serviceProperties;
         inherit infrastructure;
       }
     else
       import distributionFile;
-  
+
   previousDistribution =
     if coordinatorProfile == null then null
     else
-      filters.generatePreviousDistribution coordinatorProfile;
-  
+      referenceFilters.generatePreviousDistribution coordinatorProfile;
+
+  filters = if filtersFile == null then referenceFilters
+    else import filtersFile {
+      inherit pkgs referenceFilters;
+    };
+
   qos = if qosFile == null then
     initialDistribution
   else qosFun {
@@ -53,12 +59,19 @@ in
 pkgs.stdenv.mkDerivation {
   name = "distribution.${if outputExpr then "nix" else "xml"}";
   buildInputs = [ pkgs.libxslt ];
-  buildCommand =
-  ''
+  qosXML = builtins.toXML qos;
+  passAsFile = [ "qosXML" ];
+
+  buildCommand = ''
+    if [ "$qosXMLPath" != "" ]
+    then
+        xsltproc ${distributionXSL} $qosXMLPath > $out
+    else
     (
     cat <<EOF
-    ${builtins.toXML qos}
+    $qosXML
     EOF
     ) | xsltproc ${distributionXSL} - > $out
+    fi
   '';
 }

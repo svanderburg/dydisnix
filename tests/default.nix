@@ -470,6 +470,10 @@ in
             die "line 11 should contain testtarget1!\n";
         }
 
+        # Execute a dummy filter in a custom filters expression that erases all targets
+
+        $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${tests}/services.nix -i ${tests}/infrastructure.nix -F ${tests}/qos/customfilters.nix -q ${tests}/qos/qos-clear.nix");
+
         # Execute port assignment test. First, we assign a unique port number
         # to each service using a shared ports pool among all machines.
 

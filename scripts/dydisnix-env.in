@@ -33,6 +33,8 @@ Options:
       --ports-service-property=PROP   The name of the attribute that indicates
                                       the port assign type (defaults to:
                                       portAssign)
+  -F, --filters=filters_nix           A Nix expression providing a catalog of
+                                      custom filter algorithms
   -p, --profile=PROFILE               Name of the profile that is used for this
                                       system. Defaults to: default
       --coordinator-profile-path=PATH Path where to store the coordinator
@@ -76,7 +78,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:a:p:m:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:F:p:m:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,filters:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -102,6 +104,9 @@ do
             ;;
         -a|--augment)
             augmentFile=`readlink -f $2`
+            ;;
+        -F|--filters)
+            filtersArg="--filters $2"
             ;;
         --ports)
             portsFile=`readlink -f $2`
@@ -199,7 +204,7 @@ echo "[coordinator]: Using generated distribution model: $distribution" >&2
 if [ "$portsFile" != "" ]
 then
     echo "[coordinator]: Updating the port assignments..." >&2
-    dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $portsServicePropertyArg > $TMPDIR/ports.nix
+    dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $filtersArg $portsServicePropertyArg > $TMPDIR/ports.nix
     mv $TMPDIR/ports.nix $portsFile
 fi
 

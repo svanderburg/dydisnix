@@ -20,6 +20,8 @@ Options:
   -q, --qos=qos_nix               Quality of service Nix expression which
                                   describes how to devide services onto targets
                                   based on quality of service attributes
+  -F, --filters=filters_nix       A Nix expression providing a catalog of custom
+                                  filter algorithms
       --filter-buildable          Checks for each combination whether the
                                   service can be built (may take some time)
       --output-xml                Specifies that the output should be in XML not
@@ -61,7 +63,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:p:h -l services:,infrastructure:,qos:,filter-buildable,output-xml,stdout,profile:,coordinator-profile-path:,interface:,target-property:,no-out-link,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:F:p:h -l services:,infrastructure:,qos:,filters:,filter-buildable,output-xml,stdout,profile:,coordinator-profile-path:,interface:,target-property:,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -85,6 +87,9 @@ do
         -q|--qos)
             qosFile=`readlink -f $2`
             qosArg="--argstr qosFile $(readlink -f $qosFile)"
+            ;;
+        -F|--filters)
+            filtersArg="--argstr filtersFile $(readlink -f $2)"
             ;;
         --filter-buildable)
             filterBuildable=1
@@ -162,6 +167,7 @@ result=$(nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
           --argstr infrastructureFile "$(readlink -f $infrastructureFile)" \
           $initialDistributionArg \
           $qosArg \
+          $filtersArg \
           $exprArg \
           $coordinatorProfileArg \
           $noOutLinkArg \

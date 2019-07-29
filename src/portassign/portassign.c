@@ -53,10 +53,10 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
 {
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
-    GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
+    GHashTable *targets_table = create_target_property_table(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
 
-    if(service_table == NULL || targets_array == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
     {
         g_printerr("Error with opening one of the models!\n");
         return 1;
@@ -85,7 +85,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
         /* Cleanup */
         clean_ports_assignment(&assignment);
         delete_service_table(service_table);
-        delete_target_array(targets_array);
+        delete_targets_table(targets_table);
         delete_candidate_target_table(candidate_target_table);
 
         return 0;

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <glib/gprintf.h>
 #include <procreact_future.h>
+#include <nixxml-node.h>
 
 #define BUFFER_SIZE 1024
 
@@ -30,76 +31,54 @@ char *generate_infrastructure_xml_from_expr(char *infrastructure_expr)
     return path;
 }
 
-GPtrArray *create_target_property_array_from_xml(const gchar *infrastructure_xml_file)
+GHashTable *create_target_property_table_from_xml(const gchar *infrastructure_xml_file)
 {
-    GPtrArray *targets_array;
+    GHashTable *targets_table;
     xmlDocPtr doc;
-    
+
     /* Parse the XML document */
-    
+
     if((doc = xmlParseFile(infrastructure_xml_file)) == NULL)
     {
-	g_printerr("Error with parsing the infrastructure XML file!\n");
-	xmlCleanupParser();
-	return NULL;
+        g_printerr("Error with parsing the infrastructure XML file!\n");
+        xmlCleanupParser();
+        return NULL;
     }
-    
+
     /* Create a target array from the XML document */
-    targets_array = create_target_array_from_doc(doc);
-    
+    targets_table = create_targets_table_from_doc(doc);
+
     /* Cleanup */
     xmlFreeDoc(doc);
     xmlCleanupParser();
-    
-    /* Return the target array */
-    return targets_array;
+
+    /* Return the target table */
+    return targets_table;
 }
 
-GPtrArray *create_target_property_array_from_nix(gchar *infrastructure_nix)
+GHashTable *create_target_property_table_from_nix(gchar *infrastructure_nix)
 {
     char *infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure_nix);
-    GPtrArray *target_array = create_target_array_from_xml(infrastructure_xml);
+    GHashTable *targets_table = create_targets_table_from_xml(infrastructure_xml);
     free(infrastructure_xml);
-    return target_array;
+    return targets_table;
 }
 
-GPtrArray *create_target_property_array(gchar *infrastructure, const int xml)
+GHashTable *create_target_property_table(gchar *infrastructure, const int xml)
 {
     if(xml)
-        return create_target_property_array_from_xml(infrastructure);
+        return create_target_property_table_from_xml(infrastructure);
     else
-        return create_target_property_array_from_nix(infrastructure);
-}
-
-static gint compare_target_names(const Target **l, const Target **r)
-{
-    const Target *left = *l;
-    const Target *right = *r;
-    
-    return xmlStrcmp(left->name, right->name);
-}
-
-Target *find_target_by_name(GPtrArray *target_array, gchar *name)
-{
-    Target target;
-    Target **ret, *targetPtr = &target;
-    
-    targetPtr->name = (xmlChar*) name;
-    
-    ret = bsearch(&targetPtr, target_array->pdata, target_array->len, sizeof(gpointer), (int (*)(const void*, const void*)) compare_target_names);
-
-    if(ret == NULL)
-        return NULL;
-    else
-        return *ret;
+        return create_target_property_table_from_nix(infrastructure);
 }
 
 void substract_target_value(Target *target, gchar *property_name, int amount)
 {
     gchar buffer[BUFFER_SIZE];
-    gchar *value = find_target_property(target, property_name);
-    int result = atoi(value) - amount;
+    NixXML_Node *node = g_hash_table_lookup(target->properties_table, property_name);
+
+    int result = atoi((char*)node->value) - amount;
     g_sprintf(buffer, "%d", result);
-    g_free(value);
-    g_hash_table_insert(target->properties_table, g_strdup(property_name), g_strdup(buffer));
+    xmlFree(node->value);
+    node->value = xmlStrdup((xmlChar*)buffer);
 }

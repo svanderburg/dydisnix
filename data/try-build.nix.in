@@ -16,7 +16,7 @@ let
     inherit (pkgs) lib;
   };
 
-  normalize = import "${disnix}/share/disnix/normalize.nix" {
+  normalizeArchitecture = import "${disnix}/share/disnix/normalize-architecture.nix" {
     inherit (pkgs) lib;
   };
 
@@ -25,7 +25,7 @@ let
     packagesFun = null;
   };
 
-  normalizedArchitecture = normalize {
+  normalizedArchitecture = normalizeArchitecture {
     inherit architectureFun nixpkgs defaultClientInterface defaultTargetProperty;
     defaultDeployState = false;
   };

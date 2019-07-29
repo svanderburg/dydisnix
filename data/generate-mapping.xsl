@@ -5,10 +5,10 @@
 
 	<xsl:template match="/">
 	{
-		<xsl:for-each select="/manifest/activation/mapping[not(name=preceding-sibling::mapping/name)]">
-			<xsl:variable name="name" select="name" />
-			<xsl:value-of select="$name" /> = [
-				<xsl:for-each select="/manifest/activation/mapping[name=$name]">
+		<xsl:for-each select="/manifest/services/service[not(name=preceding-sibling::service/name)]">
+			<xsl:variable name="key" select="@name" />
+			<xsl:value-of select="name" /> = [
+				<xsl:for-each select="/manifest/serviceMappings/mapping[service=$key]">
 					"<xsl:value-of select="target" />"
 				</xsl:for-each>
 			];

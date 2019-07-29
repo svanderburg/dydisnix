@@ -1,5 +1,6 @@
 #include "divide.h"
 #include <stdlib.h>
+#include <nixxml-generate-env-generic.h>
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
 #include "candidatetargetmapping.h"
@@ -24,10 +25,10 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
     int exit_status = 0;
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
-    GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
+    GHashTable *targets_table = create_target_property_table(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
 
-    if(service_table == NULL || targets_array == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");
 	exit_status = 1;
@@ -62,13 +63,14 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	    /* Iterate over targets for the current service */
 	
 	    Target *select_target = NULL;
+	    gchar *select_target_name = NULL;
 	
 	    for(j = 0; j < targets->len; j++)
 	    {
 		gchar *target_name = g_ptr_array_index(targets, j);
-		Target *target = find_target_by_name(targets_array, target_name);
+		Target *target = g_hash_table_lookup(targets_table, target_name);
 		gchar *target_value = find_target_property(target, target_property);
-		
+
 		if(target_value == NULL)
 		{
 		    g_printerr("Value for target property: %s not found!\n", target_property);
@@ -78,10 +80,11 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 
 		if(strategy == STRATEGY_GREEDY)
 		{
-		    if(atoi(service_value) <= atoi(target_value))
+		    if(atoi(service_value) <= atoi((char*)target_value))
 		    {
 			substract_target_value(target, target_property, atoi(service_value));
 			select_target = target;
+			select_target_name = target_name;
 			g_ptr_array_add(result_targets, target_name);
 			break;
 		    }
@@ -90,30 +93,42 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		{
 		    if(select_target == NULL)
 		    {
-			if(atoi(service_value) <= atoi(target_value))
+			if(atoi(service_value) <= atoi((char*)target_value))
+			{
 			    select_target = target;
+			    select_target_name = target_name;
+			}
 		    }
 		    else
 		    {
 			gchar *select_target_value = find_target_property(select_target, target_property);
 
-			if(atoi(target_value) > atoi(select_target_value))
+			if(atoi((char*)target_value) > atoi(select_target_value))
+			{
 			    select_target = target;
+			    select_target_name = target_name;
+			}
 		    }
 		}
 		else if(strategy == STRATEGY_LOWEST_BIDDER)
 		{
-	    	    if(select_target == NULL)
+		    if(select_target == NULL)
 		    {
-			if(atoi(service_value) <= atoi(target_value))
+			if(atoi(service_value) <= atoi((char*)target_value))
+			{
 			    select_target = target;
+			    select_target_name = target_name;
+			}
 		    }
 		    else
 		    {
 			gchar *select_target_value = find_target_property(select_target, target_property);
 
-			if(atoi(target_value) < atoi(select_target_value) && atoi(service_value) <= atoi(select_target_value))
+			if(atoi((char*)target_value) < atoi(select_target_value) && atoi(service_value) <= atoi(select_target_value))
+			{
 			    select_target = target;
+			    select_target_name = target_name;
+			}
 		    }
 		}
 	    }
@@ -129,7 +144,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		if(select_target != NULL)
 		{
 		    substract_target_value(select_target, target_property, atoi(service_value));
-		    g_ptr_array_add(result_targets, select_target->name);
+		    g_ptr_array_add(result_targets, select_target_name);
 		}
 	    }
 
@@ -149,7 +164,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
     /* Cleanup */
 
     delete_service_table(service_table);
-    delete_target_array(targets_array);
+    delete_targets_table(targets_table);
     delete_candidate_target_table(candidate_target_table);
 
     /* Return exit status */

@@ -9,11 +9,11 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 {
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
-    GPtrArray *targets_array = create_target_property_array(infrastructure, xml);
+    GHashTable *targets_table = create_target_property_table(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
     int exit_status = 0;
     
-    if(service_table == NULL || targets_array == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
     {
 	g_printerr("Error with opening one of the models!\n");
 	exit_status = 1;
@@ -48,7 +48,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 	    for(i = 0; i < target_mapping_array->len; i++)
 	    {
 		TargetMappingItem *target_mapping = g_ptr_array_index(target_mapping_array, i);
-		Target *target = find_target_by_name(targets_array, target_mapping->target);
+		Target *target = g_hash_table_lookup(targets_table, target_mapping->target);
 		gchar *target_value = find_target_property(target, target_property);
 
 		int count = 0;
@@ -118,7 +118,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 
     /* Cleanup */
     delete_candidate_target_table(candidate_target_table);
-    delete_target_array(targets_array);
+    delete_targets_table(targets_table);
     delete_service_table(service_table);
 
     return exit_status;

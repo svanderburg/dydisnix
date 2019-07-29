@@ -1,5 +1,6 @@
 #include "graphcol.h"
 #include <stdlib.h>
+#include <nixxml-ghashtable-iter.h>
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
 #include "candidatetargetmapping.h"
@@ -71,11 +72,28 @@ static void delete_targets(gpointer data)
     g_ptr_array_free(targets, TRUE);
 }
 
+static gchar *get_first_target_name(GHashTable *targets_table)
+{
+    gchar *result;
+    NixXML_GHashTableOrderedIter iter;
+    gchar *key;
+    gpointer value;
+    NixXML_g_hash_table_ordered_iter_init(&iter, targets_table);
+
+    if(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
+        result = (gchar*)key;
+    else
+        result = NULL;
+
+    NixXML_g_hash_table_ordered_iter_destroy(&iter);
+    return result;
+}
+
 int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int flags)
 {
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services_xml, xml);
-    GPtrArray *targets_array = create_target_property_array(infrastructure_xml, xml);
+    GHashTable *targets_table = create_target_property_table(infrastructure_xml, xml);
     GPtrArray *adjacency_array = g_ptr_array_new();
     VertexAdjacency *max_adjacency = NULL;
     GHashTableIter iter;
@@ -126,7 +144,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     
     /* Color the max degree vertex with the first color */
     
-    max_adjacency->target = (gchar*)(((Target*)g_ptr_array_index(targets_array, 0))->name);
+    max_adjacency->target = get_first_target_name(targets_table);
     colored_vertices++;
     
     while(colored_vertices < adjacency_array->len)
@@ -180,17 +198,20 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
 	
 	/* Look in the targets array for the first target that is not in used targets (which we mean by the lowest color) */
 	
-	for(i = 0; i < targets_array->len; i++)
+	GHashTableIter iter;
+	gpointer key, value;
+
+	g_hash_table_iter_init(&iter, targets_table);
+	while(g_hash_table_iter_next(&iter, &key, &value))
 	{
 	    unsigned int j;
-	    Target *current_target = g_ptr_array_index(targets_array, i);
 	    int exists = FALSE;
 	    
 	    for(j = 0; j < used_targets->len; j++)
 	    {
 		gchar *current_used_target = g_ptr_array_index(used_targets, j);
 		
-		if(xmlStrcmp(current_target->name, (xmlChar*) current_used_target) == 0)
+		if(xmlStrcmp((xmlChar*) key, (xmlChar*) current_used_target) == 0)
 		{
 		    exists = TRUE;
 		    break;
@@ -199,7 +220,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
 	    
 	    if(!exists)
 	    {
-		pickTarget = (gchar*)current_target->name;
+		pickTarget = (gchar*)key;
 		break;
 	    }
 	}
@@ -243,7 +264,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
 
     /* Cleanup */
     delete_service_table(service_table);
-    delete_target_array(targets_array);
+    delete_targets_table(targets_table);
 
     return 0;
 }

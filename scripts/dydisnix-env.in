@@ -24,6 +24,11 @@ Options:
   -i, --infrastructure=infrastructure_nix
                                       Infrastructure Nix expression which
                                       captures properties of machines in the network
+  -P, --packages=packages_nix
+                                      Packages Nix expression specifying the
+                                      packages that should be deployed in a Nix
+                                      profile mapped to each machine in the
+                                      network
   -a, --augment=augment_nix           Nix epxression which augments additional
                                       attributes into the infrastructure model
       --ports=ports_nix               Filename of a ports expression containing
@@ -78,7 +83,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:a:F:p:m:h -l services:,infrastructure:,qos:,augment:,ports:,ports-service-property:,filters:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:P:F:p:m:h -l services:,infrastructure:,qos:,augment:,packages:,ports:,ports-service-property:,filters:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -104,6 +109,10 @@ do
             ;;
         -a|--augment)
             augmentFile=`readlink -f $2`
+            ;;
+        -P|--packages)
+            packagesFile=`readlink -f $2`
+            packagesArg="-P $packagesFile"
             ;;
         -F|--filters)
             filtersArg="--filters $2"
@@ -209,4 +218,4 @@ then
 fi
 
 echo "[coordinator]: Deploying the system..." >&2
-disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrateStateArg $deleteStateArg $depthFirstArg $keepArg $showTraceArg
+disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $packagesArg $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrateStateArg $deleteStateArg $depthFirstArg $keepArg $showTraceArg

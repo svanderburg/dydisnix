@@ -69,6 +69,7 @@ src/libservices/Makefile
 src/libinfproperties/Makefile
 src/visualize-services/Makefile
 src/document-services/Makefile
+src/previous-distribution/Makefile
 data/extfilters.nix
 data/try-build.nix
 data/Makefile

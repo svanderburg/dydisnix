@@ -89,7 +89,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 		if(g_hash_table_lookup(covered_services_table, service) == NULL)
 		{
 		    CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
-		    target_mapping->target = min_cost_target_mapping->target;
+		    target_mapping->target = (xmlChar*)min_cost_target_mapping->target;
 		    target_mapping->container = NULL;
 
 		    g_ptr_array_add(targets, target_mapping);

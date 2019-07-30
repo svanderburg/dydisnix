@@ -252,7 +252,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
         if(current_adjacency->target != NULL)
         {
             CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
-            target_mapping->target = current_adjacency->target;
+            target_mapping->target = (xmlChar*)current_adjacency->target;
             target_mapping->container = NULL;
             g_ptr_array_add(targets, target_mapping);
         }

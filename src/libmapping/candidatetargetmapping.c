@@ -41,8 +41,16 @@ void print_candidate_target_mapping_nix(FILE *file, const CandidateTargetMapping
     NixXML_print_string_nix(file, mapping->target, indent_level, userdata);
 }
 
+static void print_candidate_target_mapping_attributes_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata, NixXML_PrintXMLValueFunc print_value)
+{
+    const CandidateTargetMapping *mapping = (const CandidateTargetMapping*)value;
+
+    NixXML_print_simple_attribute_xml(file, "target", mapping->target, indent_level, type_property_name, userdata, NixXML_print_string_xml);
+    if(mapping->container != NULL)
+        NixXML_print_simple_attribute_xml(file, "container", mapping->container, indent_level, type_property_name, userdata, NixXML_print_string_xml);
+}
+
 void print_candidate_target_mapping_xml(FILE *file, const CandidateTargetMapping *mapping, const int indent_level, const char *type_property_name, void *userdata)
 {
-    // TODO: support the verbose notation as well
-    NixXML_print_string_xml(file, mapping->target, indent_level, type_property_name, userdata);
+    NixXML_print_simple_attrset_xml(file, mapping, indent_level, type_property_name, userdata, print_candidate_target_mapping_attributes_xml, NULL);
 }

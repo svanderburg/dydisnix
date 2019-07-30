@@ -40,7 +40,7 @@ GHashTable *create_port_distribution_table(PortConfiguration *port_configuration
                 {
                     CandidateTargetMapping *mapping = g_ptr_array_index(targets, 0);
                     gint *port = g_malloc(sizeof(gint));
-                    *port = assign_or_reuse_port(port_configuration, mapping->target, service_name);
+                    *port = assign_or_reuse_port(port_configuration, (char*)mapping->target, service_name);
                     g_hash_table_insert(port_distribution_table, service_name, port);
                 }
                 else

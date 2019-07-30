@@ -64,17 +64,13 @@ rec {
     };
 
   generatePreviousDistribution = coordinatorProfile:
-    let
-      generateMappingXSL = ./generate-mapping.xsl;
-    in
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
-      buildInputs = [ pkgs.libxslt ];
+      buildInputs = [ dydisnix ];
       buildCommand = ''
-        xsltproc ${generateMappingXSL} ${coordinatorProfile} > $out
+        dydisnix-previous-distribution ${coordinatorProfile} > $out
       '';
-    })}"
-  ;
+    })}";
 
   /**
    * Uses a one-dimensional configuration strategy to divide services over

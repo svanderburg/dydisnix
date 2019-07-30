@@ -1,5 +1,5 @@
 #include "filterbuildable.h"
-#include "candidatetargetmapping.h"
+#include "candidatetargetmappingtable.h"
 #include <unistd.h>
 #include <procreact_pid.h>
 
@@ -79,10 +79,10 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
 
             for(i = 0; i < targets->len; i++)
             {
-                gchar *target = g_ptr_array_index(targets, i);
+                CandidateTargetMapping *mapping = g_ptr_array_index(targets, i);
 
-                if(instantiate(services_expr, infrastructure_expr, distribution_expr, service, target, interface, target_property) == 0)
-                    g_ptr_array_add(filtered_targets, target);
+                if(instantiate(services_expr, infrastructure_expr, distribution_expr, service, (gchar*)mapping->target, interface, target_property) == 0)
+                    g_ptr_array_add(filtered_targets, mapping);
             }
 
             g_hash_table_insert(filtered_target_table, service, filtered_targets);

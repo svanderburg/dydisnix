@@ -1,143 +1,48 @@
 #include "candidatetargetmapping.h"
-#include <stdlib.h>
-#include <procreact_future.h>
 #include <nixxml-parse.h>
-#include <nixxml-gptrarray.h>
-#include <nixxml-ghashtable.h>
 #include <nixxml-print-nix.h>
 #include <nixxml-print-xml.h>
 
-static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribution_expr, char *infrastructure_expr)
+static void *create_candidate_target_mapping_from_element(xmlNodePtr element, void *userdata)
 {
-    ProcReact_Future future = procreact_initialize_future(procreact_create_string_type());
-
-    if(future.pid == 0)
-    {
-        char *const args[] = {"dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, "--no-out-link", NULL};
-        dup2(future.fd, 1); /* Attach write-end to stdout */
-        execvp(args[0], args);
-        _exit(1);
-    }
-
-    return future;
+    return g_malloc0(sizeof(CandidateTargetMapping));
 }
 
-char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr)
+static void insert_candidate_target_mapping_attribute(void *table, const xmlChar *key, void *value, void *userdata)
 {
-    ProcReact_Status status;
-    ProcReact_Future future = generate_distribution_xml_from_expr_async(distribution_expr, infrastructure_expr);
-    char *path = procreact_future_get(&future, &status);
-    path[strlen(path) - 1] = '\0';
-    return path;
-}
+    CandidateTargetMapping *mapping = (CandidateTargetMapping*)table;
 
-static void *parse_mapping(xmlNodePtr element, void *userdata)
-{
-    return NixXML_parse_g_ptr_array(element, "target", userdata, NixXML_parse_value);
-}
-
-GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping_file)
-{
-    /* Declarations */
-    xmlDocPtr doc;
-    xmlNodePtr node_root;
-    GHashTable *candidate_target_table;
-
-    /* Parse the XML document */
-
-    if((doc = xmlParseFile(candidate_mapping_file)) == NULL)
-    {
-        fprintf(stderr, "Error with candidate mapping XML file!\n");
-        xmlCleanupParser();
-        return NULL;
-    }
-
-    /* Retrieve root element */
-    node_root = xmlDocGetRootElement(doc);
-
-    if(node_root == NULL)
-    {
-        fprintf(stderr, "The candidate mapping XML file is empty!\n");
-        xmlFreeDoc(doc);
-        xmlCleanupParser();
-        return NULL;
-    }
-
-    /* Parse mappings */
-    candidate_target_table = NixXML_parse_g_hash_table_verbose(node_root, "service", "name", NULL, parse_mapping);
-
-    /* Cleanup */
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
-
-    /* Return the candidate host array */
-    return candidate_target_table;
-}
-
-GHashTable *create_candidate_target_table_from_nix(gchar *distribution_expr, gchar *infrastructure_expr)
-{
-    char *distribution_xml = generate_distribution_xml_from_expr(distribution_expr, infrastructure_expr);
-    GHashTable *candidate_target_table = create_candidate_target_table_from_xml(distribution_xml);
-    free(distribution_xml);
-    return candidate_target_table;
-}
-
-GHashTable *create_candidate_target_table(gchar *distribution_expr, gchar *infrastructure_expr, int xml)
-{
-    if(xml)
-        return create_candidate_target_table_from_xml(distribution_expr);
+    if(xmlStrcmp(key, (xmlChar*) "target") == 0)
+        mapping->target = value;
+    else if(xmlStrcmp(key, (xmlChar*) "container") == 0)
+        mapping->container = value;
     else
-        return create_candidate_target_table_from_nix(distribution_expr, infrastructure_expr);
+        xmlFree(value);
 }
 
-void delete_candidate_target_table(GHashTable *candidate_target_table)
+void *parse_candidate_target_mapping(xmlNodePtr element, void *userdata)
 {
-    if(candidate_target_table != NULL)
+    return NixXML_parse_simple_attrset(element, userdata, create_candidate_target_mapping_from_element, NixXML_parse_value, insert_candidate_target_mapping_attribute);
+}
+
+void delete_candidate_target_mapping(CandidateTargetMapping *mapping)
+{
+    if(mapping != NULL)
     {
-        GHashTableIter iter;
-        gpointer key, value;
-
-        g_hash_table_iter_init(&iter, candidate_target_table);
-        while(g_hash_table_iter_next(&iter, &key, &value))
-        {
-            GPtrArray *targets = (GPtrArray*)value;
-
-            if(targets != NULL)
-            {
-                unsigned int i;
-
-                for(i = 0; i < targets->len; i++)
-                {
-                    gchar *target = g_ptr_array_index(targets, i);
-                    g_free(target);
-                }
-
-                g_ptr_array_free(targets, TRUE);
-            }
-        }
-
-        g_hash_table_destroy(candidate_target_table);
+        xmlFree(mapping->target);
+        xmlFree(mapping->container);
+        g_free(mapping);
     }
 }
 
-static void print_targets_nix(FILE *file, const void *value, const int indent_level, void *userdata)
+void print_candidate_target_mapping_nix(FILE *file, const CandidateTargetMapping *mapping, const int indent_level, void *userdata)
 {
-    NixXML_print_g_ptr_array_nix(file, value, indent_level, userdata, NixXML_print_string_nix);
+    // TODO: support the verbose notation as well
+    NixXML_print_string_nix(file, mapping->target, indent_level, userdata);
 }
 
-void print_candidate_target_table_nix(GHashTable *candidate_target_table)
+void print_candidate_target_mapping_xml(FILE *file, const CandidateTargetMapping *mapping, const int indent_level, const char *type_property_name, void *userdata)
 {
-    NixXML_print_g_hash_table_nix(stdout, candidate_target_table, 0, NULL, print_targets_nix);
-}
-
-static void print_targets_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata)
-{
-    NixXML_print_g_ptr_array_xml(file, value, "target", indent_level, type_property_name, userdata, NixXML_print_string_xml);
-}
-
-void print_candidate_target_table_xml(GHashTable *candidate_target_table)
-{
-    NixXML_print_open_root_tag(stdout, "distribution");
-    NixXML_print_g_hash_table_verbose_xml(stdout, candidate_target_table, "service", "name", 0, NULL, NULL, print_targets_xml);
-    NixXML_print_close_root_tag(stdout, "distribution");
+    // TODO: support the verbose notation as well
+    NixXML_print_string_xml(file, mapping->target, indent_level, type_property_name, userdata);
 }

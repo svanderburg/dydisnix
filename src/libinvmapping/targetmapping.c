@@ -1,6 +1,6 @@
 #include "targetmapping.h"
 #include <stdlib.h>
-#include <candidatetargetmapping.h>
+#include <candidatetargetmappingtable.h>
 
 GPtrArray *create_target_mapping_array(GHashTable *candidate_target_table)
 {
@@ -18,13 +18,13 @@ GPtrArray *create_target_mapping_array(GHashTable *candidate_target_table)
 
         for(i = 0; i < targets->len; i++)
         {
-            gchar *target = g_ptr_array_index(targets, i);
-            TargetMappingItem *mapping = find_target_mapping_item(target_mapping_array, target);
+            CandidateTargetMapping *target_mapping = g_ptr_array_index(targets, i);
+            TargetMappingItem *mapping = find_target_mapping_item(target_mapping_array, (gchar*)target_mapping->target);
 
             if(mapping == NULL)
             {
                 mapping = (TargetMappingItem*)g_malloc(sizeof(TargetMappingItem));
-                mapping->target = target;
+                mapping->target = (gchar*)target_mapping->target;
                 mapping->services = g_ptr_array_new();
 
                 g_ptr_array_add(target_mapping_array, mapping);

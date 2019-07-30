@@ -1,7 +1,7 @@
 #include "minsetcover.h"
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
-#include "candidatetargetmapping.h"
+#include "candidatetargetmappingtable.h"
 #include "targetmapping.h"
 #include <stdlib.h>
 
@@ -88,7 +88,11 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 
 		if(g_hash_table_lookup(covered_services_table, service) == NULL)
 		{
-		    g_ptr_array_add(targets, min_cost_target_mapping->target);
+		    CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
+		    target_mapping->target = min_cost_target_mapping->target;
+		    target_mapping->container = NULL;
+
+		    g_ptr_array_add(targets, target_mapping);
 		    g_hash_table_insert(covered_services_table, service, service);
 		}
 	    }
@@ -107,7 +111,17 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
         {
             GPtrArray *targets = (GPtrArray*)targets;
             if(targets != NULL)
+            {
+                unsigned int i;
+
+                for(i = 0; i < targets->len; i++)
+                {
+                    CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_ptr_array_index(targets, i);
+                    g_free(target_mapping);
+                }
+
                 g_ptr_array_free(targets, TRUE);
+            }
         }
 
         g_hash_table_destroy(result_table);

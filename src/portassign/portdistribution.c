@@ -1,6 +1,7 @@
 #include "portdistribution.h"
 #include <nixxml-ghashtable.h>
 #include "serviceproperties.h"
+#include "candidatetargetmappingtable.h"
 
 GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GHashTable *service_table, GHashTable *candidate_target_table, gchar *service_property)
 {
@@ -37,9 +38,9 @@ GHashTable *create_port_distribution_table(PortConfiguration *port_configuration
             {
                 if(targets->len > 0)
                 {
-                    gchar *target = g_ptr_array_index(targets, 0);
+                    CandidateTargetMapping *mapping = g_ptr_array_index(targets, 0);
                     gint *port = g_malloc(sizeof(gint));
-                    *port = assign_or_reuse_port(port_configuration, target, service_name);
+                    *port = assign_or_reuse_port(port_configuration, mapping->target, service_name);
                     g_hash_table_insert(port_distribution_table, service_name, port);
                 }
                 else

@@ -3,7 +3,7 @@
 #include <nixxml-generate-env-generic.h>
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
-#include "candidatetargetmapping.h"
+#include "candidatetargetmappingtable.h"
 
 static void delete_result_table(GHashTable *result_table)
 {
@@ -13,8 +13,8 @@ static void delete_result_table(GHashTable *result_table)
     g_hash_table_iter_init(&iter, result_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
-        GPtrArray *targets = (GPtrArray*)value;
-        g_ptr_array_free(targets, TRUE);
+        GPtrArray *mappings = (GPtrArray*)value;
+        g_ptr_array_free(mappings, TRUE);
     }
 
     g_hash_table_destroy(result_table);
@@ -63,12 +63,12 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	    /* Iterate over targets for the current service */
 	
 	    Target *select_target = NULL;
-	    gchar *select_target_name = NULL;
+	    CandidateTargetMapping *selected_mapping = NULL;
 	
 	    for(j = 0; j < targets->len; j++)
 	    {
-		gchar *target_name = g_ptr_array_index(targets, j);
-		Target *target = g_hash_table_lookup(targets_table, target_name);
+		CandidateTargetMapping *mapping = g_ptr_array_index(targets, j);
+		Target *target = g_hash_table_lookup(targets_table, mapping->target);
 		gchar *target_value = find_target_property(target, target_property);
 
 		if(target_value == NULL)
@@ -84,8 +84,8 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		    {
 			substract_target_value(target, target_property, atoi(service_value));
 			select_target = target;
-			select_target_name = target_name;
-			g_ptr_array_add(result_targets, target_name);
+			selected_mapping = mapping;
+			g_ptr_array_add(result_targets, mapping);
 			break;
 		    }
 		}
@@ -96,7 +96,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 			if(atoi(service_value) <= atoi((char*)target_value))
 			{
 			    select_target = target;
-			    select_target_name = target_name;
+			    selected_mapping = mapping;
 			}
 		    }
 		    else
@@ -106,7 +106,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 			if(atoi((char*)target_value) > atoi(select_target_value))
 			{
 			    select_target = target;
-			    select_target_name = target_name;
+			    selected_mapping = mapping;
 			}
 		    }
 		}
@@ -117,7 +117,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 			if(atoi(service_value) <= atoi((char*)target_value))
 			{
 			    select_target = target;
-			    select_target_name = target_name;
+			    selected_mapping = mapping;
 			}
 		    }
 		    else
@@ -127,7 +127,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 			if(atoi((char*)target_value) < atoi(select_target_value) && atoi(service_value) <= atoi(select_target_value))
 			{
 			    select_target = target;
-			    select_target_name = target_name;
+			    selected_mapping = mapping;
 			}
 		    }
 		}
@@ -144,7 +144,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		if(select_target != NULL)
 		{
 		    substract_target_value(select_target, target_property, atoi(service_value));
-		    g_ptr_array_add(result_targets, select_target_name);
+		    g_ptr_array_add(result_targets, selected_mapping);
 		}
 	    }
 

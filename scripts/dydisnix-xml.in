@@ -96,7 +96,7 @@ checkTargetProperty
 if [ "$servicesFile" != "" ]
 then
     nix-build $showTraceArg --arg servicesFile $servicesFile \
-        --argstr targetProperty $targetProperty \
+        --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A servicesToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
@@ -104,28 +104,28 @@ elif [ "$distributionFile" != "" ] && [ "$infrastructureFile" != "" ]
 then
     nix-build $showTraceArg --arg distributionFile $distributionFile \
         --arg infrastructureFile $infrastructureFile \
-        --argstr targetProperty $targetProperty \
+        --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A distributionToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$infrastructureFile" != "" ]
 then
     nix-build $showTraceArg --arg infrastructureFile $infrastructureFile \
-        --argstr targetProperty $targetProperty \
+        --argstr defaultTargetProperty $targetProperty \
         -A infrastructureToXML \
         $noOutLinkArg $showTraceArg \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$portsFile" != "" ]
 then
     nix-build $showTraceArg --arg portsFile $portsFile \
-        --argstr targetProperty $targetProperty \
+        --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A portsToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 elif [ "$docsFile" != "" ]
 then
     nix-build $showTraceArg --arg docsFile $docsFile \
-        --argstr targetProperty $targetProperty \
+        --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A docsToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)

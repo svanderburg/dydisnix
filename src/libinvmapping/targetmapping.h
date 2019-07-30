@@ -5,7 +5,7 @@
 typedef struct
 {
     gchar *target;
-    
+
     GPtrArray *services;
 }
 TargetMappingItem;

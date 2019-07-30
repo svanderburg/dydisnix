@@ -3,7 +3,7 @@
 #include <string.h>
 #include <targetmapping.h>
 #include <serviceproperties.h>
-#include <candidatetargetmapping.h>
+#include <candidatetargetmappingtable.h>
 #include <procreact_future.h>
 #include <nixxml-parse.h>
 #include <nixxml-print-nix.h>

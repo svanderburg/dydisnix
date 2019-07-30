@@ -3,7 +3,7 @@
 #include <nixxml-ghashtable-iter.h>
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
-#include "candidatetargetmapping.h"
+#include "candidatetargetmappingtable.h"
 
 typedef struct
 {
@@ -250,7 +250,12 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
         GPtrArray *targets = g_ptr_array_new();
 
         if(current_adjacency->target != NULL)
-            g_ptr_array_add(targets, current_adjacency->target);
+        {
+            CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
+            target_mapping->target = current_adjacency->target;
+            target_mapping->container = NULL;
+            g_ptr_array_add(targets, target_mapping);
+        }
 
         g_hash_table_insert(candidate_target_table, current_adjacency->service, targets);
     }
@@ -260,9 +265,10 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     else
         print_candidate_target_table_nix(candidate_target_table);
 
-    g_hash_table_destroy(candidate_target_table);
-
     /* Cleanup */
+
+    g_hash_table_destroy(candidate_target_table); // TODO: properly clean
+
     delete_service_table(service_table);
     delete_targets_table(targets_table);
 

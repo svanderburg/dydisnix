@@ -5,7 +5,7 @@ filters.divide {
 
   inherit services infrastructure;
   distribution = initialDistribution;
-  
+
   serviceProperty = "requireMem";
   targetProperty = "mem";
 }

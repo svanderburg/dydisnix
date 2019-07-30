@@ -1,10 +1,13 @@
-{ nixpkgs ? <nixpkgs> 
-, targetProperty
+{ nixpkgs ? <nixpkgs>
+, defaultTargetProperty
 }:
 
 let
   pkgs = import nixpkgs {};
   filters = import ./filters.nix { inherit pkgs; };
+
+  getTargetProperty = {target, defaultTargetProperty}:
+    if target ? targetProperty then target.targetProperty else defaultTargetProperty;
 in
 {
   servicesToXML = {servicesFile}:
@@ -25,17 +28,50 @@ in
       infrastructure = import infrastructureFile;
     in
     filters.generateInfrastructureXML infrastructure;
-  
+
+
   distributionToXML = {infrastructureFile, distributionFile}:
     let
       infrastructure = import infrastructureFile;
       distribution = import distributionFile { inherit infrastructure; };
-      mappings = pkgs.lib.mapAttrs (serviceName: targets: # Substitute targets in infrastructure model by their names
-        map (target:
-          let
-            actualTargetProperty = if target ? targetProperty then target.targetProperty else targetProperty;
-          in
-          builtins.getAttr actualTargetProperty target.properties) targets
+
+      # Attribute set that can be used to map unique target properties to targets
+      targetMappings = builtins.listToAttrs (map (targetName:
+        let
+          target = builtins.getAttr targetName infrastructure;
+          targetProperty = getTargetProperty {
+            inherit target defaultTargetProperty;
+          };
+        in
+        { name = builtins.getAttr targetProperty target.properties;
+          value = targetName;
+        }
+      ) (builtins.attrNames infrastructure));
+
+      mappings = pkgs.lib.mapAttrs (serviceName: targets:
+        if builtins.isList targets then
+          map (target:
+            let
+              targetProperty = getTargetProperty {
+                inherit target defaultTargetProperty;
+              };
+              targetIdentifier = builtins.getAttr targetProperty target.properties;
+            in
+            { target = builtins.getAttr targetIdentifier targetMappings; }
+          ) targets
+        else if builtins.isAttrs targets then
+          map (mapping:
+            let
+              targetProperty = getTargetProperty {
+                inherit (mapping) target;
+                inherit defaultTargetProperty;
+              };
+              targetIdentifier = builtins.getAttr targetProperty mapping.target.properties;
+            in
+            { target = builtins.getAttr targetIdentifier targetMappings; }
+            // (if mapping ? container then { inherit (mapping) container; } else {})
+          ) targets.targets
+        else throw "targets has the wrong type!"
       ) distribution;
     in
     filters.generateDistributionXML mappings;

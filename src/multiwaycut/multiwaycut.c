@@ -1,6 +1,6 @@
 #include "multiwaycut.h"
 #include "targetmapping.h"
-#include "candidatetargetmapping.h"
+#include "candidatetargetmappingtable.h"
 
 static GPtrArray *filter_cuts(GPtrArray *target_mapping_array)
 {

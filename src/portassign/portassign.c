@@ -1,7 +1,7 @@
 #include "portassign.h"
 #include "serviceproperties.h"
 #include "infrastructureproperties.h"
-#include "candidatetargetmapping.h"
+#include "candidatetargetmappingtable.h"
 #include "portconfiguration.h"
 #include "portdistribution.h"
 #include <unistd.h>

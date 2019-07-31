@@ -242,6 +242,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     /* Print output expression */
 
     GHashTable *candidate_target_table = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, delete_targets);
+    int automapped = TRUE;
 
     for(i = 0; i < adjacency_array->len; i++)
     {
@@ -263,7 +264,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     if(flags & DYDISNIX_FLAG_OUTPUT_XML)
         print_candidate_target_table_xml(candidate_target_table);
     else
-        print_candidate_target_table_nix(candidate_target_table);
+        print_candidate_target_table_nix(candidate_target_table, &automapped);
 
     /* Cleanup */
 

@@ -7,10 +7,11 @@
 
 int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, const unsigned int flags)
 {
+    int automapped;
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
     GHashTable *targets_table = create_target_property_table(infrastructure, xml);
-    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
+    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
     int exit_status = 0;
     
     if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
@@ -102,7 +103,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
             print_candidate_target_table_xml(result_table);
         else
-            print_candidate_target_table_nix(result_table);
+            print_candidate_target_table_nix(result_table, &automapped);
 
         /* Cleanup */
 

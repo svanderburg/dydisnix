@@ -15,7 +15,12 @@ static void insert_candidate_target_mapping_attribute(void *table, const xmlChar
     if(xmlStrcmp(key, (xmlChar*) "target") == 0)
         mapping->target = value;
     else if(xmlStrcmp(key, (xmlChar*) "container") == 0)
+    {
+        int *automapped = (int*)userdata; /* If encouter a container, then we can no longer print the mappings with automapping notation */
+        *automapped = FALSE;
+
         mapping->container = value;
+    }
     else
         xmlFree(value);
 }
@@ -35,10 +40,23 @@ void delete_candidate_target_mapping(CandidateTargetMapping *mapping)
     }
 }
 
+void print_candidate_target_mapping_attributes_nix(FILE *file, const void *value, const int indent_level, void *userdata, NixXML_PrintValueFunc print_value)
+{
+    const CandidateTargetMapping *mapping = (const CandidateTargetMapping*)value;
+
+    NixXML_print_attribute_nix(file, "target", mapping->target, indent_level, userdata, NixXML_print_string_nix);
+    if(mapping->container != NULL)
+        NixXML_print_attribute_nix(file, "container", mapping->container, indent_level, userdata, NixXML_print_string_nix);
+}
+
 void print_candidate_target_mapping_nix(FILE *file, const CandidateTargetMapping *mapping, const int indent_level, void *userdata)
 {
-    // TODO: support the verbose notation as well
-    NixXML_print_string_nix(file, mapping->target, indent_level, userdata);
+    int *automapped = (int*)userdata;
+
+    if(*automapped)
+        NixXML_print_string_nix(file, mapping->target, indent_level, userdata);
+    else
+        NixXML_print_attrset_nix(file, mapping, indent_level, userdata, print_candidate_target_mapping_attributes_nix, NULL);
 }
 
 static void print_candidate_target_mapping_attributes_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata, NixXML_PrintXMLValueFunc print_value)

@@ -24,9 +24,10 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 {
     int exit_status = 0;
     int xml = flags & DYDISNIX_FLAG_XML;
+    int automapped;
     GHashTable *service_table = create_service_table(services, xml);
     GHashTable *targets_table = create_target_property_table(infrastructure, xml);
-    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml);
+    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
 
     if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
     {
@@ -155,7 +156,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
             print_candidate_target_table_xml(result_table);
         else
-            print_candidate_target_table_nix(result_table);
+            print_candidate_target_table_nix(result_table, &automapped);
 
         /* Cleanup */
         delete_result_table(result_table);

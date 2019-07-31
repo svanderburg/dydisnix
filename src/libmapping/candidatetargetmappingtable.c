@@ -36,7 +36,7 @@ static void *parse_targets(xmlNodePtr element, void *userdata)
     return NixXML_parse_g_ptr_array(element, "mapping", userdata, parse_candidate_target_mapping);
 }
 
-GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping_file)
+GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping_file, int *automapped)
 {
     /* Declarations */
     xmlDocPtr doc;
@@ -64,7 +64,8 @@ GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping
     }
 
     /* Parse mappings */
-    candidate_target_table = NixXML_parse_g_hash_table_verbose(node_root, "service", "name", NULL, parse_targets);
+    *automapped = TRUE;
+    candidate_target_table = NixXML_parse_g_hash_table_verbose(node_root, "service", "name", &automapped, parse_targets);
 
     /* Cleanup */
     xmlFreeDoc(doc);
@@ -74,20 +75,20 @@ GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping
     return candidate_target_table;
 }
 
-GHashTable *create_candidate_target_table_from_nix(gchar *distribution_expr, gchar *infrastructure_expr)
+GHashTable *create_candidate_target_table_from_nix(gchar *distribution_expr, gchar *infrastructure_expr, int *automapped)
 {
     char *distribution_xml = generate_distribution_xml_from_expr(distribution_expr, infrastructure_expr);
-    GHashTable *candidate_target_table = create_candidate_target_table_from_xml(distribution_xml);
+    GHashTable *candidate_target_table = create_candidate_target_table_from_xml(distribution_xml, automapped);
     free(distribution_xml);
     return candidate_target_table;
 }
 
-GHashTable *create_candidate_target_table(gchar *distribution_expr, gchar *infrastructure_expr, int xml)
+GHashTable *create_candidate_target_table(gchar *distribution_expr, gchar *infrastructure_expr, int xml, int *automapped)
 {
     if(xml)
-        return create_candidate_target_table_from_xml(distribution_expr);
+        return create_candidate_target_table_from_xml(distribution_expr, automapped);
     else
-        return create_candidate_target_table_from_nix(distribution_expr, infrastructure_expr);
+        return create_candidate_target_table_from_nix(distribution_expr, infrastructure_expr, automapped);
 }
 
 void delete_candidate_target_table(GHashTable *candidate_target_table)
@@ -125,9 +126,9 @@ static void print_targets_nix(FILE *file, const void *value, const int indent_le
     NixXML_print_g_ptr_array_nix(file, value, indent_level, userdata, (NixXML_PrintValueFunc)print_candidate_target_mapping_nix);
 }
 
-void print_candidate_target_table_nix(GHashTable *candidate_target_table)
+void print_candidate_target_table_nix(GHashTable *candidate_target_table, int *automapped)
 {
-    NixXML_print_g_hash_table_nix(stdout, candidate_target_table, 0, NULL, print_targets_nix);
+    NixXML_print_g_hash_table_nix(stdout, candidate_target_table, 0, automapped, print_targets_nix);
 }
 
 static void print_targets_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata)

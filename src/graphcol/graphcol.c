@@ -1,7 +1,7 @@
 #include "graphcol.h"
 #include <stdlib.h>
 #include <nixxml-ghashtable-iter.h>
-#include "serviceproperties.h"
+#include "servicestable.h"
 #include "infrastructureproperties.h"
 #include "candidatetargetmappingtable.h"
 

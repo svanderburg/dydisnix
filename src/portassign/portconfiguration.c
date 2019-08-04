@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <targetmapping.h>
-#include <serviceproperties.h>
+#include <servicestable.h>
 #include <candidatetargetmappingtable.h>
 #include <procreact_future.h>
 #include <nixxml-parse.h>

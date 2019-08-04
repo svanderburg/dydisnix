@@ -1,7 +1,7 @@
 #include "divide.h"
 #include <stdlib.h>
 #include <nixxml-generate-env-generic.h>
-#include "serviceproperties.h"
+#include "servicestable.h"
 #include "infrastructureproperties.h"
 #include "candidatetargetmappingtable.h"
 

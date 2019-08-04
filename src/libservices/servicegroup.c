@@ -1,5 +1,5 @@
 #include "servicegroup.h"
-#include "serviceproperties.h"
+#include "servicestable.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 

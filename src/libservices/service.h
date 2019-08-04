@@ -1,7 +1,7 @@
-#ifndef __DYDISNIX_SERVICEPROPERTIES_H
-#define __DYDISNIX_SERVICEPROPERTIES_H
+#ifndef __DYDISNIX_SERVICE_H
+#define __DYDISNIX_SERVICE_H
 #include <glib.h>
-#include <nixxml-parse.h>
+#include <libxml/parser.h>
 
 typedef struct
 {
@@ -21,21 +21,13 @@ typedef struct
 }
 Service;
 
-char *generate_service_xml_from_expr(char *service_expr);
-
-GHashTable *create_service_table_from_xml(const gchar *services_xml_file);
-
-GHashTable *create_service_table_from_nix(gchar *services_nix);
-
-GHashTable *create_service_table(gchar *services, const int xml);
+void *parse_service(xmlNodePtr element, void *userdata);
 
 void delete_service(Service *service);
 
 GHashTable *copy_properties(GHashTable *properties);
 
 Service *copy_service(const Service *service);
-
-void delete_service_table(GHashTable *service_table);
 
 xmlChar *find_service_property(Service *service, gchar *service_name);
 

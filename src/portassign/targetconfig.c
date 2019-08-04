@@ -3,7 +3,7 @@
 #include <nixxml-print-nix.h>
 #include <nixxml-print-xml.h>
 #include <nixxml-ghashtable.h>
-#include <serviceproperties.h>
+#include <servicestable.h>
 
 TargetConfig *create_target_config(gint last_port, gint min_port, gint max_port)
 {

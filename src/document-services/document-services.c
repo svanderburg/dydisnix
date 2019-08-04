@@ -1,6 +1,6 @@
 #include "document-services.h"
 #include <stdio.h>
-#include <serviceproperties.h>
+#include <servicestable.h>
 #include <servicegroup.h>
 #include "docs-config.h"
 

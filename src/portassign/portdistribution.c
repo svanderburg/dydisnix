@@ -1,7 +1,7 @@
 #include "portdistribution.h"
 #include <nixxml-node.h>
 #include <nixxml-ghashtable.h>
-#include "serviceproperties.h"
+#include "servicestable.h"
 #include "candidatetargetmappingtable.h"
 
 GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GHashTable *service_table, GHashTable *candidate_target_table, gchar *service_property)

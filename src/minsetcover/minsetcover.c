@@ -1,5 +1,5 @@
 #include "minsetcover.h"
-#include "serviceproperties.h"
+#include "servicestable.h"
 #include "infrastructureproperties.h"
 #include "candidatetargetmappingtable.h"
 #include "targetmapping.h"

@@ -1,7 +1,7 @@
 #include "visualize-services.h"
 #include <stdio.h>
 #include <unistd.h>
-#include <serviceproperties.h>
+#include <servicestable.h>
 #include <servicegroup.h>
 #include <nixxml-node.h>
 #include <procreact_pid.h>

@@ -1,4 +1,5 @@
 #include "portdistribution.h"
+#include <nixxml-node.h>
 #include <nixxml-ghashtable.h>
 #include "serviceproperties.h"
 #include "candidatetargetmappingtable.h"
@@ -17,7 +18,7 @@ GHashTable *create_port_distribution_table(PortConfiguration *port_configuration
         GPtrArray *targets = (GPtrArray*)value;
 
         Service *service = g_hash_table_lookup(service_table, service_name);
-        gchar *prop_value;
+        NixXML_Node *prop_value;
 
         if(service == NULL)
             prop_value = NULL;
@@ -28,13 +29,13 @@ GHashTable *create_port_distribution_table(PortConfiguration *port_configuration
 
         if(prop_value != NULL)
         {
-            if(g_strcmp0(prop_value, "shared") == 0) /* If a shared port is requested, consult the shared ports pool */
+            if(g_strcmp0(prop_value->value, "shared") == 0) /* If a shared port is requested, consult the shared ports pool */
             {
                 gint *port = g_malloc(sizeof(gint));
                 *port = assign_or_reuse_port(port_configuration, NULL, service_name);
                 g_hash_table_insert(port_distribution_table, service_name, port);
             }
-            else if(g_strcmp0(prop_value, "private") == 0) /* If a private port is requested, consult the machine's ports pool */
+            else if(g_strcmp0(prop_value->value, "private") == 0) /* If a private port is requested, consult the machine's ports pool */
             {
                 if(targets->len > 0)
                 {

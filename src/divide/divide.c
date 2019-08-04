@@ -49,7 +49,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
             GPtrArray *targets = (GPtrArray*)value;
 
             Service *service = g_hash_table_lookup(service_table, service_name);
-            gchar *service_value = g_hash_table_lookup(service->properties, service_property);
+            NixXML_Node *service_value = g_hash_table_lookup(service->properties, service_property);
             GPtrArray *result_targets = g_ptr_array_new();
 
 	    unsigned int j;
@@ -81,9 +81,9 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 
 		if(strategy == STRATEGY_GREEDY)
 		{
-		    if(atoi(service_value) <= atoi((char*)target_value))
+		    if(atoi(service_value->value) <= atoi((char*)target_value))
 		    {
-			substract_target_value(target, target_property, atoi(service_value));
+			substract_target_value(target, target_property, atoi(service_value->value));
 			select_target = target;
 			selected_mapping = mapping;
 			g_ptr_array_add(result_targets, mapping);
@@ -94,7 +94,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		{
 		    if(select_target == NULL)
 		    {
-			if(atoi(service_value) <= atoi((char*)target_value))
+			if(atoi(service_value->value) <= atoi((char*)target_value))
 			{
 			    select_target = target;
 			    selected_mapping = mapping;
@@ -115,7 +115,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		{
 		    if(select_target == NULL)
 		    {
-			if(atoi(service_value) <= atoi((char*)target_value))
+			if(atoi(service_value->value) <= atoi((char*)target_value))
 			{
 			    select_target = target;
 			    selected_mapping = mapping;
@@ -125,7 +125,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 		    {
 			gchar *select_target_value = find_target_property(select_target, target_property);
 
-			if(atoi((char*)target_value) < atoi(select_target_value) && atoi(service_value) <= atoi(select_target_value))
+			if(atoi((char*)target_value) < atoi(select_target_value) && atoi(service_value->value) <= atoi(select_target_value))
 			{
 			    select_target = target;
 			    selected_mapping = mapping;
@@ -144,7 +144,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 	    {
 		if(select_target != NULL)
 		{
-		    substract_target_value(select_target, target_property, atoi(service_value));
+		    substract_target_value(select_target, target_property, atoi(service_value->value));
 		    g_ptr_array_add(result_targets, selected_mapping);
 		}
 	    }

@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <serviceproperties.h>
 #include <servicegroup.h>
+#include <nixxml-node.h>
 #include <procreact_pid.h>
 
 static pid_t run_dot_async(gchar *filename, gchar *image_format)
@@ -34,10 +35,10 @@ static int run_dot(gchar *filename, gchar *image_format)
 
 static void print_type(FILE *fd, const Service *service)
 {
-    gchar *prop_value = g_hash_table_lookup(service->properties, "type");
+    NixXML_Node *prop_value = g_hash_table_lookup(service->properties, "type");
 
     if(prop_value != NULL)
-        fprintf(fd, "\\n(%s)", prop_value);
+        fprintf(fd, "\\n(%s)", (char*)prop_value->value);
 }
 
 static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, void *data, GHashTable *service_table)
@@ -223,11 +224,10 @@ static GHashTable *query_interdependent_services(GHashTable *queried_services_ta
 static void append_dependencies_to_table(GHashTable *queried_services_table, GHashTable *dep_service_table)
 {
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     g_hash_table_iter_init(&iter, dep_service_table);
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
         g_hash_table_insert(queried_services_table, current_service->name, current_service);
@@ -237,12 +237,11 @@ static void append_dependencies_to_table(GHashTable *queried_services_table, GHa
 static void append_interdependent_services_to_table(GHashTable *queried_services_table, GHashTable *interdependent_services_table)
 {
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     g_hash_table_iter_init(&iter, interdependent_services_table);
 
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
 

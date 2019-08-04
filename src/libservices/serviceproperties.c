@@ -4,6 +4,7 @@
 #include <procreact_future.h>
 #include <nixxml-gptrarray.h>
 #include <nixxml-ghashtable.h>
+#include <nixxml-glib.h>
 
 static ProcReact_Future generate_service_xml_from_expr_async(char *service_expr)
 {
@@ -37,7 +38,7 @@ static void *create_service(xmlNodePtr element, void *userdata)
     service->group = NULL;
     service->depends_on = NULL;
     service->connects_to = NULL;
-    service->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, xmlFree);
+    service->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     service->group_node = FALSE;
     return service;
 }
@@ -58,7 +59,7 @@ void parse_and_insert_service_attributes(xmlNodePtr element, void *table, const 
         service->depends_on = NixXML_parse_g_ptr_array(element, "dependency", userdata, NixXML_parse_value);
     else
     {
-        gchar *value = NixXML_parse_value(element, userdata);
+        NixXML_Node *value = NixXML_generic_parse_expr_glib(element, "type", "name", NULL);
         g_hash_table_insert(service->properties, g_strdup((gchar*)key), value);
     }
 }
@@ -135,13 +136,18 @@ static void delete_dependencies(GPtrArray *dependencies)
     g_ptr_array_free(dependencies, TRUE);
 }
 
+static void delete_service_property_table(GHashTable *service_property_table)
+{
+    NixXML_delete_g_hash_table(service_property_table, (NixXML_DeleteGHashTableValueFunc)NixXML_delete_node_glib);
+}
+
 void delete_service(Service *service)
 {
     xmlFree(service->name);
     xmlFree(service->type);
     xmlFree(service->group);
 
-    g_hash_table_destroy(service->properties);
+    delete_service_property_table(service->properties);
 
     delete_dependencies(service->connects_to);
     delete_dependencies(service->depends_on);
@@ -168,11 +174,18 @@ GHashTable *copy_properties(GHashTable *properties)
     GHashTableIter iter;
     gpointer key, value;
 
-    GHashTable *copy_hash_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, xmlFree);
+    GHashTable *copy_hash_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
 
     g_hash_table_iter_init(&iter, properties);
     while(g_hash_table_iter_next(&iter, &key, &value))
-        g_hash_table_insert(copy_hash_table, g_strdup((gchar*)key), xmlStrdup((xmlChar*)value));
+    {
+        NixXML_Node *node = (NixXML_Node*)value;
+        NixXML_Node *copy_value = (NixXML_Node*)malloc(sizeof(NixXML_Node));
+        copy_value->type = node->type;
+        copy_value->value = xmlStrdup((xmlChar*)node->value);
+
+        g_hash_table_insert(copy_hash_table, g_strdup((gchar*)key), copy_value);
+    }
 
     return copy_hash_table;
 }
@@ -218,5 +231,11 @@ xmlChar *find_service_property(Service *service, gchar *service_name)
     else if(g_strcmp0(service_name, "group") == 0)
         return service->group;
     else
-        return g_hash_table_lookup(service->properties, service_name);
+    {
+        NixXML_Node *value = g_hash_table_lookup(service->properties, service_name);
+        if(value == NULL)
+            return NULL;
+        else
+            return value->value;
+    }
 }

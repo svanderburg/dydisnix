@@ -1,4 +1,5 @@
 #include "targetconfig.h"
+#include <nixxml-node.h>
 #include <nixxml-print-nix.h>
 #include <nixxml-print-xml.h>
 #include <nixxml-ghashtable.h>
@@ -137,12 +138,12 @@ static gboolean remove_service_port_pair(gchar *service_name, RemoveParams *para
             return TRUE;
         else
         {
-            xmlChar *value = g_hash_table_lookup(service->properties, params->service_property);
+            NixXML_Node *value = g_hash_table_lookup(service->properties, params->service_property);
 
             if(value == NULL)
                 return TRUE;
             else
-                return (xmlStrcmp(value, (xmlChar*) params->service_property_value) != 0);
+                return (xmlStrcmp(value->value, (xmlChar*) params->service_property_value) != 0);
         }
     }
 }

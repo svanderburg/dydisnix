@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <nixxml-generate-env-generic.h>
 #include "servicestable.h"
-#include "infrastructureproperties.h"
+#include "targetstable2.h"
 #include "candidatetargetmappingtable.h"
 
 static void delete_result_table(GHashTable *result_table)
@@ -26,7 +26,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
     int xml = flags & DYDISNIX_FLAG_XML;
     int automapped;
     GHashTable *service_table = create_service_table(services, xml);
-    GHashTable *targets_table = create_target_property_table(infrastructure, xml);
+    GHashTable *targets_table = create_targets_table2(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
 
     if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)

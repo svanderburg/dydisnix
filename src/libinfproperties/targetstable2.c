@@ -1,4 +1,4 @@
-#include "infrastructureproperties.h"
+#include "targetstable2.h"
 #include <stdlib.h>
 #include <string.h>
 #include <glib/gprintf.h>
@@ -31,32 +31,7 @@ char *generate_infrastructure_xml_from_expr(char *infrastructure_expr)
     return path;
 }
 
-GHashTable *create_target_property_table_from_xml(const gchar *infrastructure_xml_file)
-{
-    GHashTable *targets_table;
-    xmlDocPtr doc;
-
-    /* Parse the XML document */
-
-    if((doc = xmlParseFile(infrastructure_xml_file)) == NULL)
-    {
-        g_printerr("Error with parsing the infrastructure XML file!\n");
-        xmlCleanupParser();
-        return NULL;
-    }
-
-    /* Create a target array from the XML document */
-    targets_table = create_targets_table_from_doc(doc);
-
-    /* Cleanup */
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
-
-    /* Return the target table */
-    return targets_table;
-}
-
-GHashTable *create_target_property_table_from_nix(gchar *infrastructure_nix)
+GHashTable *create_targets_table_from_nix_file(gchar *infrastructure_nix)
 {
     char *infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure_nix);
     GHashTable *targets_table = create_targets_table_from_xml(infrastructure_xml);
@@ -64,12 +39,12 @@ GHashTable *create_target_property_table_from_nix(gchar *infrastructure_nix)
     return targets_table;
 }
 
-GHashTable *create_target_property_table(gchar *infrastructure, const int xml)
+GHashTable *create_targets_table2(gchar *infrastructure, const int xml)
 {
     if(xml)
-        return create_target_property_table_from_xml(infrastructure);
+        return create_targets_table_from_xml(infrastructure);
     else
-        return create_target_property_table_from_nix(infrastructure);
+        return create_targets_table_from_nix_file(infrastructure);
 }
 
 void substract_target_value(Target *target, gchar *property_name, int amount)

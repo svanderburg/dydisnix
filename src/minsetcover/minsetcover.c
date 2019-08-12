@@ -1,6 +1,6 @@
 #include "minsetcover.h"
 #include "servicestable.h"
-#include "infrastructureproperties.h"
+#include "targetstable2.h"
 #include "candidatetargetmappingtable.h"
 #include "targetmapping.h"
 #include <stdlib.h>
@@ -10,7 +10,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
     int automapped;
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
-    GHashTable *targets_table = create_target_property_table(infrastructure, xml);
+    GHashTable *targets_table = create_targets_table2(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
     int exit_status = 0;
     

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <nixxml-ghashtable-iter.h>
 #include "servicestable.h"
-#include "infrastructureproperties.h"
+#include "targetstable2.h"
 #include "candidatetargetmappingtable.h"
 
 typedef struct
@@ -93,7 +93,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
 {
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services_xml, xml);
-    GHashTable *targets_table = create_target_property_table(infrastructure_xml, xml);
+    GHashTable *targets_table = create_targets_table2(infrastructure_xml, xml);
     GPtrArray *adjacency_array = g_ptr_array_new();
     VertexAdjacency *max_adjacency = NULL;
     GHashTableIter iter;

@@ -1,6 +1,6 @@
 #include "portassign.h"
 #include "servicestable.h"
-#include "infrastructureproperties.h"
+#include "targetstable2.h"
 #include "candidatetargetmappingtable.h"
 #include "portconfiguration.h"
 #include "portdistribution.h"
@@ -54,7 +54,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
     int automapped;
     int xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
-    GHashTable *targets_table = create_target_property_table(infrastructure, xml);
+    GHashTable *targets_table = create_targets_table2(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
 
     if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)

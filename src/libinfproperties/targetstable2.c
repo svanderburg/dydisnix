@@ -34,7 +34,7 @@ char *generate_infrastructure_xml_from_expr(char *infrastructure_expr)
 GHashTable *create_targets_table_from_nix_file(gchar *infrastructure_nix)
 {
     char *infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure_nix);
-    GHashTable *targets_table = create_targets_table_from_xml(infrastructure_xml);
+    GHashTable *targets_table = create_targets_table_from_xml(infrastructure_xml, NULL, NULL);
     free(infrastructure_xml);
     return targets_table;
 }
@@ -42,7 +42,7 @@ GHashTable *create_targets_table_from_nix_file(gchar *infrastructure_nix)
 GHashTable *create_targets_table2(gchar *infrastructure, const int xml)
 {
     if(xml)
-        return create_targets_table_from_xml(infrastructure);
+        return create_targets_table_from_xml(infrastructure, NULL, NULL);
     else
         return create_targets_table_from_nix_file(infrastructure);
 }

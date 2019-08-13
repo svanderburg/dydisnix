@@ -96,16 +96,17 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     GHashTable *targets_table = create_targets_table2(infrastructure_xml, xml);
     GPtrArray *adjacency_array = g_ptr_array_new();
     VertexAdjacency *max_adjacency = NULL;
-    GHashTableIter iter;
-    gpointer key, value;
+    NixXML_GHashTableOrderedIter iter;
+    gchar *key;
+    gpointer value;
     unsigned int i;
 
     int colored_vertices = 0;
 
     /* Create adjacency array */
 
-    g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
+    NixXML_g_hash_table_ordered_iter_init(&iter, service_table);
+    while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
     {
 	Service *current_service = (Service*)value;
 
@@ -123,8 +124,10 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     }
     
     /* Add interdependent services on given service to the adjacency array */
-    g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
+
+    NixXML_g_hash_table_ordered_iter_destroy(&iter);
+    NixXML_g_hash_table_ordered_iter_init(&iter, service_table);
+    while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
     {
 	Service *current_service = (Service*)value;
 
@@ -268,6 +271,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
 
     /* Cleanup */
 
+    NixXML_g_hash_table_ordered_iter_destroy(&iter);
     g_hash_table_destroy(candidate_target_table); // TODO: properly clean
 
     delete_service_table(service_table);

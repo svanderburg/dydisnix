@@ -1,6 +1,7 @@
 #include "divide.h"
 #include <stdlib.h>
 #include <nixxml-generate-env-generic.h>
+#include <nixxml-ghashtable-iter.h>
 #include "servicestable.h"
 #include "targetstable2.h"
 #include "candidatetargetmappingtable.h"
@@ -37,15 +38,15 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
     else
     {
         GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
-        GHashTableIter iter;
-        gpointer key, value;
+        NixXML_GHashTableOrderedIter iter;
+        gchar *service_name;
+        gpointer value;
 
         /* Iterate over each service */
 
-        g_hash_table_iter_init(&iter, candidate_target_table);
-        while(g_hash_table_iter_next(&iter, &key, &value))
+        NixXML_g_hash_table_ordered_iter_init(&iter, candidate_target_table);
+        while(NixXML_g_hash_table_ordered_iter_next(&iter, &service_name, &value))
         {
-            gchar *service_name = (gchar*)key;
             GPtrArray *targets = (GPtrArray*)value;
 
             Service *service = g_hash_table_lookup(service_table, service_name);
@@ -159,6 +160,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
             print_candidate_target_table_nix(result_table, &automapped);
 
         /* Cleanup */
+        NixXML_g_hash_table_ordered_iter_destroy(&iter);
         delete_result_table(result_table);
     }
 

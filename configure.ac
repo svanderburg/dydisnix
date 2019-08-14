@@ -70,8 +70,10 @@ src/libinfproperties/Makefile
 src/visualize-services/Makefile
 src/document-services/Makefile
 src/previous-distribution/Makefile
-data/extfilters.nix
-data/try-build.nix
-data/Makefile
+nix/extfilters.nix
+nix/try-build.nix
+nix/Makefile
+xsl/Makefile
+css/Makefile
 ])
 AC_OUTPUT

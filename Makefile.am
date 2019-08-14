@@ -1,1 +1,1 @@
-SUBDIRS = data scripts src
+SUBDIRS = nix xsl css scripts src

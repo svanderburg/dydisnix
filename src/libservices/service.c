@@ -4,7 +4,7 @@
 #include <nixxml-ghashtable.h>
 #include <nixxml-glib.h>
 
-static void *create_service(xmlNodePtr element, void *userdata)
+static void *create_service_from_element(xmlNodePtr element, void *userdata)
 {
     Service *service = (Service*)g_malloc(sizeof(Service));
     service->name = NULL;
@@ -33,14 +33,14 @@ void parse_and_insert_service_attributes(xmlNodePtr element, void *table, const 
         service->depends_on = NixXML_parse_g_ptr_array(element, "dependency", userdata, NixXML_parse_value);
     else
     {
-        NixXML_Node *value = NixXML_generic_parse_expr_glib(element, "type", "name", NULL);
+        NixXML_Node *value = NixXML_generic_parse_verbose_expr_glib(element, "type", "name", NULL);
         g_hash_table_insert(service->properties, g_strdup((gchar*)key), value);
     }
 }
 
 void *parse_service(xmlNodePtr element, void *userdata)
 {
-    return NixXML_parse_verbose_heterogeneous_attrset(element, "property", "name", NULL, create_service, parse_and_insert_service_attributes);
+    return NixXML_parse_verbose_heterogeneous_attrset(element, "property", "name", NULL, create_service_from_element, parse_and_insert_service_attributes);
 }
 
 static void delete_service_property_table(GHashTable *service_property_table)

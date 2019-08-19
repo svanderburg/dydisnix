@@ -146,9 +146,9 @@ int multiwaycut(gchar *distribution, gchar *infrastructure, const unsigned int f
         fix_unmapped_services(candidate_target_table, distmapping);
 
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-            print_candidate_target_table_xml(distmapping);
+            print_candidate_target_table_xml(stdout, distmapping, 0, NULL, NULL);
         else
-            print_candidate_target_table_nix(distmapping, &automapped);
+            print_candidate_target_table_nix(stdout, distmapping, 0, &automapped);
 
         /* Cleanup */
 

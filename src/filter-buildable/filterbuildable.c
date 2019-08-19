@@ -91,9 +91,9 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
 
         /* Print resulting expression */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-            print_candidate_target_table_xml(filtered_target_table);
+            print_candidate_target_table_xml(stdout, filtered_target_table, 0, NULL, NULL);
         else
-            print_candidate_target_table_nix(filtered_target_table, &automapped);
+            print_candidate_target_table_nix(stdout, filtered_target_table, 0, &automapped);
 
         /* Cleanup */
         delete_filtered_target_table(filtered_target_table);

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <procreact_future.h>
 #include <nixxml-parse.h>
-#include <nixxml-gptrarray.h>
 #include <nixxml-ghashtable.h>
 #include <nixxml-print-nix.h>
 #include <nixxml-print-xml.h>
@@ -29,11 +28,6 @@ char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrast
     char *path = procreact_future_get(&future, &status);
     path[strlen(path) - 1] = '\0';
     return path;
-}
-
-static void *parse_targets(xmlNodePtr element, void *userdata)
-{
-    return NixXML_parse_g_ptr_array(element, "mapping", userdata, parse_candidate_target_mapping);
 }
 
 GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping_file, int *automapped)
@@ -65,7 +59,7 @@ GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping
 
     /* Parse mappings */
     *automapped = TRUE;
-    candidate_target_table = NixXML_parse_g_hash_table_verbose(node_root, "service", "name", &automapped, parse_targets);
+    candidate_target_table = NixXML_parse_g_hash_table_verbose(node_root, "service", "name", &automapped, parse_candidate_targets_array_from_element);
 
     /* Cleanup */
     xmlFreeDoc(doc);
@@ -93,52 +87,17 @@ GHashTable *create_candidate_target_table(gchar *distribution_expr, gchar *infra
 
 void delete_candidate_target_table(GHashTable *candidate_target_table)
 {
-    if(candidate_target_table != NULL)
-    {
-        GHashTableIter iter;
-        gpointer key, value;
-
-        g_hash_table_iter_init(&iter, candidate_target_table);
-        while(g_hash_table_iter_next(&iter, &key, &value))
-        {
-            GPtrArray *targets = (GPtrArray*)value;
-
-            if(targets != NULL)
-            {
-                unsigned int i;
-
-                for(i = 0; i < targets->len; i++)
-                {
-                    CandidateTargetMapping *mapping = g_ptr_array_index(targets, i);
-                    delete_candidate_target_mapping(mapping);
-                }
-
-                g_ptr_array_free(targets, TRUE);
-            }
-        }
-
-        g_hash_table_destroy(candidate_target_table);
-    }
+    NixXML_delete_g_hash_table(candidate_target_table, (NixXML_DeleteGHashTableValueFunc)delete_candidate_targets_array);
 }
 
-static void print_targets_nix(FILE *file, const void *value, const int indent_level, void *userdata)
+void print_candidate_target_table_nix(FILE *file, GHashTable *candidate_target_table, const int indent_level, int *automapped)
 {
-    NixXML_print_g_ptr_array_nix(file, value, indent_level, userdata, (NixXML_PrintValueFunc)print_candidate_target_mapping_nix);
+    NixXML_print_g_hash_table_nix(file, candidate_target_table, indent_level, automapped, print_candidate_targets_array_nix);
 }
 
-void print_candidate_target_table_nix(GHashTable *candidate_target_table, int *automapped)
+void print_candidate_target_table_xml(FILE *file, GHashTable *candidate_target_table, const int indent_level, const char *type_property_name, void *userdata)
 {
-    NixXML_print_g_hash_table_nix(stdout, candidate_target_table, 0, automapped, print_targets_nix);
-}
-
-static void print_targets_xml(FILE *file, const void *value, const int indent_level, const char *type_property_name, void *userdata)
-{
-    NixXML_print_g_ptr_array_xml(file, value, "target", indent_level, type_property_name, userdata, (NixXML_PrintXMLValueFunc)print_candidate_target_mapping_xml);
-}
-
-void print_candidate_target_table_xml(GHashTable *candidate_target_table)
-{
-    NixXML_print_open_root_tag(stdout, "distribution");
-    NixXML_print_g_hash_table_verbose_xml(stdout, candidate_target_table, "service", "name", 0, NULL, NULL, print_targets_xml);
-    NixXML_print_close_root_tag(stdout, "distribution");
+    NixXML_print_open_root_tag(file, "distribution");
+    NixXML_print_g_hash_table_verbose_xml(file, candidate_target_table, "service", "name", indent_level, type_property_name, userdata, print_candidate_targets_array_xml);
+    NixXML_print_close_root_tag(file, "distribution");
 }

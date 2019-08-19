@@ -101,9 +101,9 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 
         /* Print resulting expression to stdout */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-            print_candidate_target_table_xml(result_table);
+            print_candidate_target_table_xml(stdout, result_table, 0, NULL, NULL);
         else
-            print_candidate_target_table_nix(result_table, &automapped);
+            print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
 
         /* Cleanup */
 

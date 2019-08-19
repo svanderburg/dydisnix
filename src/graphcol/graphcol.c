@@ -265,9 +265,9 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     }
 
     if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-        print_candidate_target_table_xml(candidate_target_table);
+        print_candidate_target_table_xml(stdout, candidate_target_table, 0, NULL, NULL);
     else
-        print_candidate_target_table_nix(candidate_target_table, &automapped);
+        print_candidate_target_table_nix(stdout, candidate_target_table, 0, &automapped);
 
     /* Cleanup */
 

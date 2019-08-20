@@ -84,18 +84,5 @@ GHashTable *create_service_table(gchar *services, const int xml)
 
 void delete_service_table(GHashTable *service_table)
 {
-    if(service_table != NULL)
-    {
-        GHashTableIter iter;
-        gpointer key, value;
-
-        g_hash_table_iter_init(&iter, service_table);
-        while(g_hash_table_iter_next(&iter, &key, &value))
-        {
-            Service *service = (Service*)value;
-            delete_service(service);
-        }
-
-        g_hash_table_destroy(service_table);
-    }
+    NixXML_delete_g_hash_table(service_table, (NixXML_DeleteGHashTableValueFunc)delete_service);
 }

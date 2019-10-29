@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <libxml/parser.h>
 
-int is_subgroup_of(xmlChar *current_group, gchar *group);
-
 GHashTable *query_services_in_group(GHashTable *service_table, gchar *group);
 
 GHashTable *group_services(GHashTable *queried_services_table, gchar *group);

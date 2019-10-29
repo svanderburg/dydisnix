@@ -66,8 +66,7 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     gchar *root_path = compose_relative_root_path(group);
     DocsConfig *docs_config = (DocsConfig*)data;
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     gchar *group_description;
 
@@ -119,7 +118,7 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     }
 
     g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
 
@@ -186,7 +185,7 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     first = TRUE;
 
     g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
 

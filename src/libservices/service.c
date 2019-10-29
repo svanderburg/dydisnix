@@ -40,7 +40,12 @@ void parse_and_insert_service_attributes(xmlNodePtr element, void *table, const 
 
 void *parse_service(xmlNodePtr element, void *userdata)
 {
-    return NixXML_parse_verbose_heterogeneous_attrset(element, "property", "name", NULL, create_service_from_element, parse_and_insert_service_attributes);
+    Service *service = NixXML_parse_verbose_heterogeneous_attrset(element, "property", "name", NULL, create_service_from_element, parse_and_insert_service_attributes);
+
+    if(service->group == NULL)
+        service->group = xmlStrdup((xmlChar*) "");
+
+    return service;
 }
 
 static void delete_service_property_table(GHashTable *service_property_table)

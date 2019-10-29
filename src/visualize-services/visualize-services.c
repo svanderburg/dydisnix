@@ -46,8 +46,7 @@ static int generate_architecture_diagram(gchar *filepath, gchar *image_format, g
     FILE *fd;
 
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     if(filepath == NULL)
         fd = stdout;
@@ -67,7 +66,7 @@ static int generate_architecture_diagram(gchar *filepath, gchar *image_format, g
 
     /* Generate vertexes */
     g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
          Service *current_service = (Service*)value;
          fprintf(fd, "\"%s\" [ label = \"%s", current_service->name, current_service->name);
@@ -162,7 +161,7 @@ static void add_interdependent_services(Service *service, GPtrArray *dependencie
     {
         gchar *dependency = g_ptr_array_index(dependencies, i);
 
-        if(g_hash_table_lookup(queried_services_table, dependency) != NULL && g_hash_table_lookup(interdependent_services_table, service->name) == NULL)
+        if(g_hash_table_lookup(interdependent_services_table, service->name) == NULL && g_hash_table_lookup(queried_services_table, dependency) != NULL)
             g_hash_table_insert(interdependent_services_table, service->name, service);
     }
 }
@@ -186,14 +185,13 @@ static GPtrArray *copy_non_dangling_dependencies(GPtrArray *dependencies, GHashT
 static GHashTable *query_direct_dependencies(GHashTable *queried_services_table, GHashTable *service_table)
 {
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     GHashTable *dep_service_table = g_hash_table_new_full(g_str_hash, g_str_equal, xmlFree, NULL);
 
     g_hash_table_iter_init(&iter, queried_services_table);
 
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
         add_outside_group_dependencies(queried_services_table, current_service->connects_to, service_table, dep_service_table);
@@ -207,11 +205,10 @@ static GHashTable *query_interdependent_services(GHashTable *queried_services_ta
 {
     GHashTable *interdependent_services_table = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
         add_interdependent_services(current_service, current_service->connects_to, interdependent_services_table, queried_services_table);

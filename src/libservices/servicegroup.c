@@ -3,30 +3,28 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-int is_subgroup_of(xmlChar *current_group, gchar *group)
+static int is_subgroup_of(xmlChar *current_group, gchar *group)
 {
+    gchar *prefix;
+
     if(g_strcmp0(group, "") == 0)
-        return TRUE;
+        prefix = g_strdup("");
     else
-    {
-        gchar *prefix = g_strjoin("", group, "/", NULL);
-        int status = g_str_has_prefix((gchar*)current_group, prefix);
-        g_free(prefix);
-        return status;
-    }
+        prefix = g_strconcat(group, "/", NULL);
+
+    int status = g_str_has_prefix((gchar*)current_group, prefix);
+    g_free(prefix);
+    return status;
 }
 
 static int is_in_group(xmlChar *current_group, gchar *group)
 {
-    if(current_group == NULL)
-        return FALSE;
+    if(group == NULL)
+        return TRUE;
+    else if(xmlStrcmp(current_group, (xmlChar*) group) == 0)
+        return TRUE;
     else
-    {
-        if(xmlStrcmp(current_group, (xmlChar*) group) == 0)
-            return TRUE;
-        else
-            return is_subgroup_of(current_group, group);
-    }
+        return is_subgroup_of(current_group, group);
 }
 
 GHashTable *query_services_in_group(GHashTable *service_table, gchar *group)
@@ -41,7 +39,7 @@ GHashTable *query_services_in_group(GHashTable *service_table, gchar *group)
     {
         Service *current_service = (Service*)value;
 
-        if(xmlStrcmp(current_service->group, (xmlChar*) "") == 0 || is_in_group(current_service->group, group))
+        if(is_in_group(current_service->group, group))
         {
             Service *new_service = copy_service(current_service);
             g_hash_table_insert(queried_services_table, new_service->name, new_service);
@@ -140,12 +138,11 @@ static GPtrArray *replace_service_dependency_by_group_dependency(Service *servic
 static void replace_service_dependencies_by_groups(Service *service, GHashTable *table, xmlChar *subgroup_root)
 {
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     g_hash_table_iter_init(&iter, table);
 
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
 
@@ -157,18 +154,13 @@ static void replace_service_dependencies_by_groups(Service *service, GHashTable 
     }
 }
 
-static int exactly_fits_in_group(gchar **current_group_tokens, gchar **group_tokens)
+static int fits_in_group(gchar **current_group_tokens, gchar **group_tokens)
 {
     if(g_strv_length(current_group_tokens) <= g_strv_length(group_tokens))
     {
-        int num_of_tokens, i;
+        unsigned int i;
 
-        if(g_strv_length(current_group_tokens) <= g_strv_length(group_tokens))
-            num_of_tokens = g_strv_length(current_group_tokens);
-        else
-            num_of_tokens = g_strv_length(group_tokens);
-
-        for(i = 0; i < num_of_tokens; i++)
+        for(i = 0; i < g_strv_length(current_group_tokens); i++)
         {
             if(g_strcmp0(current_group_tokens[i], group_tokens[i]) != 0)
                 return FALSE;
@@ -200,16 +192,11 @@ static xmlChar *derive_sub_group_root(gchar **current_group_tokens, gchar **grou
 
 static void group_service(GHashTable *queried_services_table, GHashTable *grouped_services_table, Service *service, gchar **group_tokens)
 {
-    gchar **current_group_tokens;
+    gchar **current_group_tokens = g_strsplit((gchar*)service->group, "/", -1);
 
-    if(service->group == NULL)
-        current_group_tokens = NULL;
-    else
-        current_group_tokens = g_strsplit((gchar*)service->group, "/", -1);
-
-    if(service->group == NULL || xmlStrcmp(service->group, (xmlChar*) "") == 0 || exactly_fits_in_group(current_group_tokens, group_tokens))
+    if(fits_in_group(current_group_tokens, group_tokens))
     {
-        /* If a service exactly fits in this group, just add it verbatim */
+        /* If a service fits in this sub group or any of the parent groups, just add it verbatim */
         Service *leaf_service = copy_service(service);
         g_hash_table_insert(grouped_services_table, leaf_service->name, leaf_service);
     }
@@ -217,7 +204,7 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
     {
         xmlChar *subgroup_root = derive_sub_group_root(current_group_tokens, group_tokens);
 
-        /* If a service is part of a subgroup in this group, then create a single sub group node that abstracts over its properties */
+        /* Create a single sub group node that abstracts over its properties */
         Service *group_service = g_hash_table_lookup(grouped_services_table, subgroup_root);
 
         if(group_service == NULL)
@@ -254,22 +241,16 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
 GHashTable *group_services(GHashTable *queried_services_table, gchar *group)
 {
     GHashTable *grouped_services_table = g_hash_table_new(g_str_hash, g_str_equal);
-    gchar **group_tokens;
-
-    if(group == NULL)
-        group_tokens = NULL;
-    else
-        group_tokens = g_strsplit(group, "/", -1);
+    gchar **group_tokens = g_strsplit(group, "/", -1);
 
     /* Iterate over all queried services and put them into the right sub groups */
 
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
 
     g_hash_table_iter_init(&iter, queried_services_table);
 
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
         group_service(queried_services_table, grouped_services_table, (Service*)value, group_tokens);
 
     g_strfreev(group_tokens);
@@ -280,21 +261,17 @@ GPtrArray *query_unique_groups(GHashTable *service_table)
 {
     GHashTable *unique_groups_table = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTableIter iter;
-    gpointer *key;
-    gpointer *value;
+    gpointer key, value;
     GPtrArray *unique_groups_array = g_ptr_array_new();
 
     g_hash_table_iter_init(&iter, service_table);
 
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
 
-        if(current_service->group != NULL && xmlStrcmp(current_service->group, (xmlChar*) "") != 0)
-        {
-            if(g_hash_table_lookup(unique_groups_table, current_service->group) == NULL)
-                g_hash_table_insert(unique_groups_table, current_service->group, NULL);
-        }
+        if(g_hash_table_lookup(unique_groups_table, current_service->group) == NULL)
+            g_hash_table_insert(unique_groups_table, current_service->group, NULL);
     }
 
     g_hash_table_iter_init(&iter, unique_groups_table);

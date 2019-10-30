@@ -24,8 +24,14 @@ char *generate_docs_xml_from_expr(char *docs_expr)
     ProcReact_Status status;
     ProcReact_Future future = generate_docs_xml_from_expr_async(docs_expr);
     char *path = procreact_future_get(&future, &status);
-    path[strlen(path) - 1] = '\0';
-    return path;
+
+    if(status == PROCREACT_STATUS_OK && path != NULL)
+    {
+        path[strlen(path) - 1] = '\0';
+        return path;
+    }
+    else
+        return NULL;
 }
 
 static void *create_docs_config_from_element(xmlNodePtr element, void *userdata)
@@ -91,9 +97,15 @@ DocsConfig *create_docs_config_from_xml(gchar *docs_xml_file)
 DocsConfig *create_docs_config_from_nix(gchar *docs_nix)
 {
     char *docs_xml = generate_docs_xml_from_expr(docs_nix);
-    DocsConfig *docs_config = create_docs_config_from_xml(docs_xml);
-    free(docs_xml);
-    return docs_config;
+
+    if(docs_xml == NULL)
+        return NULL;
+    else
+    {
+        DocsConfig *docs_config = create_docs_config_from_xml(docs_xml);
+        free(docs_xml);
+        return docs_config;
+    }
 }
 
 DocsConfig *create_docs_config(gchar *docs, const int xml)

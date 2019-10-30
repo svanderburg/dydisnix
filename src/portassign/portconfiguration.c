@@ -30,8 +30,14 @@ char *generate_ports_xml_from_expr(char *ports_expr)
     ProcReact_Status status;
     ProcReact_Future future = generate_ports_xml_from_expr_async(ports_expr);
     char *path = procreact_future_get(&future, &status);
-    path[strlen(path) - 1] = '\0';
-    return path;
+
+    if(status == PROCREACT_STATUS_OK && path != NULL)
+    {
+        path[strlen(path) - 1] = '\0';
+        return path;
+    }
+    else
+        return NULL;
 }
 
 static void delete_config_value(gpointer data)
@@ -108,9 +114,15 @@ PortConfiguration *open_port_configuration_from_xml(const gchar *port_configurat
 PortConfiguration *open_port_configuration_from_nix(char *port_configuration_file)
 {
     char *ports_xml = generate_ports_xml_from_expr(port_configuration_file);
-    PortConfiguration *port_configuration = open_port_configuration_from_xml(ports_xml);
-    free(ports_xml);
-    return port_configuration;
+
+    if(ports_xml == NULL)
+        return NULL;
+    else
+    {
+        PortConfiguration *port_configuration = open_port_configuration_from_xml(ports_xml);
+        free(ports_xml);
+        return port_configuration;
+    }
 }
 
 PortConfiguration *open_port_configuration(gchar *port_configuration_file, int xml)

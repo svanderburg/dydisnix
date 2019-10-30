@@ -26,8 +26,14 @@ char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrast
     ProcReact_Status status;
     ProcReact_Future future = generate_distribution_xml_from_expr_async(distribution_expr, infrastructure_expr);
     char *path = procreact_future_get(&future, &status);
-    path[strlen(path) - 1] = '\0';
-    return path;
+
+    if(status == PROCREACT_STATUS_OK && path != NULL)
+    {
+        path[strlen(path) - 1] = '\0';
+        return path;
+    }
+    else
+        return NULL;
 }
 
 GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping_file, int *automapped)
@@ -72,9 +78,15 @@ GHashTable *create_candidate_target_table_from_xml(const char *candidate_mapping
 GHashTable *create_candidate_target_table_from_nix(gchar *distribution_expr, gchar *infrastructure_expr, int *automapped)
 {
     char *distribution_xml = generate_distribution_xml_from_expr(distribution_expr, infrastructure_expr);
-    GHashTable *candidate_target_table = create_candidate_target_table_from_xml(distribution_xml, automapped);
-    free(distribution_xml);
-    return candidate_target_table;
+
+    if(distribution_xml == NULL)
+        return NULL;
+    else
+    {
+        GHashTable *candidate_target_table = create_candidate_target_table_from_xml(distribution_xml, automapped);
+        free(distribution_xml);
+        return candidate_target_table;
+    }
 }
 
 GHashTable *create_candidate_target_table(gchar *distribution_expr, gchar *infrastructure_expr, int xml, int *automapped)

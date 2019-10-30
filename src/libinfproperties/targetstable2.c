@@ -27,16 +27,28 @@ char *generate_infrastructure_xml_from_expr(char *infrastructure_expr)
     ProcReact_Status status;
     ProcReact_Future future = generate_infrastructure_xml_from_expr_async(infrastructure_expr);
     char *path = procreact_future_get(&future, &status);
-    path[strlen(path) - 1] = '\0';
-    return path;
+
+    if(status == PROCREACT_STATUS_OK && path != NULL)
+    {
+        path[strlen(path) - 1] = '\0';
+        return path;
+    }
+    else
+        return NULL;
 }
 
 GHashTable *create_targets_table_from_nix_file(gchar *infrastructure_nix)
 {
     char *infrastructure_xml = generate_infrastructure_xml_from_expr(infrastructure_nix);
-    GHashTable *targets_table = create_targets_table_from_xml(infrastructure_xml, NULL, NULL);
-    free(infrastructure_xml);
-    return targets_table;
+
+    if(infrastructure_xml == NULL)
+        return NULL;
+    else
+    {
+        GHashTable *targets_table = create_targets_table_from_xml(infrastructure_xml, NULL, NULL);
+        free(infrastructure_xml);
+        return targets_table;
+    }
 }
 
 GHashTable *create_targets_table2(gchar *infrastructure, const int xml)

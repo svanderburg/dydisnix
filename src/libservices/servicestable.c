@@ -24,8 +24,14 @@ char *generate_service_xml_from_expr(char *service_expr)
     ProcReact_Status status;
     ProcReact_Future future = generate_service_xml_from_expr_async(service_expr);
     char *path = procreact_future_get(&future, &status);
-    path[strlen(path) - 1] = '\0';
-    return path;
+
+    if(status == PROCREACT_STATUS_OK && path != NULL)
+    {
+        path[strlen(path) - 1] = '\0';
+        return path;
+    }
+    else
+        return NULL;
 }
 
 GHashTable *create_service_table_from_xml(const gchar *services_xml_file)
@@ -69,9 +75,15 @@ GHashTable *create_service_table_from_xml(const gchar *services_xml_file)
 GHashTable *create_service_table_from_nix(gchar *services_nix)
 {
     char *services_xml = generate_service_xml_from_expr(services_nix);
-    GHashTable *service_table = create_service_table_from_xml(services_xml);
-    free(services_xml);
-    return service_table;
+
+    if(services_xml == NULL)
+        return NULL;
+    else
+    {
+        GHashTable *service_table = create_service_table_from_xml(services_xml);
+        free(services_xml);
+        return service_table;
+    }
 }
 
 GHashTable *create_service_table(gchar *services, const int xml)

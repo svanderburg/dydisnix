@@ -4,6 +4,7 @@
 #include <servicestable.h>
 #include <servicegroup.h>
 #include <nixxml-node.h>
+#include <nixxml-ghashtable-iter.h>
 #include <procreact_pid.h>
 
 static pid_t run_dot_async(gchar *filename, gchar *image_format)
@@ -41,12 +42,62 @@ static void print_type(FILE *fd, const Service *service)
         fprintf(fd, "\\n(%s)", (char*)prop_value->value);
 }
 
+static void generate_vertexes(FILE *fd, GHashTable *service_table)
+{
+    NixXML_GHashTableOrderedIter iter;
+    gchar *key;
+    gpointer value;
+
+    NixXML_g_hash_table_ordered_iter_init(&iter, service_table);
+    while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
+    {
+         Service *current_service = (Service*)value;
+         fprintf(fd, "\"%s\" [ label = \"%s", current_service->name, current_service->name);
+         print_type(fd, current_service);
+         fprintf(fd, "\"");
+
+         if(current_service->group_node)
+             fprintf(fd, ", style=dashed");
+
+         fprintf(fd, " ]\n");
+    }
+
+    NixXML_g_hash_table_ordered_iter_destroy(&iter);
+}
+
+static void generate_edges(FILE *fd, GHashTable *service_table)
+{
+    NixXML_GHashTableOrderedIter iter;
+    gchar *key;
+    gpointer value;
+
+    NixXML_g_hash_table_ordered_iter_init(&iter, service_table);
+    while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
+    {
+         Service *current_service = (Service*)value;
+         unsigned int i;
+
+         /* Inter-dependencies with ordering requirement */
+         for(i = 0; i < current_service->depends_on->len; i++)
+         {
+             gchar *dependency = g_ptr_array_index(current_service->depends_on, i);
+             fprintf(fd, "\"%s\" -> \"%s\"\n", current_service->name, dependency);
+         }
+
+         /* Inter-dependencies without ordering requirement */
+         for(i = 0; i < current_service->connects_to->len; i++)
+         {
+             gchar *dependency = g_ptr_array_index(current_service->connects_to, i);
+             fprintf(fd, "\"%s\" -> \"%s\" [style=dashed]\n", current_service->name, dependency);
+         }
+    }
+
+    NixXML_g_hash_table_ordered_iter_destroy(&iter);
+}
+
 static int generate_architecture_diagram(gchar *filepath, gchar *image_format, gchar *group, void *data, GHashTable *service_table)
 {
     FILE *fd;
-
-    GHashTableIter iter;
-    gpointer key, value;
 
     if(filepath == NULL)
         fd = stdout;
@@ -63,46 +114,9 @@ static int generate_architecture_diagram(gchar *filepath, gchar *image_format, g
 
     fprintf(fd, "digraph G {\n");
     fprintf(fd, "node [style=filled,fillcolor=white,color=black];\n");
-
-    /* Generate vertexes */
-    g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-         Service *current_service = (Service*)value;
-         fprintf(fd, "\"%s\" [ label = \"%s", current_service->name, current_service->name);
-         print_type(fd, current_service);
-         fprintf(fd, "\"");
-
-         if(current_service->group_node)
-             fprintf(fd, ", style=dashed");
-
-         fprintf(fd, " ]\n");
-    }
-
-    /* Generate edges */
+    generate_vertexes(fd, service_table);
     fprintf(fd, "\n");
-
-    g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, (gpointer*)&key, (gpointer*)&value))
-    {
-         Service *current_service = (Service*)value;
-         unsigned int j;
-
-         /* Inter-dependencies with ordering requirement */
-         for(j = 0; j < current_service->depends_on->len; j++)
-         {
-             gchar *dependency = g_ptr_array_index(current_service->depends_on, j);
-             fprintf(fd, "\"%s\" -> \"%s\"\n", current_service->name, dependency);
-         }
-
-         /* Inter-dependencies without ordering requirement */
-         for(j = 0; j < current_service->connects_to->len; j++)
-         {
-             gchar *dependency = g_ptr_array_index(current_service->connects_to, j);
-             fprintf(fd, "\"%s\" -> \"%s\" [style=dashed]\n", current_service->name, dependency);
-         }
-    }
-
+    generate_edges(fd, service_table);
     fprintf(fd, "}\n");
 
     if(filepath != NULL)

@@ -1,5 +1,6 @@
 #include "document-services.h"
 #include <stdio.h>
+#include <nixxml-ghashtable-iter.h>
 #include <servicestable.h>
 #include <servicegroup.h>
 #include "docs-config.h"
@@ -59,66 +60,15 @@ static void print_title(FILE *fd, gchar *group, gchar *group_description)
     }
 }
 
-static int generate_architecture_description(gchar *filepath, gchar *image_format, gchar *group, void *data, GHashTable *service_table)
+static void generate_services_table(FILE *fd, DocsConfig *docs_config, GHashTable *service_table)
 {
-    FILE *fd;
+    NixXML_GHashTableOrderedIter iter;
+    gchar *key;
+    gpointer value;
     int first = TRUE;
-    gchar *root_path = compose_relative_root_path(group);
-    DocsConfig *docs_config = (DocsConfig*)data;
-    GHashTableIter iter;
-    gpointer key, value;
 
-    gchar *group_description;
-
-    if(docs_config == NULL || g_strcmp0(group, "") == 0)
-        group_description = NULL;
-    else
-        group_description = find_group(docs_config, group);
-
-    if(filepath == NULL)
-        fd = stdout;
-    else
-    {
-        fd = fopen(filepath, "w");
-        if(fd == NULL)
-        {
-            g_printerr("Can't open file: %s\n", filepath);
-            return FALSE;
-        }
-    }
-
-    fprintf(fd, "<!DOCTYPE html>\n\n");
-    fprintf(fd, "<html>\n");
-    fprintf(fd, "    <head>\n");
-    fprintf(fd, "        <title>");
-    print_title(fd, group, group_description);
-    fprintf(fd, "</title>\n");
-    fprintf(fd, "        <link rel=\"stylesheet\" type=\"text/css\" href=\"%s/style.css\">\n", root_path);
-    fprintf(fd, "    </head>\n");
-
-    fprintf(fd, "    <body>\n");
-
-    if(g_strcmp0(group, "") != 0)
-    {
-        fprintf(fd, "        <h1>");
-
-        if(group_description == NULL)
-            fprintf(fd, "%s", group);
-        else
-            fprintf(fd, "%s", group_description);
-
-        fprintf(fd, "</h1>\n");
-    }
-
-    if(image_format != NULL)
-    {
-        fprintf(fd, "        <p>\n");
-        fprintf(fd, "            <img src=\"diagram.dot.%s\" alt=\"Architecture diagram\">\n", image_format);
-        fprintf(fd, "        </p>\n");
-    }
-
-    g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
+    NixXML_g_hash_table_ordered_iter_init(&iter, service_table);
+    while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
 
@@ -182,10 +132,18 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     if(!first)
         fprintf(fd, "        </table>\n");
 
-    first = TRUE;
+    NixXML_g_hash_table_ordered_iter_destroy(&iter);
+}
 
-    g_hash_table_iter_init(&iter, service_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
+static void generate_groups_table(FILE *fd, DocsConfig *docs_config, GHashTable *service_table, gchar *group)
+{
+    NixXML_GHashTableOrderedIter iter;
+    gchar *key;
+    gpointer value;
+    int first = TRUE;
+
+    NixXML_g_hash_table_ordered_iter_init(&iter, service_table);
+    while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
     {
         Service *current_service = (Service*)value;
 
@@ -232,6 +190,66 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
 
     if(!first)
         fprintf(fd, "        </table>\n");
+
+    NixXML_g_hash_table_ordered_iter_destroy(&iter);
+}
+
+static int generate_architecture_description(gchar *filepath, gchar *image_format, gchar *group, void *data, GHashTable *service_table)
+{
+    FILE *fd;
+    gchar *root_path = compose_relative_root_path(group);
+    DocsConfig *docs_config = (DocsConfig*)data;
+    gchar *group_description;
+
+    if(docs_config == NULL || g_strcmp0(group, "") == 0)
+        group_description = NULL;
+    else
+        group_description = find_group(docs_config, group);
+
+    if(filepath == NULL)
+        fd = stdout;
+    else
+    {
+        fd = fopen(filepath, "w");
+        if(fd == NULL)
+        {
+            g_printerr("Can't open file: %s\n", filepath);
+            return FALSE;
+        }
+    }
+
+    fprintf(fd, "<!DOCTYPE html>\n\n");
+    fprintf(fd, "<html>\n");
+    fprintf(fd, "    <head>\n");
+    fprintf(fd, "        <title>");
+    print_title(fd, group, group_description);
+    fprintf(fd, "</title>\n");
+    fprintf(fd, "        <link rel=\"stylesheet\" type=\"text/css\" href=\"%s/style.css\">\n", root_path);
+    fprintf(fd, "    </head>\n");
+
+    fprintf(fd, "    <body>\n");
+
+    if(g_strcmp0(group, "") != 0)
+    {
+        fprintf(fd, "        <h1>");
+
+        if(group_description == NULL)
+            fprintf(fd, "%s", group);
+        else
+            fprintf(fd, "%s", group_description);
+
+        fprintf(fd, "</h1>\n");
+    }
+
+    if(image_format != NULL)
+    {
+        fprintf(fd, "        <p>\n");
+        fprintf(fd, "            <img src=\"diagram.dot.%s\" alt=\"Architecture diagram\">\n", image_format);
+        fprintf(fd, "        </p>\n");
+    }
+
+    generate_services_table(fd, docs_config, service_table);
+    generate_groups_table(fd, docs_config, service_table, group);
 
     fprintf(fd, "    </body>\n");
     fprintf(fd, "</html>\n");

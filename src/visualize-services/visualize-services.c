@@ -36,10 +36,42 @@ static int run_dot(gchar *filename, gchar *image_format)
 
 static void print_type(FILE *fd, const Service *service)
 {
-    NixXML_Node *prop_value = g_hash_table_lookup(service->properties, "type");
+    if(service->type != NULL)
+        fprintf(fd, "\\n(%s)", (char*)service->type);
+}
 
-    if(prop_value != NULL)
-        fprintf(fd, "\\n(%s)", (char*)prop_value->value);
+static int print_container_providers_annotation(FILE *fd, const Service *service)
+{
+    if(service->provides_container != NULL)
+    {
+        fprintf(fd, " ->\\n%s", service->provides_container);
+        return TRUE;
+    }
+    else if(g_hash_table_size(service->provides_containers_table) > 0)
+    {
+        NixXML_GHashTableOrderedIter iter;
+        gchar *key;
+        gpointer value;
+        int first = TRUE;
+
+        fprintf(fd, "\\n -> { ");
+
+        NixXML_g_hash_table_ordered_iter_init(&iter, service->provides_containers_table);
+        while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
+        {
+            if(first)
+                first = FALSE;
+            else
+                fprintf(fd, "\\n, ");
+
+            fprintf(fd, "%s", (gchar*)key);
+         }
+
+         g_print("\\n}");
+         return TRUE;
+     }
+
+    return FALSE;
 }
 
 static void generate_vertexes(FILE *fd, GHashTable *service_table)
@@ -51,15 +83,21 @@ static void generate_vertexes(FILE *fd, GHashTable *service_table)
     NixXML_g_hash_table_ordered_iter_init(&iter, service_table);
     while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))
     {
-         Service *current_service = (Service*)value;
-         fprintf(fd, "\"%s\" [ label = \"%s", current_service->name, current_service->name);
-         print_type(fd, current_service);
-         fprintf(fd, "\"");
+        Service *current_service = (Service*)value;
+        fprintf(fd, "\"%s\" [ label = \"%s", current_service->name, current_service->name);
 
-         if(current_service->group_node)
-             fprintf(fd, ", style=dashed");
+        int provides_containers = print_container_providers_annotation(fd, current_service);
 
-         fprintf(fd, " ]\n");
+        print_type(fd, current_service);
+        fprintf(fd, "\"");
+
+        if(current_service->group_node)
+            fprintf(fd, ", style=dashed");
+
+        if(provides_containers)
+            fprintf(fd, ", peripheries=2");
+
+        fprintf(fd, " ]\n");
     }
 
     NixXML_g_hash_table_ordered_iter_destroy(&iter);

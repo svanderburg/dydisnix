@@ -11,6 +11,10 @@ typedef struct
 
     xmlChar *group;
 
+    xmlChar *provides_container;
+
+    GHashTable *provides_containers_table;
+
     GPtrArray *connects_to;
 
     GPtrArray *depends_on;

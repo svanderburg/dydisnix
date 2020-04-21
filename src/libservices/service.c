@@ -10,6 +10,8 @@ static void *create_service_from_element(xmlNodePtr element, void *userdata)
     service->name = NULL;
     service->type = NULL;
     service->group = NULL;
+    service->provides_container = NULL;
+    service->provides_containers_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     service->depends_on = NULL;
     service->connects_to = NULL;
     service->properties = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
@@ -27,6 +29,10 @@ void parse_and_insert_service_attributes(xmlNodePtr element, void *table, const 
         service->type = NixXML_parse_value(element, userdata);
     else if(xmlStrcmp(key, (xmlChar*) "group") == 0)
         service->group = NixXML_parse_value(element, userdata);
+    else if(xmlStrcmp(key, (xmlChar*) "providesContainer") == 0)
+        service->provides_container = NixXML_parse_value(element, userdata);
+    else if(xmlStrcmp(key, (xmlChar*) "providesContainers") == 0)
+        service->provides_containers_table = NixXML_generic_parse_verbose_expr_glib(element, "type", "name", NULL);
     else if(xmlStrcmp(key, (xmlChar*) "connectsTo") == 0)
         service->connects_to = NixXML_parse_g_ptr_array(element, "dependency", userdata, NixXML_parse_value);
     else if(xmlStrcmp(key, (xmlChar*) "dependsOn") == 0)
@@ -73,7 +79,8 @@ void delete_service(Service *service)
         xmlFree(service->name);
         xmlFree(service->type);
         xmlFree(service->group);
-
+        xmlFree(service->provides_container);
+        NixXML_delete_g_hash_table(service->provides_containers_table, (NixXML_DeleteGHashTableValueFunc)NixXML_delete_node_glib);
         delete_service_property_table(service->properties);
 
         delete_dependencies(service->connects_to);
@@ -124,6 +131,8 @@ Service *copy_service(const Service *service)
     new_service->name = xmlStrdup(service->name);
     new_service->type = xmlStrdup(service->type);
     new_service->group = xmlStrdup(service->group);
+    new_service->provides_container = xmlStrdup(service->provides_container);
+    new_service->provides_containers_table = copy_properties(service->provides_containers_table);
     new_service->properties = copy_properties(service->properties);
     new_service->depends_on = copy_dependencies(service->depends_on);
     new_service->connects_to = copy_dependencies(service->connects_to);
@@ -140,6 +149,8 @@ xmlChar *find_service_property(Service *service, gchar *service_name)
         return service->type;
     else if(g_strcmp0(service_name, "group") == 0)
         return service->group;
+    else if(g_strcmp0(service_name, "providesContainer") == 0)
+        return service->provides_container;
     else
     {
         NixXML_Node *value = g_hash_table_lookup(service->properties, service_name);

@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <procreact_pid.h>
 
-static int instantiate_async(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName, char *interface, char *target_property)
+static pid_t instantiate_async(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName, char *interface, char *target_property, char *extra_params)
 {
     pid_t pid = fork();
 
@@ -17,6 +17,7 @@ static int instantiate_async(gchar *services_expr, gchar *infrastructure_expr, g
             "--argstr", "targetName", targetName,
             "--argstr", "defaultClientInterface", interface,
             "--argstr", "defaultTargetProperty", target_property,
+            "--arg", "extraParams", extra_params,
             DATADIR "/dydisnix/try-build.nix", NULL};
         dup2(2, 1);
         execvp(args[0], args);
@@ -26,10 +27,10 @@ static int instantiate_async(gchar *services_expr, gchar *infrastructure_expr, g
     return pid;
 }
 
-static int instantiate(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName, char *interface, char *target_property)
+static int instantiate(gchar *services_expr, gchar *infrastructure_expr, gchar *distribution_expr, gchar *serviceName, gchar *targetName, char *interface, char *target_property, char *extra_params)
 {
     ProcReact_Status status;
-    pid_t pid = instantiate_async(services_expr, infrastructure_expr, distribution_expr, serviceName, targetName, interface, target_property);
+    pid_t pid = instantiate_async(services_expr, infrastructure_expr, distribution_expr, serviceName, targetName, interface, target_property, extra_params);
     int exit_status = procreact_wait_for_exit_status(pid, &status);
 
     if(status != PROCREACT_STATUS_OK)
@@ -53,7 +54,7 @@ static void delete_filtered_target_table(GHashTable *filtered_target_table)
     g_hash_table_destroy(filtered_target_table);
 }
 
-int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, const unsigned int flags, char *interface, char *target_property)
+int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, const unsigned int flags, char *interface, char *target_property, char *extra_params)
 {
     int automapped;
     GHashTable *candidate_target_table = create_candidate_target_table(distribution_expr, infrastructure_expr, flags & DYDISNIX_FLAG_XML, &automapped);
@@ -82,7 +83,7 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
             {
                 CandidateTargetMapping *mapping = g_ptr_array_index(targets, i);
 
-                if(instantiate(services_expr, infrastructure_expr, distribution_expr, service, (gchar*)mapping->target, interface, target_property) == 0)
+                if(instantiate(services_expr, infrastructure_expr, distribution_expr, service, (gchar*)mapping->target, interface, target_property, extra_params) == 0)
                     g_ptr_array_add(filtered_targets, mapping);
             }
 

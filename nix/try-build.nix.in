@@ -1,4 +1,4 @@
-{ servicesFile, infrastructureFile, distributionFile, serviceName, targetName, defaultClientInterface, defaultTargetProperty
+{ servicesFile, infrastructureFile, distributionFile, serviceName, targetName, defaultClientInterface, defaultTargetProperty, extraParams
 , nixpkgs ? <nixpkgs>
 , disnix ? builtins.storePath @DISNIX_PREFIX@
 }:
@@ -20,17 +20,18 @@ let
     inherit (pkgs) lib;
   };
 
-  architectureFun = wrapArchitecture {
-    inherit servicesFun infrastructure distributionFun;
+  architectureFun = wrapArchitecture.wrapBasicInputsModelsIntoArchitectureFun {
+    inherit servicesFun infrastructure distributionFun extraParams;
     packagesFun = null;
   };
 
-  normalizedArchitecture = normalizeArchitecture {
+  normalizedArchitecture = normalizeArchitecture.generateNormalizedDeploymentArchitecture {
     inherit architectureFun nixpkgs defaultClientInterface defaultTargetProperty;
     defaultDeployState = false;
+    extraParams = {};
   };
 
   target = getAttr targetName infrastructure;
   system = if target ? system then target.system else builtins.currentSystem;
 in
-normalizedArchitecture.services."${serviceName}"._pkgsPerSystem."${system}"
+normalizedArchitecture.services."${serviceName}".pkgs."${system}"

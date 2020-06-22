@@ -8,7 +8,7 @@
 static GHashTable *convert_manifest_to_candidate_target_table(Manifest *manifest, int *automapped)
 {
     unsigned int i;
-    GHashTable *candidate_target_table = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    GHashTable *candidate_target_table = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
 
     *automapped = TRUE;
 

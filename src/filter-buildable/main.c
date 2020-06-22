@@ -33,6 +33,9 @@ static void print_usage(const char *command)
     "                               interface. (Defaults to hostname)\n"
     "      --interface=INTERFACE    Path to executable that communicates with a Disnix\n"
     "                               interface. Defaults to: disnix-ssh-client\n"
+    "      --extra-params           A string with an attribute set in the Nix expression\n"
+    "                               language propagating extra parameters to the input\n"
+    "                               models\n"
     "  -h, --help                   Shows the usage of this command to the user\n"
 
     "\nEnvironment:\n"
@@ -57,6 +60,7 @@ int main(int argc, char *argv[])
         {"target-property", required_argument, 0, DYDISNIX_OPTION_TARGET_PROPERTY},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
         {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
+        {"extra-params", required_argument, 0, DYDISNIX_OPTION_EXTRA_PARAMS},
         {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
         {0, 0, 0, 0}
     };
@@ -66,6 +70,7 @@ int main(int argc, char *argv[])
     unsigned int flags = 0;
     char *interface = NULL;
     char *target_property = NULL;
+    char *extra_params = "{}";
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
@@ -93,6 +98,9 @@ int main(int argc, char *argv[])
             case DYDISNIX_OPTION_TARGET_PROPERTY:
                 target_property = optarg;
                 break;
+            case DYDISNIX_OPTION_EXTRA_PARAMS:
+                extra_params = optarg;
+                break;
             case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
                 return 0;
@@ -113,5 +121,5 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return filter_buildable(services, infrastructure, distribution, flags, interface, target_property);
+    return filter_buildable(services, infrastructure, distribution, flags, interface, target_property, extra_params);
 }

@@ -80,6 +80,7 @@ void delete_service(Service *service)
         xmlFree(service->type);
         xmlFree(service->group);
         xmlFree(service->provides_container);
+
         NixXML_delete_g_hash_table(service->provides_containers_table, (NixXML_DeleteGHashTableValueFunc)NixXML_delete_node_glib);
         delete_service_property_table(service->properties);
 

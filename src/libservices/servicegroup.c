@@ -198,7 +198,7 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
     {
         /* If a service fits in this sub group or any of the parent groups, just add it verbatim */
         Service *leaf_service = copy_service(service);
-        g_hash_table_insert(grouped_services_table, leaf_service->name, leaf_service);
+        g_hash_table_insert(grouped_services_table, g_strdup((gchar*)leaf_service->name), leaf_service);
     }
     else
     {
@@ -213,11 +213,13 @@ static void group_service(GHashTable *queried_services_table, GHashTable *groupe
             group_service->name = subgroup_root;
             group_service->type = NULL;
             group_service->group = NULL;
+            group_service->provides_container = NULL;
+            group_service->provides_containers_table = g_hash_table_new(g_str_hash, g_str_equal);
             group_service->properties = g_hash_table_new(g_str_hash, g_str_equal);
             group_service->connects_to = g_ptr_array_new();
             group_service->depends_on = g_ptr_array_new();
             group_service->group_node = TRUE;
-            g_hash_table_insert(grouped_services_table, group_service->name, group_service);
+            g_hash_table_insert(grouped_services_table, g_strdup((gchar*)group_service->name), group_service);
         }
         else
             g_free(subgroup_root);

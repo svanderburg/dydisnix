@@ -12,7 +12,7 @@ TargetConfig *create_target_config(gint last_port, gint min_port, gint max_port)
     target_config->last_port = last_port;
     target_config->min_port = min_port;
     target_config->max_port = max_port;
-    target_config->services_to_ports = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
+    target_config->services_to_ports = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     target_config->ports_to_services = g_hash_table_new(g_int_hash, g_int_equal);
 
     return target_config;

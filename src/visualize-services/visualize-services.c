@@ -195,6 +195,8 @@ static void add_outside_group_dependencies(GHashTable *queried_services_table, G
             service->type = xmlStrdup(dependency_service->type);
             service->group = xmlStrdup(dependency_service->group);
             service->properties = copy_properties(dependency_service->properties);
+            service->provides_container = xmlStrdup(dependency_service->provides_container);
+            service->provides_containers_table = copy_properties(dependency_service->provides_containers_table);
             /* Disregard its dependencies, because they are an implementation detail */
             service->depends_on = g_ptr_array_new();
             service->connects_to = g_ptr_array_new();
@@ -301,6 +303,8 @@ static void append_interdependent_services_to_table(GHashTable *queried_services
             service->type = xmlStrdup(current_service->type);
             service->group = xmlStrdup(current_service->group);
             service->properties = copy_properties(current_service->properties);
+            service->provides_container = xmlStrdup(current_service->provides_container);
+            service->provides_containers_table = copy_properties(current_service->provides_containers_table);
 
             /* Copy dependencies but drop non-existent dependencies */
             service->depends_on = copy_non_dangling_dependencies(current_service->depends_on, queried_services_table);

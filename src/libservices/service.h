@@ -2,6 +2,7 @@
 #define __DYDISNIX_SERVICE_H
 #include <glib.h>
 #include <libxml/parser.h>
+#include <nixxml-types.h>
 
 typedef struct
 {
@@ -21,7 +22,7 @@ typedef struct
 
     GHashTable *properties;
 
-    int group_node;
+    NixXML_bool group_node;
 }
 Service;
 

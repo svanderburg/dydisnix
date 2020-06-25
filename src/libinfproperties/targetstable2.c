@@ -51,7 +51,7 @@ GHashTable *create_targets_table_from_nix_file(gchar *infrastructure_nix)
     }
 }
 
-GHashTable *create_targets_table2(gchar *infrastructure, const int xml)
+GHashTable *create_targets_table2(gchar *infrastructure, const NixXML_bool xml)
 {
     if(xml)
         return create_targets_table_from_xml(infrastructure, NULL, NULL);

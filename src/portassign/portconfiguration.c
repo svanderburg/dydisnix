@@ -125,7 +125,7 @@ PortConfiguration *open_port_configuration_from_nix(char *port_configuration_fil
     }
 }
 
-PortConfiguration *open_port_configuration(gchar *port_configuration_file, int xml)
+PortConfiguration *open_port_configuration(gchar *port_configuration_file, NixXML_bool xml)
 {
     if(xml)
         return open_port_configuration_from_xml(port_configuration_file);

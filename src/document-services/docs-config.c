@@ -108,7 +108,7 @@ DocsConfig *create_docs_config_from_nix(gchar *docs_nix)
     }
 }
 
-DocsConfig *create_docs_config(gchar *docs, const int xml)
+DocsConfig *create_docs_config(gchar *docs, const NixXML_bool xml)
 {
     if(xml)
         return create_docs_config_from_xml(docs);

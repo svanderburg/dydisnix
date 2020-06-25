@@ -56,7 +56,7 @@ static void delete_filtered_target_table(GHashTable *filtered_target_table)
 
 int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, const unsigned int flags, char *interface, char *target_property, char *extra_params)
 {
-    int automapped;
+    NixXML_bool automapped;
     GHashTable *candidate_target_table = create_candidate_target_table(distribution_expr, infrastructure_expr, flags & DYDISNIX_FLAG_XML, &automapped);
 
     if(candidate_target_table == NULL)

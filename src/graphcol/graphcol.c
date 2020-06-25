@@ -91,7 +91,7 @@ static gchar *get_first_target_name(GHashTable *targets_table)
 
 int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int flags)
 {
-    int xml = flags & DYDISNIX_FLAG_XML;
+    NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services_xml, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure_xml, xml);
     GPtrArray *adjacency_array = g_ptr_array_new();
@@ -245,7 +245,7 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
     /* Print output expression */
 
     GHashTable *candidate_target_table = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, delete_targets);
-    int automapped = TRUE;
+    NixXML_bool automapped = TRUE;
 
     for(i = 0; i < adjacency_array->len; i++)
     {

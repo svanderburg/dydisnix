@@ -24,8 +24,8 @@ static void delete_result_table(GHashTable *result_table)
 int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, const unsigned int flags)
 {
     int exit_status = 0;
-    int xml = flags & DYDISNIX_FLAG_XML;
-    int automapped;
+    NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
+    NixXML_bool automapped;
     GHashTable *service_table = create_service_table(services, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);

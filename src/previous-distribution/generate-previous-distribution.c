@@ -5,7 +5,7 @@
 #include <checkoptions.h>
 #include "candidatetargetmappingtable.h"
 
-static GHashTable *convert_manifest_to_candidate_target_table(Manifest *manifest, int *automapped)
+static GHashTable *convert_manifest_to_candidate_target_table(Manifest *manifest, NixXML_bool *automapped)
 {
     unsigned int i;
     GHashTable *candidate_target_table = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, NULL);
@@ -52,7 +52,7 @@ int generate_previous_distribution(char *manifest_file, const unsigned int flags
 
         if(check_manifest(manifest))
         {
-            int automapped;
+            NixXML_bool automapped;
             GHashTable *candidate_target_table = convert_manifest_to_candidate_target_table(manifest, &automapped);
 
             /* Print the result */

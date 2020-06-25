@@ -269,7 +269,7 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
 
 int document_services(gchar *services, gchar *group, const unsigned int flags, gchar *docs)
 {
-    int xml = flags & DYDISNIX_FLAG_XML;
+    NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
 
     if(service_table == NULL)
@@ -351,7 +351,7 @@ static int copy_stylesheet(gchar *output_dir)
 
 int document_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format, gchar *docs)
 {
-    int xml = flags & DYDISNIX_FLAG_XML;
+    NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
 
     if(service_table == NULL)

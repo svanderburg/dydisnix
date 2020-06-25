@@ -86,7 +86,7 @@ GHashTable *create_service_table_from_nix(gchar *services_nix)
     }
 }
 
-GHashTable *create_service_table(gchar *services, const int xml)
+GHashTable *create_service_table(gchar *services, const NixXML_bool xml)
 {
     if(xml)
         return create_service_table_from_xml(services);

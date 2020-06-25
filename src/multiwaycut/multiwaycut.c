@@ -121,7 +121,7 @@ static void fix_unmapped_services(GHashTable *initial_candidate_target_table, GH
 
 int multiwaycut(gchar *distribution, gchar *infrastructure, const unsigned int flags)
 {
-    int automapped;
+    NixXML_bool automapped;
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, NULL, flags & DYDISNIX_FLAG_XML, &automapped);
 
     if(candidate_target_table == NULL)

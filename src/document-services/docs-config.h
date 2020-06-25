@@ -1,6 +1,7 @@
 #ifndef __DYDISNIX_DOCS_CONFIG_H
 #define __DYDISNIX_DOCS_CONFIG_H
 #include <glib.h>
+#include <nixxml-types.h>
 
 typedef struct
 {
@@ -18,7 +19,7 @@ DocsConfig *create_docs_config_from_xml(gchar *docs_xml_file);
 
 DocsConfig *create_docs_config_from_nix(gchar *docs_nix);
 
-DocsConfig *create_docs_config(gchar *docs, const int xml);
+DocsConfig *create_docs_config(gchar *docs, const NixXML_bool xml);
 
 void delete_docs_config(DocsConfig *docs_config);
 

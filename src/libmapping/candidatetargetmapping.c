@@ -2,6 +2,7 @@
 #include <nixxml-parse.h>
 #include <nixxml-print-nix.h>
 #include <nixxml-print-xml.h>
+#include <nixxml-types.h>
 
 static void *create_candidate_target_mapping_from_element(xmlNodePtr element, void *userdata)
 {
@@ -16,7 +17,7 @@ static void insert_candidate_target_mapping_attribute(void *table, const xmlChar
         mapping->target = value;
     else if(xmlStrcmp(key, (xmlChar*) "container") == 0)
     {
-        int *automapped = (int*)userdata; /* If encouter a container, then we can no longer print the mappings with automapping notation */
+        NixXML_bool *automapped = (NixXML_bool*)userdata; /* If encouter a container, then we can no longer print the mappings with automapping notation */
         *automapped = FALSE;
 
         mapping->container = value;
@@ -51,7 +52,7 @@ void print_candidate_target_mapping_attributes_nix(FILE *file, const void *value
 
 void print_candidate_target_mapping_nix(FILE *file, const CandidateTargetMapping *mapping, const int indent_level, void *userdata)
 {
-    int *automapped = (int*)userdata;
+    NixXML_bool *automapped = (NixXML_bool*)userdata;
 
     if(*automapped)
         NixXML_print_string_nix(file, mapping->target, indent_level, userdata);

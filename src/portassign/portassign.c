@@ -51,8 +51,8 @@ static void print_ports_assignment_xml(const PortsAssignment *assignment)
 
 int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *ports, gchar *service_property, const unsigned int flags)
 {
-    int automapped;
-    int xml = flags & DYDISNIX_FLAG_XML;
+    NixXML_bool automapped;
+    NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
     GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);

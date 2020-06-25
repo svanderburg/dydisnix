@@ -2,6 +2,7 @@
 #define __DYDISNIX_PORTCONFIGURATION_H
 #include <stdio.h>
 #include <glib.h>
+#include <nixxml-types.h>
 #include "targetconfig.h"
 
 typedef struct
@@ -20,7 +21,7 @@ PortConfiguration *open_port_configuration_from_xml(const gchar *port_configurat
 
 PortConfiguration *open_port_configuration_from_nix(gchar *port_configuration_file);
 
-PortConfiguration *open_port_configuration(gchar *port_configuration_file, int xml);
+PortConfiguration *open_port_configuration(gchar *port_configuration_file, NixXML_bool xml);
 
 void delete_port_configuration(PortConfiguration *port_configuration);
 

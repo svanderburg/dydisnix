@@ -10,6 +10,6 @@ GHashTable *create_targets_table_from_nix_file(gchar *infrastructure_nix);
 
 GHashTable *create_targets_table2(gchar *infrastructure, const NixXML_bool xml);
 
-void substract_target_value(Target *target, gchar *property_name, int amount);
+void substract_target_value(Target *target, const gchar *property_name, int amount);
 
 #endif

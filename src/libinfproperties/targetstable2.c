@@ -59,7 +59,7 @@ GHashTable *create_targets_table2(gchar *infrastructure, const NixXML_bool xml)
         return create_targets_table_from_nix_file(infrastructure);
 }
 
-void substract_target_value(Target *target, gchar *property_name, int amount)
+void substract_target_value(Target *target, const gchar *property_name, int amount)
 {
     gchar buffer[BUFFER_SIZE];
     NixXML_Node *node = g_hash_table_lookup(target->properties_table, property_name);

@@ -117,19 +117,23 @@ rec {
    * multiway cut problem.
    *
    * Parameters:
+   * services: Services model
+   * infrastructure: Infrastructure model
    * distribution: A candidate target mapping in which each key refers to a service and each value to a list of machine names
    *
    * Returns:
    * A candidate target mapping in which each key refers to a service and each
    * value to a list of machine names
    */
-  multiwaycut = {distribution}:
+  multiwaycut = {services, infrastructure, distribution}:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";
       buildInputs = [ dydisnix ];
       buildCommand =
       ''
         dydisnix-multiwaycut \
+          --services ${generateServicesXML services} \
+          --infrastructure ${generateInfrastructureXML infrastructure} \
           --distribution ${generateDistributionXML distribution} \
           --xml \
           > $out

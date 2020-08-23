@@ -3,6 +3,6 @@
 #include <glib.h>
 #include <checkoptions.h>
 
-int multiwaycut(gchar *distribution, gchar *infrastructure, const unsigned int flags);
+int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, const unsigned int flags);
 
 #endif

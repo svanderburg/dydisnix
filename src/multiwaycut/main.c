@@ -5,16 +5,19 @@
 
 static void print_usage(const char *command)
 {
-    printf("Usage: %s [--infrastructure infrastructure_nix] --distribution distribution_nix\n\n", command);
+    printf("Usage: %s --services services_expr [--infrastructure infrastructure_nix] --distribution distribution_nix\n\n", command);
 
     puts(
     "Divides all services in the distribution model by using an approximation\n"
     "algorithm for the multiway cut problem.\n\n"
 
     "This algorithm is useful to generate a distribution in which the amount of\n"
-    "network links is minimized.\n\n"
+    "network links between machines is minimized.\n\n"
 
     "Options:\n"
+    "  -s, --services=services_nix\n"
+    "                           Services Nix expression which describes all\n"
+    "                           components of the distributed system\n"
     "  -i, --infrastructure=infrastructure_nix\n"
     "                           Infrastructure Nix expression which captures\n"
     "                           properties of machines in the network\n"
@@ -35,6 +38,7 @@ int main(int argc, char *argv[])
     int c, option_index = 0;
     struct option long_options[] =
     {
+        {"services", required_argument, 0, DYDISNIX_OPTION_SERVICES},
         {"infrastructure", required_argument, 0, DYDISNIX_OPTION_INFRASTRUCTURE},
         {"distribution", required_argument, 0, DYDISNIX_OPTION_DISTRIBUTION},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
@@ -42,15 +46,19 @@ int main(int argc, char *argv[])
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
+    char *services = NULL;
     char *infrastructure = NULL;
     char *distribution = NULL;
     unsigned int flags = 0;
 
     /* Parse command-line options */
-    while((c = getopt_long(argc, argv, "i:d:h", long_options, &option_index)) != -1)
+    while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
+            case DYDISNIX_OPTION_SERVICES:
+                services = optarg;
+                break;
             case DYDISNIX_OPTION_INFRASTRUCTURE:
                 infrastructure = optarg;
                 break;
@@ -75,9 +83,10 @@ int main(int argc, char *argv[])
     /* Validate options */
 
     if((!(flags & DYDISNIX_FLAG_XML) && !check_infrastructure_option(infrastructure))
+      || !check_services_option(services)
       || !check_distribution_option(distribution))
         return 1;
 
     /* Execute operation */
-    return multiwaycut(distribution, infrastructure, flags);
+    return multiwaycut(services, distribution, infrastructure, flags);
 }

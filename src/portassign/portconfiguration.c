@@ -1,7 +1,7 @@
 #include "portconfiguration.h"
 #include <stdlib.h>
 #include <string.h>
-#include <targetmapping.h>
+#include <targetmappingtable.h>
 #include <servicestable.h>
 #include <candidatetargetmappingtable.h>
 #include <procreact_future.h>
@@ -254,15 +254,15 @@ void print_port_configuration_xml(FILE *file, const void *value, const int inden
 static gboolean remove_obsolete_target_config(gpointer key, gpointer value, gpointer user_data)
 {
     gchar *target = (gchar*)key;
-    GPtrArray *target_mapping_array = (GPtrArray*)user_data;
-    
-    return (find_target_mapping_item(target_mapping_array, target) == NULL);
+    GHashTable *target_mapping_table = (GHashTable*)user_data;
+
+    return !g_hash_table_contains(target_mapping_table, target);
 }
 
 void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GHashTable *service_table, gchar *service_property)
 {
     /* Generate inverse mapping to determine which machines are in use */
-    GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_table);
+    GHashTable *target_mapping_table = create_target_mapping_table(candidate_target_table);
 
     GHashTableIter iter;
     gpointer key, value;
@@ -272,7 +272,7 @@ void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTab
         clean_obsolete_services_to_ports(port_configuration->global_config, candidate_target_table, service_table, service_property, "shared");
 
     /* Remove all port reservations for a machine, if it does not exist anymore */
-    g_hash_table_foreach_remove(port_configuration->target_configs, remove_obsolete_target_config, target_mapping_array);
+    g_hash_table_foreach_remove(port_configuration->target_configs, remove_obsolete_target_config, target_mapping_table);
 
     g_hash_table_iter_init(&iter, port_configuration->target_configs);
     while(g_hash_table_iter_next(&iter, &key, &value))
@@ -280,12 +280,10 @@ void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTab
         gchar *target = (gchar*)key;
         TargetConfig *target_config = (TargetConfig*)value;
 
-        TargetMappingItem *target_mapping_item = find_target_mapping_item(target_mapping_array, target);
-
-        if(target_mapping_item != NULL)
+        if(g_hash_table_contains(target_mapping_table, target))
             clean_obsolete_services_to_ports(target_config, candidate_target_table, service_table, service_property, "private");
     }
 
-    /* Clean inverse mapping array from memory */
-    delete_target_mapping_array(target_mapping_array);
+    /* Clean inverse mapping table from memory */
+    delete_target_mapping_table(target_mapping_table);
 }

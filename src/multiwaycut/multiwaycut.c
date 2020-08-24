@@ -5,7 +5,7 @@
 #include <servicestable.h>
 #include <candidatetargetmappingtable.h>
 #include <candidatetargetmapping.h>
-#include <targetmapping.h>
+#include <targetmappingtable.h>
 #include "node.h"
 
 static void generate_initial_application_nodes(ApplicationHostGraph *graph, GHashTable *candidate_target_table)
@@ -85,17 +85,21 @@ static void generate_host_to_app_node_links(Node *host_node, GPtrArray *services
  * - Every target in the infrastructure model becomes a host node in the graph
  * - For each target machine that is a candidate for a service, a bidirectional link is created with a very heavy weight: n^2
  */
-static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GPtrArray *target_mapping_array)
+static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GHashTable *target_mapping_table)
 {
-    unsigned int i;
+    GHashTableIter iter;
+    gpointer key, value;
 
-    for(i = 0; i < target_mapping_array->len; i++)
+    g_hash_table_iter_init(&iter, target_mapping_table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
     {
-        TargetMappingItem *item = (TargetMappingItem*)g_ptr_array_index(target_mapping_array, i);
-        Node *host_node = create_node(FALSE, item->target);
-        g_hash_table_insert(graph->hosts_table, item->target, host_node);
+        gchar *target = (gchar*)key;
+        GPtrArray *services = (GPtrArray*)value;
 
-        generate_host_to_app_node_links(host_node, item->services, graph->appnodes_table);
+        Node *host_node = create_node(FALSE, target);
+        g_hash_table_insert(graph->hosts_table, target, host_node);
+
+        generate_host_to_app_node_links(host_node, services, graph->appnodes_table);
     }
 }
 
@@ -104,7 +108,7 @@ static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GPtrArra
  * - Every service becomes an app node. Every inter-dependencies translates to a bidirectional link with weight: 1
  * - Every target machines becomes a host. When a target machine is a candidate deployment target for a service, a link gets created with a very heavy weight: n^2
  */
-static ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table, GHashTable *candidate_target_table, GPtrArray *target_mapping_array)
+static ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table, GHashTable *candidate_target_table, GHashTable *target_mapping_table)
 {
     ApplicationHostGraph *graph = create_application_host_graph();
 
@@ -112,7 +116,7 @@ static ApplicationHostGraph *generate_application_host_graph(GHashTable *service
     generate_application_graph(graph, services_table, candidate_target_table);
 
     /* Create host nodes and attach them to the application nodes */
-    generate_and_attach_host_nodes(graph, target_mapping_array);
+    generate_and_attach_host_nodes(graph, target_mapping_table);
 
     /* Return result */
     return graph;
@@ -330,10 +334,10 @@ static void delete_cuts_per_terminal_table(GHashTable *cuts_per_terminal_table)
     g_hash_table_destroy(cuts_per_terminal_table);
 }
 
-static GHashTable *generate_reliable_distribution_using_multiway_cut_approximation(GHashTable *services_table, GHashTable *candidate_target_table, GPtrArray *target_mapping_array)
+static GHashTable *generate_reliable_distribution_using_multiway_cut_approximation(GHashTable *services_table, GHashTable *candidate_target_table, GHashTable *target_mapping_table)
 {
     // Convert deployment models to a host/application graph
-    ApplicationHostGraph *graph = generate_application_host_graph(services_table, candidate_target_table, target_mapping_array);
+    ApplicationHostGraph *graph = generate_application_host_graph(services_table, candidate_target_table, target_mapping_table);
 
     // The three steps of the approximation algorithm
     GHashTable *cuts_per_terminal_table = generate_minimum_cuts_per_terminal(graph);
@@ -390,8 +394,8 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
     }
     else
     {
-        GPtrArray *target_mapping_array = create_target_mapping_array(candidate_target_table);
-        GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, candidate_target_table, target_mapping_array);
+        GHashTable *target_mapping_table = create_target_mapping_table(candidate_target_table);
+        GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, candidate_target_table, target_mapping_table);
 
         /* Print Nix expression of the result */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
@@ -401,7 +405,7 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
 
         /* Cleanup */
         delete_result_table(result_table);
-        delete_target_mapping_array(target_mapping_array);
+        delete_target_mapping_table(target_mapping_table);
         delete_candidate_target_table(candidate_target_table);
         delete_service_table(services_table);
 

@@ -9,32 +9,46 @@ ApplicationHostGraph *create_application_host_graph(void)
     return graph;
 }
 
+static void delete_nodes_table(GHashTable *table)
+{
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
+    {
+        Node *node = (Node*)value;
+        delete_node(node);
+    }
+
+    g_hash_table_destroy(table);
+}
+
 void delete_application_host_graph(ApplicationHostGraph *graph)
 {
     if(graph != NULL)
     {
-        g_hash_table_destroy(graph->hosts_table);
-        g_hash_table_destroy(graph->appnodes_table);
+        delete_nodes_table(graph->hosts_table);
+        delete_nodes_table(graph->appnodes_table);
         g_free(graph);
+    }
+}
+
+static void mark_all_nodes_unvisited_in_table(GHashTable *table)
+{
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, table);
+    while(g_hash_table_iter_next(&iter, &key, &value))
+    {
+        Node *node = (Node*)value;
+        node->visited = FALSE;
     }
 }
 
 void mark_all_nodes_unvisited(ApplicationHostGraph *graph)
 {
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, graph->hosts_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        Node *host_node = (Node*)value;
-        host_node->visited = FALSE;
-    }
-
-    g_hash_table_iter_init(&iter, graph->appnodes_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        Node *app_node = (Node*)value;
-        app_node->visited = FALSE;
-    }
+    mark_all_nodes_unvisited_in_table(graph->hosts_table);
+    mark_all_nodes_unvisited_in_table(graph->appnodes_table);
 }

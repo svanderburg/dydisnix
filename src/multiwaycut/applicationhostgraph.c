@@ -1,5 +1,4 @@
 #include "applicationhostgraph.h"
-#include "node.h"
 
 ApplicationHostGraph *create_application_host_graph(void)
 {
@@ -51,4 +50,19 @@ void mark_all_nodes_unvisited(ApplicationHostGraph *graph)
 {
     mark_all_nodes_unvisited_in_table(graph->hosts_table);
     mark_all_nodes_unvisited_in_table(graph->appnodes_table);
+}
+
+Node *create_app_node(gchar *name)
+{
+    return create_node_with_value(name, TRUE);
+}
+
+Node *create_host_node(gchar *name)
+{
+    return create_node_with_value(name, FALSE);
+}
+
+NixXML_bool node_is_app_node(Node *node)
+{
+    return node->value;
 }

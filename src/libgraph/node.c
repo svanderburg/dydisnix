@@ -1,13 +1,19 @@
 #include "node.h"
 
-Node *create_node(NixXML_bool application_node, gchar *name)
+Node *create_node_with_value(gchar *name, int value)
 {
     Node *node = (Node*)g_malloc(sizeof(Node));
-    node->application_node = application_node;
     node->name = name;
+    node->value = value;
     node->visited = FALSE;
+    node->attachment = NULL;
     node->links = g_ptr_array_new();
     return node;
+}
+
+Node *create_node(gchar *name)
+{
+    return create_node_with_value(name, 0);
 }
 
 void delete_node(Node *node)

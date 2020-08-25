@@ -57,6 +57,7 @@ scripts/Makefile
 src/Makefile
 src/dydisnix.pc
 src/libdymain/Makefile
+src/libgraph/Makefile
 src/filter-buildable/Makefile
 src/divide/Makefile
 src/multiwaycut/Makefile

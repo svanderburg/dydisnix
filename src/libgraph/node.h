@@ -7,13 +7,16 @@ typedef struct Node Node;
 
 struct Node
 {
-    NixXML_bool application_node; // If FALSE -> host node
-    gchar *name; // Name of the service or target
+    gchar *name;
+    int value;
     NixXML_bool visited;
+    void *attachment;
     GPtrArray *links;
 };
 
-Node *create_node(NixXML_bool application_node, gchar *name);
+Node *create_node_with_value(gchar *name, int value);
+
+Node *create_node(gchar *name);
 
 void delete_node(Node *node);
 

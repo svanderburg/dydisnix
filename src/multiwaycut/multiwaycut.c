@@ -17,7 +17,7 @@ static void generate_initial_application_nodes(ApplicationHostGraph *graph, GHas
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         gchar *service_name = (gchar*)key;
-        Node *app_node = create_node(TRUE, service_name);
+        Node *app_node = create_app_node(service_name);
         g_hash_table_insert(graph->appnodes_table, service_name, app_node);
     }
 }
@@ -96,7 +96,7 @@ static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GHashTab
         gchar *target = (gchar*)key;
         GPtrArray *services = (GPtrArray*)value;
 
-        Node *host_node = create_node(FALSE, target);
+        Node *host_node = create_host_node(target);
         g_hash_table_insert(graph->hosts_table, target, host_node);
 
         generate_host_to_app_node_links(host_node, services, graph->appnodes_table);
@@ -257,7 +257,7 @@ static NixXML_bool check_app_node_is_orphaned_from_host_node(Node *app_node)
     for(i = 0; i < app_node->links->len; i++)
     {
         Node *linked_node = (Node*)g_ptr_array_index(app_node->links, i);
-        if(!linked_node->application_node)
+        if(!node_is_app_node(linked_node))
             return FALSE;
     }
 
@@ -307,7 +307,7 @@ static GHashTable *generate_candidate_target_table_from_application_host_graph(A
         for(i = 0; i < app_node->links->len; i++)
         {
             Node *link_node = (Node*)g_ptr_array_index(app_node->links, i);
-            if(!link_node->application_node)
+            if(!node_is_app_node(link_node))
             {
                 CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
                 mapping->target = (xmlChar*)link_node->name;

@@ -58,6 +58,11 @@ void unlink_nodes_bidirectional(Node *node1, Node *node2)
     unlink_nodes(node2, node1);
 }
 
+unsigned int node_degree(const Node *node)
+{
+    return node->links->len;
+}
+
 NixXML_bool check_nodes_have_indirect_connection(Node *start_node, Node *examine_node, void *data)
 {
     return (examine_node == (Node*)data);

@@ -10,7 +10,7 @@
       priority = 2;
     };
   };
-  
+
   testtarget2 = {
     properties = {
       hostname = "testtarget2";

@@ -28,6 +28,8 @@ void link_nodes_bidirectional(Node *node1, Node *node2);
 
 void unlink_nodes_bidirectional(Node *node1, Node *node2);
 
+unsigned int node_degree(const Node *node);
+
 typedef NixXML_bool (*check_target_node_function) (Node *start_node, Node *examine_node, void *data);
 
 NixXML_bool check_nodes_have_indirect_connection(Node *start_node, Node *examine_node, void *data);

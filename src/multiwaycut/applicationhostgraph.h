@@ -1,5 +1,5 @@
 #ifndef __DYDISNIX_APPLICATIONHOSTGRAPH_H
-#define __DYDISNIX_APPLICATIONHOSTGRAPH__H
+#define __DYDISNIX_APPLICATIONHOSTGRAPH_H
 #include <glib.h>
 #include "node.h"
 

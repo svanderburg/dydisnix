@@ -4,6 +4,19 @@
 #include <nixxml-print-xml.h>
 #include <nixxml-types.h>
 
+CandidateTargetMapping *create_candidate_target_mapping(xmlChar *target, xmlChar *container)
+{
+    CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
+    mapping->target = target;
+    mapping->container = container;
+    return mapping;
+}
+
+CandidateTargetMapping *create_candidate_target_auto_mapping(xmlChar *target)
+{
+    return create_candidate_target_mapping(target, NULL);
+}
+
 static void *create_candidate_target_mapping_from_element(xmlNodePtr element, void *userdata)
 {
     return g_malloc0(sizeof(CandidateTargetMapping));

@@ -121,9 +121,7 @@ static void process_min_cost_target_mapping(gchar *host_name, GPtrArray *service
 
         if(!g_hash_table_contains(covered_services_table, service))
         {
-            CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
-            target_mapping->target = (xmlChar*)host_name;
-            target_mapping->container = NULL;
+            CandidateTargetMapping *target_mapping = create_candidate_target_auto_mapping((xmlChar*)host_name);
 
             g_hash_table_insert(covered_services_table, service, service); // Mark the service as covered
             g_ptr_array_add(targets, target_mapping); // Add the targets to the result table

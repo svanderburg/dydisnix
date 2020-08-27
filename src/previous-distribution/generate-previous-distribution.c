@@ -17,7 +17,6 @@ static GHashTable *convert_manifest_to_candidate_target_table(Manifest *manifest
         ServiceMapping *mapping = (ServiceMapping*)g_ptr_array_index(manifest->service_mapping_array, i);
         ManifestService *service = (ManifestService*)g_hash_table_lookup(manifest->services_table, mapping->service);
         GPtrArray *targets = g_hash_table_lookup(candidate_target_table, (gchar*)service->name);
-        CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
 
         if(targets == NULL)
         {
@@ -25,8 +24,7 @@ static GHashTable *convert_manifest_to_candidate_target_table(Manifest *manifest
             g_hash_table_insert(candidate_target_table, (gchar*)service->name, targets);
         }
 
-        target_mapping->target = mapping->target;
-        target_mapping->container = mapping->container;
+        CandidateTargetMapping *target_mapping = create_candidate_target_mapping(mapping->target, mapping->container);
 
         if(xmlStrcmp(target_mapping->container, service->type) != 0) /* As soon as we encounter a container mapping that does not match the type name, we know that we can't automap anymore */
             *automapped = FALSE;

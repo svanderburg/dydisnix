@@ -10,6 +10,10 @@ typedef struct
 }
 CandidateTargetMapping;
 
+CandidateTargetMapping *create_candidate_target_mapping(xmlChar *target, xmlChar *container);
+
+CandidateTargetMapping *create_candidate_target_auto_mapping(xmlChar *target);
+
 void *parse_candidate_target_mapping(xmlNodePtr element, void *userdata);
 
 void delete_candidate_target_mapping(CandidateTargetMapping *mapping);

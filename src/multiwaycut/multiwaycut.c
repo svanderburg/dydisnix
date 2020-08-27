@@ -309,9 +309,7 @@ static GHashTable *generate_candidate_target_table_from_application_host_graph(A
             Node *link_node = (Node*)g_ptr_array_index(app_node->links, i);
             if(!node_is_app_node(link_node))
             {
-                CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
-                mapping->target = (xmlChar*)link_node->name;
-                mapping->container = NULL;
+                CandidateTargetMapping *mapping = create_candidate_target_auto_mapping((xmlChar*)link_node->name);
                 g_ptr_array_add(targets, mapping);
             }
         }

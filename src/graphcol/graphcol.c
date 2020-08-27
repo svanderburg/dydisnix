@@ -250,9 +250,8 @@ GHashTable *convert_nodes_table_to_candidate_target_mapping_table(GHashTable *co
 
         Target *target = g_ptr_array_index(colors, node->value);
 
-        CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_malloc(sizeof(CandidateTargetMapping));
-        mapping->container = NULL;
-        mapping->target = (xmlChar*)find_target_property(target, "hostname"); // TODO: we need the real key;
+        xmlChar *target_name = (xmlChar*)find_target_property(target, "hostname"); // TODO: we need the real key
+        CandidateTargetMapping *mapping = create_candidate_target_auto_mapping(target_name);
 
         GPtrArray *targets = g_ptr_array_new();
         g_ptr_array_add(targets, mapping);

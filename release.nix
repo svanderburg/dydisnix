@@ -55,9 +55,38 @@ let
         disnix = builtins.getAttr (builtins.currentSystem) (disnixJobset.build);
         dydisnix = builtins.getAttr (builtins.currentSystem) build;
       in
-      import ./tests {
-        inherit nixpkgs pkgs disnix dydisnix;
+      {
+        augmentInfra = import ./tests/augment-infra.nix {
+          inherit nixpkgs pkgs disnix dydisnix;
+        };
+
+        gendist = import ./tests/gendist.nix {
+          inherit nixpkgs pkgs disnix dydisnix;
+        };
+
+        portassign = import ./tests/portassign.nix {
+          inherit nixpkgs pkgs disnix dydisnix;
+        };
+
+        docs = import ./tests/docs.nix {
+          inherit nixpkgs pkgs disnix dydisnix;
+        };
       };
+
+    release = pkgs.releaseTools.aggregate {
+      name = "dydisnix-${tarball.version}";
+      constituents = [
+        tarball
+      ]
+      ++ map (system: builtins.getAttr system build) systems
+      ++ [
+        tests.augmentInfra
+        tests.gendist
+        tests.portassign
+        tests.docs
+      ];
+      meta.description = "Release-critical builds";
+    };
   };
 in
 jobs

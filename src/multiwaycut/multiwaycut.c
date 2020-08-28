@@ -213,29 +213,6 @@ static GHashTable *generate_reliable_distribution_using_multiway_cut_approximati
     return result_table;
 }
 
-static void delete_result_table(GHashTable *result_table)
-{
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, result_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        GPtrArray *mappings_array = (GPtrArray*)value;
-        unsigned int i;
-
-        for(i = 0; i < mappings_array->len; i++)
-        {
-            CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_ptr_array_index(mappings_array, i);
-            g_free(mapping);
-        }
-
-        g_ptr_array_free(mappings_array, TRUE);
-    }
-
-    g_hash_table_destroy(result_table);
-}
-
 int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, const unsigned int flags)
 {
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
@@ -260,7 +237,7 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
             print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
 
         /* Cleanup */
-        delete_result_table(result_table);
+        delete_application_host_graph_result_table(result_table);
         delete_target_mapping_table(target_mapping_table);
         delete_candidate_target_table(candidate_target_table);
         delete_service_table(services_table);

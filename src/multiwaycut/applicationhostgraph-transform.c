@@ -145,3 +145,29 @@ GHashTable *generate_candidate_target_table_from_application_host_graph(Applicat
 
     return candidate_target_table;
 }
+
+void delete_application_host_graph_result_table(GHashTable *result_table)
+{
+    if(result_table != NULL)
+    {
+        GHashTableIter iter;
+        gpointer key, value;
+
+        g_hash_table_iter_init(&iter, result_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+        {
+            GPtrArray *mappings_array = (GPtrArray*)value;
+            unsigned int i;
+
+            for(i = 0; i < mappings_array->len; i++)
+            {
+                CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_ptr_array_index(mappings_array, i);
+                g_free(mapping);
+            }
+
+            g_ptr_array_free(mappings_array, TRUE);
+        }
+
+        g_hash_table_destroy(result_table);
+    }
+}

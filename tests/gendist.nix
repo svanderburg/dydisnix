@@ -207,6 +207,9 @@ simpleTest {
     $machine->mustFail("xmllint --xpath \"/distribution/service[\@name='testService3']/mapping/target[text() = 'testtarget2']\" result");
     $machine->mustSucceed("xmllint --xpath \"/distribution/service[\@name='testService3']/mapping/target[text() = 'testtarget3']\" result");
 
+    # Execute graph coloring test. This test should fail because we need one additional machine.
+    $result = $machine->mustFail("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-gendist -s ${models}/services.nix -i ${models}/infrastructure.nix -q ${models}/qos/qos-graphcol.nix --output-xml");
+
     # Execute map stateful to previous test. First, all services are
     # mapped to testtarget1. Then an upgrade is performed in which
     # services are mapped to all targets. testService1 which is marked

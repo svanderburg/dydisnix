@@ -6,84 +6,8 @@
 #include <targetstable2.h>
 #include <target.h>
 #include <candidatetargetmappingtable.h>
-
-static GHashTable *create_application_nodes(GHashTable *services_table)
-{
-    GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
-
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, services_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        gchar *service_name = (gchar*)key;
-        Node *node = create_node(service_name);
-        g_hash_table_insert(result_table, service_name, node);
-    }
-
-    return result_table;
-}
-
-static void generate_edges_for_dependency_type(Node *node, GHashTable *nodes_table, GPtrArray *dependencies)
-{
-    unsigned int i;
-
-    for(i = 0; i < dependencies->len; i++)
-    {
-        gchar *dependency_name = g_ptr_array_index(dependencies, i);
-        Node *dependency_node = g_hash_table_lookup(nodes_table, dependency_name);
-
-        link_nodes_bidirectional(node, dependency_node);
-    }
-}
-
-static void add_application_edges(GHashTable *nodes_table, GHashTable *services_table)
-{
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, nodes_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        gchar *service_name = (gchar*)key;
-        Node *node = (Node*)value;
-        Service *service = g_hash_table_lookup(services_table, service_name);
-
-        generate_edges_for_dependency_type(node, nodes_table, service->depends_on);
-        generate_edges_for_dependency_type(node, nodes_table, service->connects_to);
-    }
-}
-
-static GHashTable *generate_application_graph(GHashTable *services_table)
-{
-    GHashTable *nodes_table = create_application_nodes(services_table);
-    add_application_edges(nodes_table, services_table);
-    return nodes_table;
-}
-
-static GPtrArray *convert_targets_to_colors(GHashTable *targets_table)
-{
-    GPtrArray *colors = g_ptr_array_new();
-
-    NixXML_GHashTableOrderedIter iter;
-    gchar *host_name;
-    gpointer value;
-
-    NixXML_g_hash_table_ordered_iter_init(&iter, targets_table);
-
-    while(NixXML_g_hash_table_ordered_iter_next(&iter, &host_name, &value))
-    {
-        Target *target = (Target*)value;
-        g_ptr_array_add(colors, target);
-    }
-
-    NixXML_g_hash_table_ordered_iter_destroy(&iter);
-
-    return colors;
-
-    // TODO: maybe also allow a priority field per target
-}
+#include "partialcoloredgraph.h"
+#include "partialcoloredgraph-transform.h"
 
 static gint compare_node_degrees(gconstpointer a, gconstpointer b)
 {
@@ -187,10 +111,7 @@ static Node *select_node_to_color(GHashTable *uncolored_nodes_table, GHashTable 
     Node *max_saturation_degree_node = find_node_with_unique_maximal_saturation_degree(uncolored_nodes_table, colored_nodes);
 
     if(max_saturation_degree_node == NULL)
-    {
-        // If no node with a unique maximum saturation degree, take the first node with the highest regular degree
-        return find_node_with_highest_degree(nodes_ordered_by_degree);
-    }
+        return find_node_with_highest_degree(nodes_ordered_by_degree); // If no node with a unique maximum saturation degree, take the first node with the highest regular degree
     else
         return max_saturation_degree_node;
 }
@@ -235,124 +156,92 @@ static void assign_color(Node *node, unsigned int color_index, GHashTable *uncol
     g_ptr_array_index(nodes_ordered_by_degree, color_index) = NULL;
 }
 
-GHashTable *convert_nodes_table_to_candidate_target_mapping_table(GHashTable *colored_nodes_table, GPtrArray *colors)
-{
-    GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
-
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, colored_nodes_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        gchar *service_name = (gchar*)key;
-        Node *node = (Node*)value;
-
-        Target *target = g_ptr_array_index(colors, node->value);
-
-        xmlChar *target_name = (xmlChar*)find_target_property(target, "hostname"); // TODO: we need the real key
-        CandidateTargetMapping *mapping = create_candidate_target_auto_mapping(target_name);
-
-        GPtrArray *targets = g_ptr_array_new();
-        g_ptr_array_add(targets, mapping);
-
-        g_hash_table_insert(result_table, service_name, targets);
-    }
-
-    return result_table;
-}
-
-static void delete_nodes_table(GHashTable *nodes_table)
-{
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, nodes_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-         delete_node((Node*)value);
-
-    g_hash_table_destroy(nodes_table);
-}
-
 static GHashTable *graphcol_dsatur_approximation(GHashTable *services_table, GHashTable *targets_table)
 {
-    // Convert models to an application graph and colors
-    GHashTable *uncolored_nodes_table = generate_application_graph(services_table);
-    unsigned int num_of_nodes = g_hash_table_size(uncolored_nodes_table);
-    GPtrArray *colors = convert_targets_to_colors(targets_table);
-
-    GHashTable *colored_nodes_table = g_hash_table_new(g_str_hash, g_str_equal);
-    GPtrArray *nodes_ordered_by_degree = order_nodes_by_degree(uncolored_nodes_table);
-
-    // Approximation starts here
-    Node *first_node = find_node_with_highest_degree(nodes_ordered_by_degree);
-    assign_color(first_node, 0, uncolored_nodes_table, colored_nodes_table, nodes_ordered_by_degree);
-
-    while(g_hash_table_size(colored_nodes_table) < num_of_nodes)
+    if(g_hash_table_size(services_table) > 0)
     {
-        Node *node = select_node_to_color(uncolored_nodes_table, colored_nodes_table, nodes_ordered_by_degree);
-        unsigned int color_index = pick_lowest_possible_color(node, colors, colored_nodes_table);
-        assign_color(node, color_index, uncolored_nodes_table, colored_nodes_table, nodes_ordered_by_degree);
-    }
+        PartialColoredGraph *graph = generate_uncolored_graph(services_table, targets_table);
 
-    GHashTable *result_table = convert_nodes_table_to_candidate_target_mapping_table(colored_nodes_table, colors);
+        // Convert models to an application graph and colors
+        GPtrArray *nodes_ordered_by_degree = order_nodes_by_degree(graph->uncolored_nodes_table);
 
-    // Cleanup
-    g_hash_table_destroy(uncolored_nodes_table);
-    delete_nodes_table(colored_nodes_table);
-    g_ptr_array_free(colors, TRUE);
-    g_ptr_array_free(nodes_ordered_by_degree, TRUE);
+        // Approximation starts here
+        Node *first_node = find_node_with_highest_degree(nodes_ordered_by_degree);
 
-    return result_table;
-}
+        assign_color(first_node, 0, graph->uncolored_nodes_table, graph->colored_nodes_table, nodes_ordered_by_degree);
 
-static void delete_result_table(GHashTable *result_table)
-{
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, result_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
-    {
-        GPtrArray *targets = (GPtrArray*)value;
-        unsigned int i;
-
-        for(i = 0; i < targets->len; i++)
+        while(g_hash_table_size(graph->uncolored_nodes_table) > 0)
         {
-            CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_ptr_array_index(targets, i);
-            g_free(mapping);
+            Node *node = select_node_to_color(graph->uncolored_nodes_table, graph->colored_nodes_table, nodes_ordered_by_degree);
+            unsigned int color_index = pick_lowest_possible_color(node, graph->colors, graph->colored_nodes_table);
+
+            g_printerr("NODE: %s, picked color: %d, targets table size: %d\n", node->name, color_index, g_hash_table_size(targets_table));
+
+            if(color_index < g_hash_table_size(targets_table))
+                assign_color(node, color_index, graph->uncolored_nodes_table, graph->colored_nodes_table, nodes_ordered_by_degree);
+            else
+            {
+                g_printerr("Not enough target machines available to compute a valid graph coloring!\n");
+                g_ptr_array_free(nodes_ordered_by_degree, TRUE);
+                delete_partial_colored_graph(graph);
+                return NULL;
+            }
         }
 
-        g_ptr_array_free(targets, TRUE);
-    }
+        // Convert back to distribution model
+        GHashTable *result_table = convert_colored_graph_to_candidate_target_mapping_table(graph);
 
-    g_hash_table_destroy(result_table);
+        // Cleanup
+        g_ptr_array_free(nodes_ordered_by_degree, TRUE);
+        delete_partial_colored_graph(graph);
+
+        return result_table;
+    }
+    else
+        return g_hash_table_new(g_str_hash, g_str_equal);
 }
 
 int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int flags)
 {
     /* Load input models */
-    NixXML_bool automapped = TRUE;
 
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *services_table = create_service_table(services_xml, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure_xml, xml);
 
-    /* Generate distribution using graph coloring approximation */
-    GHashTable *result_table = graphcol_dsatur_approximation(services_table, targets_table);
-
-    /* Print output expression */
-
-    if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-        print_candidate_target_table_xml(stdout, result_table, 0, NULL, NULL);
+    if(services_table == NULL || targets_table == NULL)
+    {
+        g_printerr("Error opening one of the input models!\n");
+        return 1;
+    }
     else
-        print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
+    {
+        NixXML_bool automapped = TRUE;
+        int exit_status;
 
-    /* Cleanup */
+        /* Generate distribution using graph coloring approximation */
+        GHashTable *result_table = graphcol_dsatur_approximation(services_table, targets_table);
 
-    delete_result_table(result_table);
-    delete_service_table(services_table);
-    delete_targets_table(targets_table);
+        if(result_table == NULL)
+            exit_status = 1;
+        else
+        {
+            exit_status = 0;
 
-    return 0;
+            /* Print output expression */
+
+            if(flags & DYDISNIX_FLAG_OUTPUT_XML)
+                print_candidate_target_table_xml(stdout, result_table, 0, NULL, NULL);
+            else
+                print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
+        }
+
+        /* Cleanup */
+
+        delete_converted_colored_graph_result_table(result_table);
+        delete_service_table(services_table);
+        delete_targets_table(targets_table);
+
+        return exit_status;
+    }
 }

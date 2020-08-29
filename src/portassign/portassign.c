@@ -1,7 +1,7 @@
 #include "portassign.h"
 #include "servicestable.h"
 #include "targetstable2.h"
-#include "candidatetargetmappingtable.h"
+#include "distributiontable.h"
 #include "portconfiguration.h"
 #include "portdistribution.h"
 #include <unistd.h>
@@ -55,9 +55,9 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
-    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
 
-    if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_table == NULL || distribution_table == NULL)
     {
         g_printerr("Error with opening one of the models!\n");
         return 1;
@@ -72,10 +72,10 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
             assignment.port_configuration = open_port_configuration(ports, xml); /* Otherwise, open the ports config */
 
         /* Clean obsolete reservations */
-        clean_obsolete_reservations(assignment.port_configuration, candidate_target_table, service_table, service_property);
+        clean_obsolete_reservations(assignment.port_configuration, distribution_table, service_table, service_property);
 
         /* Create ports distribution table */
-        assignment.port_distribution_table = create_port_distribution_table(assignment.port_configuration, service_table, candidate_target_table, service_property);
+        assignment.port_distribution_table = create_port_distribution_table(assignment.port_configuration, service_table, distribution_table, service_property);
 
         /* Print ports configuration */
         if(flags & DYDISNIX_OPTION_OUTPUT_XML)
@@ -87,7 +87,7 @@ int portassign(gchar *services, gchar *infrastructure, gchar *distribution, gcha
         clean_ports_assignment(&assignment);
         delete_service_table(service_table);
         delete_targets_table(targets_table);
-        delete_candidate_target_table(candidate_target_table);
+        delete_distribution_table(distribution_table);
 
         return 0;
     }

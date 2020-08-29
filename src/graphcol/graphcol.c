@@ -5,7 +5,7 @@
 #include <servicestable.h>
 #include <targetstable2.h>
 #include <target.h>
-#include <candidatetargetmappingtable.h>
+#include <distributiontable.h>
 #include "partialcoloredgraph.h"
 #include "partialcoloredgraph-transform.h"
 
@@ -189,7 +189,7 @@ static GHashTable *graphcol_dsatur_approximation(GHashTable *services_table, GHa
         }
 
         // Convert back to distribution model
-        GHashTable *result_table = convert_colored_graph_to_candidate_target_mapping_table(graph);
+        GHashTable *result_table = convert_colored_graph_to_distribution_table(graph);
 
         // Cleanup
         g_ptr_array_free(nodes_ordered_by_degree, TRUE);
@@ -231,9 +231,9 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
             /* Print output expression */
 
             if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-                print_candidate_target_table_xml(stdout, result_table, 0, NULL, NULL);
+                print_distribution_table_xml(stdout, result_table, 0, NULL, NULL);
             else
-                print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
+                print_distribution_table_nix(stdout, result_table, 0, &automapped);
         }
 
         /* Cleanup */

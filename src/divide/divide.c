@@ -4,7 +4,7 @@
 #include <nixxml-ghashtable-iter.h>
 #include "servicestable.h"
 #include "targetstable2.h"
-#include "candidatetargetmappingtable.h"
+#include "distributiontable.h"
 
 static void delete_result_table(GHashTable *result_table)
 {
@@ -84,15 +84,15 @@ static SelectStatus select_lower_bidder(Target *target, const char *service_prop
     }
 }
 
-static CandidateTargetMapping *select_mapping(const GPtrArray *targets, GHashTable *targets_table, const char *service_property_value, const char *target_property, select_target_function select_target)
+static DistributionMapping *select_mapping(const GPtrArray *targets, GHashTable *targets_table, const char *service_property_value, const char *target_property, select_target_function select_target)
 {
-    CandidateTargetMapping *candidate_target_mapping = NULL;
+    DistributionMapping *candidate_distribution_mapping = NULL;
     Target *candidate_target = NULL;
     unsigned int i;
 
     for(i = 0; i < targets->len; i++)
     {
-        CandidateTargetMapping *mapping = g_ptr_array_index(targets, i);
+        DistributionMapping *mapping = g_ptr_array_index(targets, i);
         Target *target = g_hash_table_lookup(targets_table, mapping->target);
         gchar *target_property_value = find_target_property(target, target_property);
 
@@ -102,7 +102,7 @@ static CandidateTargetMapping *select_mapping(const GPtrArray *targets, GHashTab
 
             if(status != SELECT_STATUS_NO)
             {
-                candidate_target_mapping = mapping;
+                candidate_distribution_mapping = mapping;
                 candidate_target = target;
             }
 
@@ -114,16 +114,16 @@ static CandidateTargetMapping *select_mapping(const GPtrArray *targets, GHashTab
     if(candidate_target != NULL) // If a candidate target was selected, substract the service property from it
         substract_target_value(candidate_target, target_property, atoi(service_property_value));
 
-    return candidate_target_mapping;
+    return candidate_distribution_mapping;
 }
 
-static NixXML_bool select_target_for_each_mapping(GHashTable *service_table, GHashTable *targets_table, GHashTable *candidate_target_table, GHashTable *result_table, const char *service_property, const char *target_property, select_target_function select_target)
+static NixXML_bool select_target_for_each_mapping(GHashTable *service_table, GHashTable *targets_table, GHashTable *distribution_table, GHashTable *result_table, const char *service_property, const char *target_property, select_target_function select_target)
 {
     NixXML_GHashTableOrderedIter iter;
     gchar *service_name;
     gpointer value;
 
-    NixXML_g_hash_table_ordered_iter_init(&iter, candidate_target_table);
+    NixXML_g_hash_table_ordered_iter_init(&iter, distribution_table);
 
     while(NixXML_g_hash_table_ordered_iter_next(&iter, &service_name, &value))
     {
@@ -138,7 +138,7 @@ static NixXML_bool select_target_for_each_mapping(GHashTable *service_table, GHa
         }
         else
         {
-            CandidateTargetMapping *selected_mapping = select_mapping(targets, targets_table, service_property_value->value, target_property, select_target);
+            DistributionMapping *selected_mapping = select_mapping(targets, targets_table, service_property_value->value, target_property, select_target);
 
             if(selected_mapping == NULL)
             {
@@ -166,9 +166,9 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
 
     GHashTable *service_table = create_service_table(services, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
-    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
 
-    if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_table == NULL || distribution_table == NULL)
     {
         g_printerr("Error with opening one of the models!\n");
         exit_status = 1;
@@ -196,13 +196,13 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
         }
 
         /* Execute division strategy */
-        exit_status = !select_target_for_each_mapping(service_table, targets_table, candidate_target_table, result_table, service_property, target_property, select_target);
+        exit_status = !select_target_for_each_mapping(service_table, targets_table, distribution_table, result_table, service_property, target_property, select_target);
 
         /* Print Nix expression of the result */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-            print_candidate_target_table_xml(stdout, result_table, 0, NULL, NULL);
+            print_distribution_table_xml(stdout, result_table, 0, NULL, NULL);
         else
-            print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
+            print_distribution_table_nix(stdout, result_table, 0, &automapped);
 
         /* Cleanup */
         delete_result_table(result_table);
@@ -211,7 +211,7 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
     /* Cleanup */
     delete_service_table(service_table);
     delete_targets_table(targets_table);
-    delete_candidate_target_table(candidate_target_table);
+    delete_distribution_table(distribution_table);
 
     /* Return exit status */
     return exit_status;

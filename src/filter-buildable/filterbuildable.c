@@ -1,5 +1,5 @@
 #include "filterbuildable.h"
-#include "candidatetargetmappingtable.h"
+#include "distributiontable.h"
 #include <unistd.h>
 #include <procreact_pid.h>
 
@@ -57,11 +57,11 @@ static void delete_filtered_target_table(GHashTable *filtered_target_table)
 int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, const unsigned int flags, char *interface, char *target_property, char *extra_params)
 {
     NixXML_bool automapped;
-    GHashTable *candidate_target_table = create_candidate_target_table(distribution_expr, infrastructure_expr, flags & DYDISNIX_FLAG_XML, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution_expr, infrastructure_expr, flags & DYDISNIX_FLAG_XML, &automapped);
 
-    if(candidate_target_table == NULL)
+    if(distribution_table == NULL)
     {
-        g_printerr("Error opening candidate host mapping!\n");
+        g_printerr("Error opening distribution model!\n");
         return 1;
     }
     else
@@ -71,7 +71,7 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
         GHashTableIter iter;
         gpointer key, value;
 
-        g_hash_table_iter_init(&iter, candidate_target_table);
+        g_hash_table_iter_init(&iter, distribution_table);
         while(g_hash_table_iter_next(&iter, &key, &value))
         {
             gchar *service = (gchar*)key;
@@ -81,7 +81,7 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
 
             for(i = 0; i < targets->len; i++)
             {
-                CandidateTargetMapping *mapping = g_ptr_array_index(targets, i);
+                DistributionMapping *mapping = g_ptr_array_index(targets, i);
 
                 if(instantiate(services_expr, infrastructure_expr, distribution_expr, service, (gchar*)mapping->target, interface, target_property, extra_params) == 0)
                     g_ptr_array_add(filtered_targets, mapping);
@@ -92,13 +92,13 @@ int filter_buildable(char *services_expr, char *infrastructure_expr, char *distr
 
         /* Print resulting expression */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-            print_candidate_target_table_xml(stdout, filtered_target_table, 0, NULL, NULL);
+            print_distribution_table_xml(stdout, filtered_target_table, 0, NULL, NULL);
         else
-            print_candidate_target_table_nix(stdout, filtered_target_table, 0, &automapped);
+            print_distribution_table_nix(stdout, filtered_target_table, 0, &automapped);
 
         /* Cleanup */
         delete_filtered_target_table(filtered_target_table);
-        delete_candidate_target_table(candidate_target_table);
+        delete_distribution_table(distribution_table);
 
         return 0;
     }

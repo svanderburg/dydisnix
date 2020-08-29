@@ -3,7 +3,7 @@
 #include <string.h>
 #include <targetmappingtable.h>
 #include <servicestable.h>
-#include <candidatetargetmappingtable.h>
+#include <distributiontable.h>
 #include <procreact_future.h>
 #include <nixxml-parse.h>
 #include <nixxml-print-nix.h>
@@ -259,17 +259,17 @@ static gboolean remove_obsolete_target_config(gpointer key, gpointer value, gpoi
     return !g_hash_table_contains(target_mapping_table, target);
 }
 
-void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *candidate_target_table, GHashTable *service_table, gchar *service_property)
+void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *distribution_table, GHashTable *service_table, gchar *service_property)
 {
     /* Generate inverse mapping to determine which machines are in use */
-    GHashTable *target_mapping_table = create_target_mapping_table(candidate_target_table);
+    GHashTable *target_mapping_table = create_target_mapping_table(distribution_table);
 
     GHashTableIter iter;
     gpointer key, value;
 
     /* Clean the global target config */
     if(port_configuration->global_config != NULL)
-        clean_obsolete_services_to_ports(port_configuration->global_config, candidate_target_table, service_table, service_property, "shared");
+        clean_obsolete_services_to_ports(port_configuration->global_config, distribution_table, service_table, service_property, "shared");
 
     /* Remove all port reservations for a machine, if it does not exist anymore */
     g_hash_table_foreach_remove(port_configuration->target_configs, remove_obsolete_target_config, target_mapping_table);
@@ -281,7 +281,7 @@ void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTab
         TargetConfig *target_config = (TargetConfig*)value;
 
         if(g_hash_table_contains(target_mapping_table, target))
-            clean_obsolete_services_to_ports(target_config, candidate_target_table, service_table, service_property, "private");
+            clean_obsolete_services_to_ports(target_config, distribution_table, service_table, service_property, "private");
     }
 
     /* Clean inverse mapping table from memory */

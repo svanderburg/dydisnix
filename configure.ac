@@ -64,7 +64,7 @@ src/multiwaycut/Makefile
 src/minsetcover/Makefile
 src/graphcol/Makefile
 src/portassign/Makefile
-src/libmapping/Makefile
+src/libdistribution/Makefile
 src/libinvmapping/Makefile
 src/libservices/Makefile
 src/libinfproperties/Makefile

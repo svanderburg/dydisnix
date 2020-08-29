@@ -5,7 +5,7 @@
 
 PartialColoredGraph *generate_uncolored_graph(GHashTable *services_table, GHashTable *targets_table);
 
-GHashTable *convert_colored_graph_to_candidate_target_mapping_table(PartialColoredGraph *graph);
+GHashTable *convert_colored_graph_to_distribution_table(PartialColoredGraph *graph);
 
 void delete_converted_colored_graph_result_table(GHashTable *result_table);
 

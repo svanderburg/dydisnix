@@ -4,8 +4,8 @@
 #include "applicationhostgraph-transform.h"
 #include <service.h>
 #include <servicestable.h>
-#include <candidatetargetmappingtable.h>
-#include <candidatetargetmapping.h>
+#include <distributiontable.h>
+#include <distributionmapping.h>
 #include <targetmappingtable.h>
 #include "node.h"
 
@@ -151,10 +151,10 @@ static NixXML_bool check_app_node_is_orphaned_from_host_node(Node *app_node)
     return TRUE;
 }
 
-static void attach_app_node_to_first_host_node(Node *app_node, GHashTable *candidate_target_table, GHashTable *hosts_table)
+static void attach_app_node_to_first_host_node(Node *app_node, GHashTable *distribution_table, GHashTable *hosts_table)
 {
-    GPtrArray *targets = g_hash_table_lookup(candidate_target_table, app_node->name);
-    CandidateTargetMapping *first_mapping = g_ptr_array_index(targets, 0);
+    GPtrArray *targets = g_hash_table_lookup(distribution_table, app_node->name);
+    DistributionMapping *first_mapping = g_ptr_array_index(targets, 0);
     Node *host_node = g_hash_table_lookup(hosts_table, first_mapping->target);
     link_nodes_bidirectional(app_node, host_node);
 }
@@ -163,7 +163,7 @@ static void attach_app_node_to_first_host_node(Node *app_node, GHashTable *candi
  * Some app nodes might get orphaned after applying the approximation algorithm.
  * We should reattach these to the first available host node.
  */
-static void fix_orphaned_services(ApplicationHostGraph *graph, GHashTable *candidate_target_table)
+static void fix_orphaned_services(ApplicationHostGraph *graph, GHashTable *distribution_table)
 {
     GHashTableIter iter;
     gpointer key, value;
@@ -174,7 +174,7 @@ static void fix_orphaned_services(ApplicationHostGraph *graph, GHashTable *candi
         Node *app_node = (Node*)value;
 
         if(check_app_node_is_orphaned_from_host_node(app_node))
-            attach_app_node_to_first_host_node(app_node, candidate_target_table, graph->hosts_table);
+            attach_app_node_to_first_host_node(app_node, distribution_table, graph->hosts_table);
     }
 }
 
@@ -190,10 +190,10 @@ static void delete_cuts_per_terminal_table(GHashTable *cuts_per_terminal_table)
     g_hash_table_destroy(cuts_per_terminal_table);
 }
 
-static GHashTable *generate_reliable_distribution_using_multiway_cut_approximation(GHashTable *services_table, GHashTable *candidate_target_table, GHashTable *target_mapping_table)
+static GHashTable *generate_reliable_distribution_using_multiway_cut_approximation(GHashTable *services_table, GHashTable *distribution_table, GHashTable *target_mapping_table)
 {
     // Convert deployment models to a host/application graph
-    ApplicationHostGraph *graph = generate_application_host_graph(services_table, candidate_target_table, target_mapping_table);
+    ApplicationHostGraph *graph = generate_application_host_graph(services_table, distribution_table, target_mapping_table);
 
     // The three steps of the approximation algorithm
     GHashTable *cuts_per_terminal_table = generate_minimum_cuts_per_terminal(graph);
@@ -201,10 +201,10 @@ static GHashTable *generate_reliable_distribution_using_multiway_cut_approximati
     unlink_cuts_in_graph(graph, cuts_per_terminal_table);
 
     // Fix orphaned services
-    fix_orphaned_services(graph, candidate_target_table);
+    fix_orphaned_services(graph, distribution_table);
 
     // Convert back to mapping table and return the result
-    GHashTable *result_table = generate_candidate_target_table_from_application_host_graph(graph);
+    GHashTable *result_table = generate_distribution_table_from_application_host_graph(graph);
 
     // Cleanup
     delete_cuts_per_terminal_table(cuts_per_terminal_table);
@@ -218,28 +218,28 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     NixXML_bool automapped;
     GHashTable *services_table = create_service_table(services, xml);
-    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
 
-    if(services_table == NULL || candidate_target_table == NULL)
+    if(services_table == NULL || distribution_table == NULL)
     {
         g_printerr("Error opening one of the input models!\n");
         return 1;
     }
     else
     {
-        GHashTable *target_mapping_table = create_target_mapping_table(candidate_target_table);
-        GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, candidate_target_table, target_mapping_table);
+        GHashTable *target_mapping_table = create_target_mapping_table(distribution_table);
+        GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, distribution_table, target_mapping_table);
 
         /* Print Nix expression of the result */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-            print_candidate_target_table_xml(stdout, result_table, 0, NULL, NULL);
+            print_distribution_table_xml(stdout, result_table, 0, NULL, NULL);
         else
-            print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
+            print_distribution_table_nix(stdout, result_table, 0, &automapped);
 
         /* Cleanup */
         delete_application_host_graph_result_table(result_table);
         delete_target_mapping_table(target_mapping_table);
-        delete_candidate_target_table(candidate_target_table);
+        delete_distribution_table(distribution_table);
         delete_service_table(services_table);
 
         /* Return exit status */

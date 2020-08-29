@@ -2,16 +2,16 @@
 #include <nixxml-node.h>
 #include <nixxml-ghashtable.h>
 #include "servicestable.h"
-#include "candidatetargetmappingtable.h"
+#include "distributiontable.h"
 
-GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GHashTable *service_table, GHashTable *candidate_target_table, gchar *service_property)
+GHashTable *create_port_distribution_table(PortConfiguration *port_configuration, GHashTable *service_table, GHashTable *distribution_table, gchar *service_property)
 {
     GHashTable *port_distribution_table = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, g_free);
 
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init(&iter, candidate_target_table);
+    g_hash_table_iter_init(&iter, distribution_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         gchar *service_name = (gchar*)key;
@@ -39,7 +39,7 @@ GHashTable *create_port_distribution_table(PortConfiguration *port_configuration
             {
                 if(targets->len > 0)
                 {
-                    CandidateTargetMapping *mapping = g_ptr_array_index(targets, 0);
+                    DistributionMapping *mapping = g_ptr_array_index(targets, 0);
                     gint *port = g_malloc(sizeof(gint));
                     *port = assign_or_reuse_port(port_configuration, (char*)mapping->target, service_name);
                     g_hash_table_insert(port_distribution_table, service_name, port);

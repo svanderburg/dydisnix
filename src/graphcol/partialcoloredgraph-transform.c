@@ -3,7 +3,7 @@
 #include <node.h>
 #include <service.h>
 #include <target.h>
-#include <candidatetargetmapping.h>
+#include <distributionmapping.h>
 
 static void generate_application_nodes(GHashTable *services_table, GHashTable *nodes_table)
 {
@@ -82,7 +82,7 @@ PartialColoredGraph *generate_uncolored_graph(GHashTable *services_table, GHashT
     return graph;
 }
 
-GHashTable *convert_colored_graph_to_candidate_target_mapping_table(PartialColoredGraph *graph)
+GHashTable *convert_colored_graph_to_distribution_table(PartialColoredGraph *graph)
 {
     GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
 
@@ -98,7 +98,7 @@ GHashTable *convert_colored_graph_to_candidate_target_mapping_table(PartialColor
         Target *target = g_ptr_array_index(graph->colors, node->value);
 
         xmlChar *target_name = (xmlChar*)find_target_property(target, "hostname"); // TODO: we need the real key
-        CandidateTargetMapping *mapping = create_candidate_target_auto_mapping(target_name);
+        DistributionMapping *mapping = create_distribution_auto_mapping(target_name);
 
         GPtrArray *targets = g_ptr_array_new();
         g_ptr_array_add(targets, mapping);
@@ -124,7 +124,7 @@ void delete_converted_colored_graph_result_table(GHashTable *result_table)
 
             for(i = 0; i < targets->len; i++)
             {
-                CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_ptr_array_index(targets, i);
+                DistributionMapping *mapping = (DistributionMapping*)g_ptr_array_index(targets, i);
                 g_free(mapping);
             }
 

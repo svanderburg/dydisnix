@@ -1,7 +1,7 @@
 #include "applicationhostgraph-transform.h"
 #include <node.h>
 #include <service.h>
-#include <candidatetargetmapping.h>
+#include <distributionmapping.h>
 
 static void generate_initial_application_nodes(ApplicationHostGraph *graph, GHashTable *candidate_target_table)
 {
@@ -117,7 +117,7 @@ ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table
     return graph;
 }
 
-GHashTable *generate_candidate_target_table_from_application_host_graph(ApplicationHostGraph *graph)
+GHashTable *generate_distribution_table_from_application_host_graph(ApplicationHostGraph *graph)
 {
     GHashTable *candidate_target_table = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTableIter iter;
@@ -135,7 +135,7 @@ GHashTable *generate_candidate_target_table_from_application_host_graph(Applicat
             Node *link_node = (Node*)g_ptr_array_index(app_node->links, i);
             if(!node_is_app_node(link_node))
             {
-                CandidateTargetMapping *mapping = create_candidate_target_auto_mapping((xmlChar*)link_node->name);
+                DistributionMapping *mapping = create_distribution_auto_mapping((xmlChar*)link_node->name);
                 g_ptr_array_add(targets, mapping);
             }
         }
@@ -161,7 +161,7 @@ void delete_application_host_graph_result_table(GHashTable *result_table)
 
             for(i = 0; i < mappings_array->len; i++)
             {
-                CandidateTargetMapping *mapping = (CandidateTargetMapping*)g_ptr_array_index(mappings_array, i);
+                DistributionMapping *mapping = (DistributionMapping*)g_ptr_array_index(mappings_array, i);
                 g_free(mapping);
             }
 

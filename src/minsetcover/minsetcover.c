@@ -3,17 +3,17 @@
 #include <nixxml-ghashtable-iter.h>
 #include "servicestable.h"
 #include "targetstable2.h"
-#include "candidatetargetmappingtable.h"
+#include "distributiontable.h"
 #include "targetmappingtable.h"
 
-static GHashTable *generate_empty_mappings_table(GHashTable *candidate_target_table)
+static GHashTable *generate_empty_mappings_table(GHashTable *distribution_table)
 {
     GHashTableIter iter;
     gpointer key, value;
 
     GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
 
-    g_hash_table_iter_init(&iter, candidate_target_table);
+    g_hash_table_iter_init(&iter, distribution_table);
 
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
@@ -42,7 +42,7 @@ static void delete_result_table(GHashTable *result_table)
 
             for(i = 0; i < targets->len; i++)
             {
-                CandidateTargetMapping *target_mapping = (CandidateTargetMapping*)g_ptr_array_index(targets, i);
+                DistributionMapping *target_mapping = (DistributionMapping*)g_ptr_array_index(targets, i);
                 g_free(target_mapping);
             }
 
@@ -121,7 +121,7 @@ static void process_min_cost_target_mapping(gchar *host_name, GPtrArray *service
 
         if(!g_hash_table_contains(covered_services_table, service))
         {
-            CandidateTargetMapping *target_mapping = create_candidate_target_auto_mapping((xmlChar*)host_name);
+            DistributionMapping *target_mapping = create_distribution_auto_mapping((xmlChar*)host_name);
 
             g_hash_table_insert(covered_services_table, service, service); // Mark the service as covered
             g_ptr_array_add(targets, target_mapping); // Add the targets to the result table
@@ -129,10 +129,10 @@ static void process_min_cost_target_mapping(gchar *host_name, GPtrArray *service
     }
 }
 
-static GHashTable *approximate_minset_cover_greedy(GHashTable *service_table, GHashTable *targets_table, GHashTable *candidate_target_table, GHashTable *target_mapping_table, gchar *target_property)
+static GHashTable *approximate_minset_cover_greedy(GHashTable *service_table, GHashTable *targets_table, GHashTable *distribution_table, GHashTable *target_mapping_table, gchar *target_property)
 {
     /* Create a result table with the same services as in the input distribution model and empty candidate hosts */
-    GHashTable *result_table = generate_empty_mappings_table(candidate_target_table);
+    GHashTable *result_table = generate_empty_mappings_table(distribution_table);
 
     GHashTable *covered_services_table = g_hash_table_new(g_str_hash, g_str_equal);
 
@@ -152,26 +152,26 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *service_table = create_service_table(services, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
-    GHashTable *candidate_target_table = create_candidate_target_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
     int exit_status = 0;
 
-    if(service_table == NULL || targets_table == NULL || candidate_target_table == NULL)
+    if(service_table == NULL || targets_table == NULL || distribution_table == NULL)
     {
         g_printerr("Error with opening one of the models!\n");
         exit_status = 1;
     }
     else
     {
-        GHashTable *target_mapping_table = create_target_mapping_table(candidate_target_table);
+        GHashTable *target_mapping_table = create_target_mapping_table(distribution_table);
 
         /* Execute minimum set cover approximation */
-        GHashTable *result_table = approximate_minset_cover_greedy(service_table, targets_table, candidate_target_table, target_mapping_table, target_property);
+        GHashTable *result_table = approximate_minset_cover_greedy(service_table, targets_table, distribution_table, target_mapping_table, target_property);
 
         /* Print resulting expression to stdout */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
-            print_candidate_target_table_xml(stdout, result_table, 0, NULL, NULL);
+            print_distribution_table_xml(stdout, result_table, 0, NULL, NULL);
         else
-            print_candidate_target_table_nix(stdout, result_table, 0, &automapped);
+            print_distribution_table_nix(stdout, result_table, 0, &automapped);
 
         /* Cleanup */
         delete_result_table(result_table);
@@ -179,7 +179,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
     }
 
     /* Cleanup */
-    delete_candidate_target_table(candidate_target_table);
+    delete_distribution_table(distribution_table);
     delete_targets_table(targets_table);
     delete_service_table(service_table);
 

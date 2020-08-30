@@ -1,7 +1,6 @@
 SUBDIRS = libservices \
 	libinfproperties \
 	libdistribution \
-	libinvmapping \
 	libgraph \
 	libdymain \
 	filter-buildable \

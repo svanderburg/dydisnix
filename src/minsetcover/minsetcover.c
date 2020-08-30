@@ -1,10 +1,10 @@
 #include "minsetcover.h"
 #include <stdlib.h>
 #include <nixxml-ghashtable-iter.h>
-#include "servicestable.h"
-#include "targetstable2.h"
-#include "distributiontable.h"
-#include "targetmappingtable.h"
+#include <servicestable.h>
+#include <targetstable2.h>
+#include <distributiontable.h>
+#include <targettoservicestable.h>
 
 static GHashTable *generate_empty_mappings_table(GHashTable *distribution_table)
 {
@@ -172,10 +172,10 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
     }
     else
     {
-        GHashTable *target_mapping_table = create_target_mapping_table(distribution_table);
+        GHashTable *target_to_services_table = create_target_to_services_table(distribution_table);
 
         /* Execute minimum set cover approximation */
-        GHashTable *result_table = approximate_minset_cover_greedy(service_table, targets_table, distribution_table, target_mapping_table, target_property);
+        GHashTable *result_table = approximate_minset_cover_greedy(service_table, targets_table, distribution_table, target_to_services_table, target_property);
 
         /* Print resulting expression to stdout */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
@@ -185,7 +185,7 @@ int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gch
 
         /* Cleanup */
         delete_result_table(result_table);
-        delete_target_mapping_table(target_mapping_table);
+        delete_target_to_services_table(target_to_services_table);
 
         exit_status = 0;
     }

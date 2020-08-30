@@ -3,7 +3,7 @@
 #include <servicestable.h>
 #include <distributionmapping.h>
 #include <distributiontable.h>
-#include <targetmappingtable.h>
+#include <targettoservicestable.h>
 #include "applicationhostgraph.h"
 #include "applicationhostgraph-transform.h"
 #include "multiwaycut-approximate.h"
@@ -46,7 +46,7 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
     }
     else
     {
-        GHashTable *target_mapping_table = create_target_mapping_table(distribution_table);
+        GHashTable *target_mapping_table = create_target_to_services_table(distribution_table);
         GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, distribution_table, target_mapping_table);
 
         /* Print Nix expression of the result */
@@ -57,7 +57,7 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
 
         /* Cleanup */
         delete_application_host_graph_result_table(result_table);
-        delete_target_mapping_table(target_mapping_table);
+        delete_target_to_services_table(target_mapping_table);
 
         exit_status = 0;
     }

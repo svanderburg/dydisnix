@@ -1,7 +1,7 @@
 #include "portconfiguration.h"
 #include <stdlib.h>
 #include <string.h>
-#include <targetmappingtable.h>
+#include <targettoservicestable.h>
 #include <servicestable.h>
 #include <distributiontable.h>
 #include <procreact_future.h>
@@ -262,7 +262,7 @@ static gboolean remove_obsolete_target_config(gpointer key, gpointer value, gpoi
 void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *distribution_table, GHashTable *service_table, gchar *service_property)
 {
     /* Generate inverse mapping to determine which machines are in use */
-    GHashTable *target_mapping_table = create_target_mapping_table(distribution_table);
+    GHashTable *target_to_services_table = create_target_to_services_table(distribution_table);
 
     GHashTableIter iter;
     gpointer key, value;
@@ -272,7 +272,7 @@ void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTab
         clean_obsolete_services_to_ports(port_configuration->global_config, distribution_table, service_table, service_property, "shared");
 
     /* Remove all port reservations for a machine, if it does not exist anymore */
-    g_hash_table_foreach_remove(port_configuration->target_configs, remove_obsolete_target_config, target_mapping_table);
+    g_hash_table_foreach_remove(port_configuration->target_configs, remove_obsolete_target_config, target_to_services_table);
 
     g_hash_table_iter_init(&iter, port_configuration->target_configs);
     while(g_hash_table_iter_next(&iter, &key, &value))
@@ -280,10 +280,10 @@ void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTab
         gchar *target = (gchar*)key;
         TargetConfig *target_config = (TargetConfig*)value;
 
-        if(g_hash_table_contains(target_mapping_table, target))
+        if(g_hash_table_contains(target_to_services_table, target))
             clean_obsolete_services_to_ports(target_config, distribution_table, service_table, service_property, "private");
     }
 
     /* Clean inverse mapping table from memory */
-    delete_target_mapping_table(target_mapping_table);
+    delete_target_to_services_table(target_to_services_table);
 }

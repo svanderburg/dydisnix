@@ -1,8 +1,8 @@
-#include "targetmappingtable.h"
+#include "targettoservicestable.h"
 #include <stdlib.h>
 #include <distributiontable.h>
 
-GHashTable *create_target_mapping_table(GHashTable *distribution_table)
+GHashTable *create_target_to_services_table(GHashTable *distribution_table)
 {
     GHashTable *result_table = g_hash_table_new(g_str_hash, g_str_equal);
 
@@ -34,17 +34,20 @@ GHashTable *create_target_mapping_table(GHashTable *distribution_table)
     return result_table;
 }
 
-void delete_target_mapping_table(GHashTable *target_mapping_table)
+void delete_target_to_services_table(GHashTable *target_to_services_table)
 {
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, target_mapping_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
+    if(target_to_services_table != NULL)
     {
-        GPtrArray *services = (GPtrArray*)value;
-        g_ptr_array_free(services, TRUE);
-    }
+        GHashTableIter iter;
+        gpointer key, value;
 
-    g_hash_table_destroy(target_mapping_table);
+        g_hash_table_iter_init(&iter, target_to_services_table);
+        while(g_hash_table_iter_next(&iter, &key, &value))
+        {
+            GPtrArray *services = (GPtrArray*)value;
+            g_ptr_array_free(services, TRUE);
+        }
+
+        g_hash_table_destroy(target_to_services_table);
+    }
 }

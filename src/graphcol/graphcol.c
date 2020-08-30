@@ -31,19 +31,24 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
 {
     /* Load input models */
 
+    int exit_status;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     GHashTable *services_table = create_service_table(services_xml, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure_xml, xml);
 
-    if(services_table == NULL || targets_table == NULL)
+    if(services_table == NULL)
     {
-        g_printerr("Error opening one of the input models!\n");
-        return 1;
+        g_printerr("Error with opening the services model!\n");
+        exit_status = 1;
+    }
+    else if(targets_table == NULL)
+    {
+        g_printerr("Error with opening the infrastructure model!\n");
+        exit_status = 1;
     }
     else
     {
         NixXML_bool automapped = TRUE;
-        int exit_status;
 
         /* Generate distribution using graph coloring approximation */
         GHashTable *result_table = generate_maximal_network_link_distribution_with_graphcol_approximation(services_table, targets_table);
@@ -63,11 +68,11 @@ int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int fl
         }
 
         /* Cleanup */
-
         delete_converted_colored_graph_result_table(result_table);
-        delete_service_table(services_table);
-        delete_targets_table(targets_table);
-
-        return exit_status;
     }
+
+    delete_service_table(services_table);
+    delete_targets_table(targets_table);
+
+    return exit_status;
 }

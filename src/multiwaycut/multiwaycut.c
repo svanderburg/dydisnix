@@ -27,15 +27,22 @@ static GHashTable *generate_reliable_distribution_using_multiway_cut_approximati
 
 int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, const unsigned int flags)
 {
+    int exit_status;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     NixXML_bool automapped;
+
     GHashTable *services_table = create_service_table(services, xml);
     GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
 
-    if(services_table == NULL || distribution_table == NULL)
+    if(services_table == NULL)
     {
-        g_printerr("Error opening one of the input models!\n");
-        return 1;
+        g_printerr("Error opening the services model!\n");
+        exit_status = 1;
+    }
+    else if(distribution_table == NULL)
+    {
+        g_printerr("Error opening the distribution model!\n");
+        exit_status = 1;
     }
     else
     {
@@ -51,10 +58,14 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
         /* Cleanup */
         delete_application_host_graph_result_table(result_table);
         delete_target_mapping_table(target_mapping_table);
-        delete_distribution_table(distribution_table);
-        delete_service_table(services_table);
 
-        /* Return exit status */
-        return 0;
+        exit_status = 0;
     }
+
+    /* Cleanup */
+    delete_distribution_table(distribution_table);
+    delete_service_table(services_table);
+
+    /* Return exit status */
+    return exit_status;
 }

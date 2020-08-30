@@ -175,7 +175,6 @@ NixXML_bool approximate_graph_coloring_dsatur(PartialColoredGraph *graph)
             else
             {
                 g_printerr("Not enough target machines available to compute a valid graph coloring!\n");
-                g_ptr_array_free(nodes_ordered_by_degree, TRUE);
                 result = FALSE;
                 break;
             }

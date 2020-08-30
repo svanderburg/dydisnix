@@ -168,9 +168,19 @@ int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *dis
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
     GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
 
-    if(service_table == NULL || targets_table == NULL || distribution_table == NULL)
+    if(service_table == NULL)
     {
-        g_printerr("Error with opening one of the models!\n");
+        g_printerr("Error with opening the services model!\n");
+        exit_status = 1;
+    }
+    else if(targets_table == NULL)
+    {
+        g_printerr("Error with opening the infrastructure model!\n");
+        exit_status = 1;
+    }
+    else if(distribution_table == NULL)
+    {
+        g_printerr("Error with opening the distribution model!\n");
         exit_status = 1;
     }
     else

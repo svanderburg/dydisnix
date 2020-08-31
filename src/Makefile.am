@@ -1,5 +1,5 @@
 SUBDIRS = libservices \
-	libinfproperties \
+	libinfrastructure2 \
 	libdistribution \
 	libgraph \
 	libdymain \

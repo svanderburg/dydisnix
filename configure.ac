@@ -66,7 +66,7 @@ src/graphcol/Makefile
 src/portassign/Makefile
 src/libdistribution/Makefile
 src/libservices/Makefile
-src/libinfproperties/Makefile
+src/libinfrastructure2/Makefile
 src/visualize-services/Makefile
 src/document-services/Makefile
 src/previous-distribution/Makefile

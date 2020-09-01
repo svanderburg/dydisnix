@@ -254,9 +254,9 @@ void print_port_configuration_xml(FILE *file, const void *value, const int inden
 static gboolean remove_obsolete_target_config(gpointer key, gpointer value, gpointer user_data)
 {
     gchar *target = (gchar*)key;
-    GHashTable *target_mapping_table = (GHashTable*)user_data;
+    GHashTable *target_to_services_table = (GHashTable*)user_data;
 
-    return !g_hash_table_contains(target_mapping_table, target);
+    return !g_hash_table_contains(target_to_services_table, target);
 }
 
 void clean_obsolete_reservations(PortConfiguration *port_configuration, GHashTable *distribution_table, GHashTable *service_table, gchar *service_property)

@@ -82,7 +82,7 @@ static double compute_cost_fraction(gchar *host_name, GPtrArray *services, GHash
     return atoi(target_value) / (double)count;
 }
 
-static gchar *find_target_with_smallest_cost_fraction(GHashTable *target_mapping_table, GHashTable *targets_table, gchar *target_property, GHashTable *covered_services_table)
+static gchar *find_target_with_smallest_cost_fraction(GHashTable *target_to_services_table, GHashTable *targets_table, gchar *target_property, GHashTable *covered_services_table)
 {
     double min_cost_fraction = -1;
     gchar *min_cost_host_name = NULL;
@@ -91,7 +91,7 @@ static gchar *find_target_with_smallest_cost_fraction(GHashTable *target_mapping
     gchar *host_name;
     gpointer value;
 
-    NixXML_g_hash_table_ordered_iter_init(&iter, target_mapping_table);
+    NixXML_g_hash_table_ordered_iter_init(&iter, target_to_services_table);
 
     while(NixXML_g_hash_table_ordered_iter_next(&iter, &host_name, &value))
     {
@@ -129,7 +129,7 @@ static void process_min_cost_target_mapping(gchar *host_name, GPtrArray *service
     }
 }
 
-static GHashTable *approximate_minset_cover_greedy(GHashTable *service_table, GHashTable *targets_table, GHashTable *distribution_table, GHashTable *target_mapping_table, gchar *target_property)
+static GHashTable *approximate_minset_cover_greedy(GHashTable *service_table, GHashTable *targets_table, GHashTable *distribution_table, GHashTable *target_to_services_table, gchar *target_property)
 {
     /* Create a result table with the same services as in the input distribution model and empty candidate hosts */
     GHashTable *result_table = generate_empty_mappings_table(distribution_table);
@@ -138,8 +138,8 @@ static GHashTable *approximate_minset_cover_greedy(GHashTable *service_table, GH
 
     while(g_hash_table_size(covered_services_table) < g_hash_table_size(service_table))
     {
-        gchar *host_name = find_target_with_smallest_cost_fraction(target_mapping_table, targets_table, target_property, covered_services_table);
-        process_min_cost_target_mapping(host_name, g_hash_table_lookup(target_mapping_table, host_name), result_table, covered_services_table);
+        gchar *host_name = find_target_with_smallest_cost_fraction(target_to_services_table, targets_table, target_property, covered_services_table);
+        process_min_cost_target_mapping(host_name, g_hash_table_lookup(target_to_services_table, host_name), result_table, covered_services_table);
     }
 
     g_hash_table_destroy(covered_services_table);

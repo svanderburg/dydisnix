@@ -8,10 +8,10 @@
 #include "applicationhostgraph-transform.h"
 #include "multiwaycut-approximate.h"
 
-static GHashTable *generate_reliable_distribution_using_multiway_cut_approximation(GHashTable *services_table, GHashTable *distribution_table, GHashTable *target_mapping_table)
+static GHashTable *generate_reliable_distribution_using_multiway_cut_approximation(GHashTable *services_table, GHashTable *distribution_table, GHashTable *target_to_services_table)
 {
     // Convert deployment models to a host/application graph
-    ApplicationHostGraph *graph = generate_application_host_graph(services_table, distribution_table, target_mapping_table);
+    ApplicationHostGraph *graph = generate_application_host_graph(services_table, distribution_table, target_to_services_table);
 
     // Approximate a solution for the multiway cut problem
     approximate_multiway_cut_solution(graph, distribution_table);
@@ -46,8 +46,8 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
     }
     else
     {
-        GHashTable *target_mapping_table = create_target_to_services_table(distribution_table);
-        GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, distribution_table, target_mapping_table);
+        GHashTable *target_to_services_table = create_target_to_services_table(distribution_table);
+        GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, distribution_table, target_to_services_table);
 
         /* Print Nix expression of the result */
         if(flags & DYDISNIX_FLAG_OUTPUT_XML)
@@ -57,7 +57,7 @@ int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, con
 
         /* Cleanup */
         delete_application_host_graph_result_table(result_table);
-        delete_target_to_services_table(target_mapping_table);
+        delete_target_to_services_table(target_to_services_table);
 
         exit_status = 0;
     }

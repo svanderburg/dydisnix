@@ -80,12 +80,12 @@ static void generate_host_to_app_node_links(Node *host_node, GPtrArray *services
  * - Every target in the infrastructure model becomes a host node in the graph
  * - For each target machine that is a candidate for a service, a bidirectional link is created with a very heavy weight: n^2
  */
-static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GHashTable *target_mapping_table)
+static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GHashTable *target_to_services_table)
 {
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init(&iter, target_mapping_table);
+    g_hash_table_iter_init(&iter, target_to_services_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         gchar *target = (gchar*)key;
@@ -103,7 +103,7 @@ static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GHashTab
  * - Every service becomes an app node. Every inter-dependencies translates to a bidirectional link with weight: 1
  * - Every target machines becomes a host. When a target machine is a candidate deployment target for a service, a link gets created with a very heavy weight: n^2
  */
-ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table, GHashTable *candidate_target_table, GHashTable *target_mapping_table)
+ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table, GHashTable *candidate_target_table, GHashTable *target_to_services_table)
 {
     ApplicationHostGraph *graph = create_application_host_graph();
 
@@ -111,7 +111,7 @@ ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table
     generate_application_graph(graph, services_table, candidate_target_table);
 
     /* Create host nodes and attach them to the application nodes */
-    generate_and_attach_host_nodes(graph, target_mapping_table);
+    generate_and_attach_host_nodes(graph, target_to_services_table);
 
     /* Return result */
     return graph;

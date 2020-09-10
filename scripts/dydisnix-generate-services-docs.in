@@ -48,7 +48,7 @@ while [ "$1" != "--" ]
 do
     case "$1" in
         -s|--services)
-            servicesFile=`readlink -f $2`
+            servicesFile=`@readlink@ -f $2`
             ;;
         --docs)
             docsArg="--docs $2"

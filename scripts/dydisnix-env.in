@@ -100,29 +100,29 @@ while [ "$1" != "--" ]
 do
     case "$1" in
         -s|--services)
-            servicesFile=`readlink -f $2`
+            servicesFile=`@readlink@ -f $2`
             ;;
         -q|--qos)
-            qosFile=`readlink -f $2`
+            qosFile=`@readlink@ -f $2`
             ;;
         -i|--infrastructure)
-            infrastructureFile=`readlink -f $2`
+            infrastructureFile=`@readlink@ -f $2`
             ;;
         -a|--augment)
-            augmentFile=`readlink -f $2`
+            augmentFile=`@readlink@ -f $2`
             ;;
         -P|--packages)
-            packagesFile=`readlink -f $2`
+            packagesFile=`@readlink@ -f $2`
             packagesArg="-P $packagesFile"
             ;;
         -F|--filters)
             filtersArg="--filters $2"
             ;;
         --id-resources)
-            idResourcesFile=`readlink -f $2`
+            idResourcesFile=`@readlink@ -f $2`
             ;;
         --ids)
-            idsFile=`readlink -f $2`
+            idsFile=`@readlink@ -f $2`
             ;;
         --ids-service-property)
             idsServicePropertyArg="--service-property $2"

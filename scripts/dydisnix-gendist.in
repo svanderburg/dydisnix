@@ -79,17 +79,17 @@ while [ "$1" != "--" ]
 do
     case "$1" in
         -s|--services)
-            servicesFile=`readlink -f $2`
+            servicesFile=`@readlink@ -f $2`
             ;;
         -i|--infrastructure)
-            infrastructureFile=`readlink -f $2`
+            infrastructureFile=`@readlink@ -f $2`
             ;;
         -q|--qos)
-            qosFile=`readlink -f $2`
-            qosArg="--argstr qosFile $(readlink -f $qosFile)"
+            qosFile=`@readlink@ -f $2`
+            qosArg="--argstr qosFile $qosFile"
             ;;
         -F|--filters)
-            filtersArg="--argstr filtersFile $(readlink -f $2)"
+            filtersArg="--argstr filtersFile $(@readlink@ -f $2)"
             ;;
         --filter-buildable)
             filterBuildable=1
@@ -163,8 +163,8 @@ then
     initialDistributionArg="--argstr distributionFile $filteredDistribution"
 fi
 
-result=$(nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
-          --argstr infrastructureFile "$(readlink -f $infrastructureFile)" \
+result=$(nix-build --argstr servicesFile "$servicesFile" \
+          --argstr infrastructureFile "$infrastructureFile" \
           $initialDistributionArg \
           $qosArg \
           $filtersArg \
@@ -172,7 +172,7 @@ result=$(nix-build --argstr servicesFile "$(readlink -f $servicesFile)" \
           $coordinatorProfileArg \
           $noOutLinkArg \
           $showTraceArg \
-          "$(readlink -f @datadir@/@PACKAGE@/gendist.nix)")
+          @datadir@/@PACKAGE@/gendist.nix)
 
 if [ "$displayStdout" = "1" ]
 then

@@ -96,19 +96,19 @@ while [ "$1" != "--" ]
 do
     case "$1" in
         -s|--services)
-            servicesFile=`readlink -f $2`
+            servicesFile=`@readlink@ -f $2`
             ;;
         -q|--qos)
-            qosFile=`readlink -f $2`
+            qosFile=`@readlink@ -f $2`
             ;;
         -a|--augment)
-            augmentFile=`readlink -f $2`
+            augmentFile=`@readlink@ -f $2`
             ;;
         --id-resources)
-            idResourcesFile=`readlink -f $2`
+            idResourcesFile=`@readlink@ -f $2`
             ;;
         --ids)
-            idsFile=`readlink -f $2`
+            idsFile=`@readlink@ -f $2`
             ;;
         --ids-service-property)
             idsServicePropertyArg="--service-property $2"

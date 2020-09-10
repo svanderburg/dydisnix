@@ -21,6 +21,11 @@ PKG_PROG_PKG_CONFIG
 NEED_PROG(bash, bash)
 NEED_PROG(getopt, getopt)
 
+AC_PATH_PROGS(readlink, [greadlink readlink], [na])
+if test "$readlink" = na; then
+    AC_MSG_ERROR([We need a GNU compatible readlink command, i.e. greadlink or readlink needed])
+fi
+
 # Checks for libxml2 libraries
 LIBXML2_REQUIRED=2.5.10
 PKG_CHECK_MODULES(LIBXML2, libxml-2.0 >= $LIBXML2_REQUIRED)

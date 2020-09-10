@@ -67,25 +67,25 @@ while [ "$1" != "--" ]
 do
     case "$1" in
         -s|--services)
-            servicesFile=`readlink -f $2`
+            servicesFile=`@readlink@ -f $2`
             ;;
         -i|--infrastructure)
-            infrastructureFile=`readlink -f $2`
+            infrastructureFile=`@readlink@ -f $2`
             ;;
         -d|--distribution)
-            distributionFile=`readlink -f $2`
+            distributionFile=`@readlink@ -f $2`
             ;;
         -p|--ports)
-            portsFile=`readlink -f $2`
+            portsFile=`@readlink@ -f $2`
             ;;
         --docs)
-            docsFile=`readlink -f $2`
+            docsFile=`@readlink@ -f $2`
             ;;
         --id-resources)
-            idResourcesFile=`readlink -f $2`
+            idResourcesFile=`@readlink@ -f $2`
             ;;
         --ids)
-            idsFile=`readlink -f $2`
+            idsFile=`@readlink@ -f $2`
             ;;
         --no-out-link)
             noOutLinkArg="--no-out-link"
@@ -112,7 +112,7 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A servicesToXML \
-        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+        @datadir@/@PACKAGE@/toXML.nix
 elif [ "$distributionFile" != "" ] && [ "$infrastructureFile" != "" ]
 then
     nix-build $showTraceArg --arg distributionFile $distributionFile \
@@ -120,42 +120,42 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A distributionToXML \
-        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+        @datadir@/@PACKAGE@/toXML.nix
 elif [ "$infrastructureFile" != "" ]
 then
     nix-build $showTraceArg --arg infrastructureFile $infrastructureFile \
         --argstr defaultTargetProperty $targetProperty \
         -A infrastructureToXML \
         $noOutLinkArg $showTraceArg \
-        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+        @datadir@/@PACKAGE@/toXML.nix
 elif [ "$portsFile" != "" ]
 then
     nix-build $showTraceArg --arg portsFile $portsFile \
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A portsToXML \
-        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+        @datadir@/@PACKAGE@/toXML.nix
 elif [ "$docsFile" != "" ]
 then
     nix-build $showTraceArg --arg docsFile $docsFile \
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A docsToXML \
-        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+        @datadir@/@PACKAGE@/toXML.nix
 elif [ "$idResourcesFile" != "" ]
 then
     nix-build $showTraceArg --arg idResourcesFile $idResourcesFile \
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A idResourcesToXML \
-        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+        @datadir@/@PACKAGE@/toXML.nix
 elif [ "$idsFile" != "" ]
 then
     nix-build $showTraceArg --arg idsFile $idsFile \
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A idsToXML \
-        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+        @datadir@/@PACKAGE@/toXML.nix
 else
     echo "Don't know how to generate XML from the given input files. Are all models correctly specified?" >&2
     exit 1

@@ -31,13 +31,14 @@ Options:
                                       network
   -a, --augment=augment_nix           Nix epxression which augments additional
                                       attributes into the infrastructure model
-      --ports=ports_nix               Filename of a ports expression containing
-                                      port assignments. It will be updated when
-                                      a deployment changes. If not provided, no
-                                      port assignment will be done
-      --ports-service-property=PROP   The name of the attribute that indicates
-                                      the port assign type (defaults to:
-                                      portAssign)
+      --id-resources=id_resources_nix
+                                      ID resources Nix expression defining
+                                      numeric ID resources
+      --ids=ids_nix                   IDs Nix expression mapping services to
+                                      unique IDs per resource
+      --ids-service-property=PROP     Property in service model that specifies
+                                      which numeric ID resources a service needs
+                                      (Defaults to: requireUniqueIdsFor)
   -F, --filters=filters_nix           A Nix expression providing a catalog of
                                       custom filter algorithms
   -p, --profile=PROFILE               Name of the profile that is used for this
@@ -83,7 +84,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:q:a:P:F:p:m:h -l services:,infrastructure:,qos:,augment:,packages:,ports:,ports-service-property:,filters:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:q:a:P:F:p:m:h -l services:,infrastructure:,qos:,augment:,packages:,id-resources:,ids:,ids-service-property:,filters:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -117,11 +118,14 @@ do
         -F|--filters)
             filtersArg="--filters $2"
             ;;
-        --ports)
-            portsFile=`readlink -f $2`
+        --id-resources)
+            idResourcesFile=`readlink -f $2`
             ;;
-        --ports-service-property)
-            portsServicePropertyArg="--service-property $2"
+        --ids)
+            idsFile=`readlink -f $2`
+            ;;
+        --ids-service-property)
+            idsServicePropertyArg="--service-property $2"
             ;;
         -p|--profile)
             profileArg="--profile $2"
@@ -210,11 +214,16 @@ echo "[coordinator]: Generating a distribution model..." >&2
 distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $coordinatorProfilePathArg $interfaceArg $targetPropertyArg $showTraceArg`
 echo "[coordinator]: Using generated distribution model: $distribution" >&2
 
-if [ "$portsFile" != "" ]
+if [ "$idsFile" != "" ]
 then
-    echo "[coordinator]: Updating the port assignments..." >&2
-    dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $filtersArg $portsServicePropertyArg > $TMPDIR/ports.nix
-    mv $TMPDIR/ports.nix $portsFile
+    echo "[coordinator]: Updating the ID assignments..." >&2
+
+    if [ -e "$idsFile" ]
+    then
+        idsParam="--ids $idsFile"
+    fi
+
+    dydisnix-id-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --id-resources $idResourcesFile $idsParam $filtersArg $idsServicePropertyArg --output-file $idsFile
 fi
 
 echo "[coordinator]: Deploying the system..." >&2

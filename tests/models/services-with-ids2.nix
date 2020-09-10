@@ -8,9 +8,9 @@ rec {
     name = "testService2";
     pkg = customPkgs.testService2;
     type = "echo";
-    portAssign = "shared";
+    requiresUniqueIdsFor = [ "ports" ];
   };
-  
+
   testService3 = {
     name = "testService3";
     pkg = customPkgs.testService3;
@@ -18,6 +18,6 @@ rec {
       inherit testService2;
     };
     type = "echo";
-    portAssign = "shared";
+    requiresUniqueIdsFor = [ "ports" ];
   };
 }

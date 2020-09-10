@@ -20,13 +20,14 @@ Options:
                                       attributes
   -a, --augment=augment_nix           Nix epxression which augments additional
                                       attributes into the infrastructure model
-      --ports=ports_nix               Filename of a ports expression containing
-                                      port assignments. It will be updated when
-                                      a deployment changes. If not provided, no
-                                      port assignment will be done
-      --ports-service-property=PROP   The name of the attribute that indicates
-                                      the port assign type (defaults to:
-                                      portAssign)
+      --id-resources=id_resources_nix
+                                      ID resources Nix expression defining
+                                      numeric ID resources
+      --ids=ids_nix                   IDs Nix expression mapping services to
+                                      unique IDs per resource
+      --ids-service-property=PROP     Property in service model that specifies
+                                      which numeric ID resources a service needs
+                                      (Defaults to: requireUniqueIdsFor)
   -F, --filters=filters_nix           A Nix expression providing a catalog of
                                       custom filter algorithms
   -p, --profile=PROFILE               Name of the profile that is used for this
@@ -79,7 +80,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:q:a:F:p:m:h -l services:,qos:,augment:,ports:,ports-service-property:,filters:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:q:a:F:p:m:h -l services:,qos:,augment:,ids:,id-resources:,ids-service-property:,filters:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -103,11 +104,14 @@ do
         -a|--augment)
             augmentFile=`readlink -f $2`
             ;;
-        --ports)
-            portsFile=`readlink -f $2`
+        --id-resources)
+            idResourcesFile=`readlink -f $2`
             ;;
-        --ports-service-property)
-            portsServicePropertyArg="--service-property $2"
+        --ids)
+            idsFile=`readlink -f $2`
+            ;;
+        --ids-service-property)
+            idsServicePropertyArg="--service-property $2"
             ;;
         -F|--filters)
             filtersArg="--filters $2"
@@ -196,58 +200,63 @@ checkTmpDir
 while true
 do
     # Capture the infrastructure configuration
-    
+
     echo "[coordinator]: Capturing infrastructure..." >&2
     infrastructureFile="$TMPDIR/infrastructure_captured.nix"
     $geninfra > $infrastructureFile
     echo "[coordinator]: Captured infrastructure file: $infrastructureFile" >&2
-    
+
     # Augment the infrastructure, if needed
     if [ "$augmentFile" != "" ]
     then
         echo "[coordinator]: Augmenting the captured infrastructure..." >&2
         infrastructureFile=`dydisnix-augment-infra --infrastructure $infrastructureFile --augment $augmentFile`
     fi
-    
+
     echo "[coordinator]: Using infrastructure model: $infrastructureFile" >&2
-    
+
     # If requested, take a snapshot of the entire environment
     if [ "$snapshot" = "1" ]
     then
         echo "[coordinator]: Capturing the state..." >&2
         disnix-snapshot $profileArg $coordinatorProfileArg $maxConcurrentTransfersArg
     fi
-    
+
     # Compute the hash of the evaluated infrastructure, so that changes can be detected by comparing hashes
     hash=$(nix-instantiate --eval-only --strict --xml $infrastructureFile | sha256sum -)
-    
+
     # If a change has been detected, do a redeployment
     if [ "$hash" != "$previousHash" ]
     then
         echo "[coordinator]: A change in the infrastructure has been detected!" >&2
-        
+
         if [ "$reconstruct" = "1" ]
         then
             echo "[coordinator]: Reconstructing manifest..." >&2
             disnix-reconstruct $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $showTraceArg $infrastructureFile
         fi
-        
+
         echo "[coordinator]: Generating a new distribution model..." >&2
         distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $filtersArg $coordinatorProfilePathArg $interfaceArg $targetPropertyArg $showTraceArg`
         echo "[coordinator]: Using generated distribution model: $distribution" >&2
-        
-        if [ "$portsFile" != "" ]
+
+        if [ "$idsFile" != "" ]
         then
-            echo "[coordinator]: Updating the port assignments..." >&2
-            dydisnix-port-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --ports $portsFile $portsServicePropertyArg > $TMPDIR/ports.nix
-            mv $TMPDIR/ports.nix $portsFile
+            echo "[coordinator]: Updating the ID assignments..." >&2
+
+            if [ -e "$idsFile" ]
+            then
+                idsParam="--ids $idsFile"
+            fi
+
+            dydisnix-id-assign --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution --id-resources $idResourcesFile $idsParam $idsServicePropertyArg --output-file $idsFile
         fi
-        
+
         echo "[coordinator]: Redeploying the system..." >&2
         disnix-env --services $servicesFile --infrastructure $infrastructureFile --distribution $distribution $profileArg $coordinatorProfilePathArg $maxConcurrentTransfersArg $noMigrationArg $deleteStateArg $depthFirstArg $keepArg $showTraceArg
         previousHash="$hash"
     fi
-    
+
     # Wait for a while, and then check again
     echo "[coordinator]: Waiting for $interval seconds..." >&2
     sleep $interval

@@ -8,7 +8,7 @@ SUBDIRS = libservices \
 	multiwaycut \
 	minsetcover \
 	graphcol \
-	portassign \
+	idassign \
 	visualize-services \
 	document-services \
 	previous-distribution

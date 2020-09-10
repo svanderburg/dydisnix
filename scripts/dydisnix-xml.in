@@ -10,6 +10,8 @@ Usage: $0 -s services_nix [OPTION]
   or: $0 -d distribution_nix -i infrastructure_nix [OPTION]
   or: $0 -p ports_nix [OPTION]
   or: $0 --docs docs.nix [OPTION]
+  or: $0 --id-resources idresources.nix [OPTION]
+  or: $0 --ids ids.nix [OPTION]
 
 The command \`dydisnix-xml' generates XML representations of the Disnix models
 so that they can be used by external tools.
@@ -25,6 +27,11 @@ Options:
   -p, --ports=ports_nix        Port assignment expression assigning port numbers to
                                services
       --docs=docs_nix          Documentation configuration expression
+      --id-resources=id_resources_nix
+                               ID resources Nix expression defining numeric ID
+                               resources
+      --ids=ids_nix            IDs Nix expression mapping services to unique IDs per
+                               resource
       --no-out-link            Do not create a result symlink
       --show-trace             Shows a trace of the output
   -h, --help                   Shows the usage of this command
@@ -44,7 +51,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:d:p:h -l services:,infrastructure:,distribution:,ports:,docs:,no-out-link,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:d:p:h -l services:,infrastructure:,distribution:,ports:,docs:,id-resources:,ids:,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -74,6 +81,12 @@ do
         --docs)
             docsFile=`readlink -f $2`
             ;;
+        --id-resources)
+            idResourcesFile=`readlink -f $2`
+            ;;
+        --ids)
+            idsFile=`readlink -f $2`
+            ;;
         --no-out-link)
             noOutLinkArg="--no-out-link"
             ;;
@@ -85,7 +98,7 @@ do
             exit 0
             ;;
     esac
-    
+
     shift
 done
 
@@ -128,6 +141,20 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A docsToXML \
+        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+elif [ "$idResourcesFile" != "" ]
+then
+    nix-build $showTraceArg --arg idResourcesFile $idResourcesFile \
+        --argstr defaultTargetProperty $targetProperty \
+        $noOutLinkArg $showTraceArg \
+        -A idResourcesToXML \
+        $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
+elif [ "$idsFile" != "" ]
+then
+    nix-build $showTraceArg --arg idsFile $idsFile \
+        --argstr defaultTargetProperty $targetProperty \
+        $noOutLinkArg $showTraceArg \
+        -A idsToXML \
         $(readlink -f @datadir@/@PACKAGE@/toXML.nix)
 else
     echo "Don't know how to generate XML from the given input files. Are all models correctly specified?" >&2

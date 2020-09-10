@@ -28,8 +28,8 @@ of the infrastructure:
   discovered infrastructure model that cannot be auto-discovered
 * The *distribution generator* computes a mapping of services to machines based
   on their technical requirements and non-functional requirements
-* The *port assigner* automatically assigns unique TCP ports to services that
-  require them
+* The *ID assigner* automatically assigns unique IDs (such as TCP ports) to
+  services that require them
 
 Prerequisites
 =============
@@ -46,9 +46,11 @@ Installation
 Dynamic Disnix is a typical autotools based package which can be compiled and
 installed by running the following commands in a shell session:
 
-    $ ./configure
-    $ make
-    $ make install
+```bash
+$ ./configure
+$ make
+$ make install
+```
 
 For more information about using the autotools setup or for customizing the
 configuration, take a look at the `./INSTALL` file.
@@ -100,7 +102,9 @@ We can generate a distribution model from a services model, infrastructure model
 and quality of service (QoS) model in which the last model describes how to map
 services to machines based on their technical and non-functional properties:
 
-    $ dydisnix-gendist -s services.nix -i infrastructure.nix -q qos.nix
+```bash
+$ dydisnix-gendist -s services.nix -i infrastructure.nix -q qos.nix
+```
 
 A QoS model is a Nix expression declaring a function that has the following
 header:
@@ -359,109 +363,160 @@ a new distribution. It is also possible to use XML by providing the
 $ dydisnix-divide --output-xml --xml --strategy greedy -s services.xml -i infrastructure.xml -d distribution.xml --service-property requireMem --target-property mem
 ```
 
-Port assigner
--------------
-Some services require unique TCP port assignments. We can automate this process
-by augmenting services in the Disnix services model with two properties:
+ID assigner
+-----------
+Some service require unique IDs, for example to allow them to bind to an
+unallocated TCP port or to use stable UIDs and GIDs when a service needs to run
+as an unprivileged user.
+
+The process of assigning unique IDs to services can be automated. To do this
+you need to specify an ID resources model that has the following structure:
+
+```nix
+{
+  ports = {
+    min = 3000;
+    max = 4000;
+    scope = "global";
+  };
+
+  uids = {
+    min = 2000;
+    max = 3000;
+    scope = "global";
+  };
+
+  gids = {
+    min = 2000;
+    max = 3000;
+    scope = "global";
+  };
+}
+```
+
+The above `idresources.nix` configuration file defines three kinds of numeric
+ID resources:
+
+* `ports` refers to a pool of unique TCP port numbers
+* `uids` refers to a pool of unique user IDs (UIDs)
+* `gids` refers to a pool of unique group IDs (GIDs)
+
+Each resource defines the following configuration properties:
+
+* `min` specifies the minimum allowed ID
+* `max` specifies the maximum allowed ID
+* `scope` defines the scope of the ID. `global` (the default value) means that
+  the IDs should be globally unique for the entire system. `machine` says that
+  an ID should be unique to the machine where a service is deployed to.
+  In case the scope is `machine`, a service becomes target-specific and can
+  only be deployed to one machine in the network only.
+
+To make it possible to automatically assign IDs to services, we can annotate
+a service model as follows:
 
 ```nix
 {distribution, system, pkgs}:
 
 let
-  portsConfiguration = if builtins.pathExists ./ports.nix
-    then import ./ports.nix else {};
-  ...
+  ids = import ./ids.nix;
 in
 rec {
   roomservice = rec {
     name = "roomservice";
-    pkg = customPkgs.roomservicewrapper { inherit port; };
+    pkg = customPkgs.roomservicewrapper {
+      port = ids.ports.roomservice;
+      uid = ids.uids.roomservice;
+      gid = ids.gids.roomservice;
+    };
     dependsOn = {
       inherit rooms;
     };
     type = "process";
-    portAssign = "private";
-    port = portsConfiguration.ports.roomservice or 0;
+    requiresUniqueIdsFor = [ "ports" "uids" "groups" ];
   };
 
   ...
 
   stafftracker = rec {
     name = "stafftracker";
-    pkg = customPkgs.stafftrackerwrapper { inherit port; };
+    pkg = customPkgs.stafftrackerwrapper {
+      port = ids.ports.stafftracker;
+      uid = ids.uids.stafftracker;
+      gid = ids.gids.stafftracker;
+    };
     dependsOn = {
       inherit roomservice staffservice zipcodeservice;
     };
     type = "process";
-    portAssign = "shared";
-    port = portsConfiguration.ports.stafftracker or 0;
     baseURL = "/";
+    requiresUniqueIdsFor = [ "ports" "uids" "groups" ];
   };
 }
 ```
 
-In the above services model, each services declares a `portAssign` property that
-can be `private` to indicate that a unique port should be assigned that applies
-to machine where it has been deployed and `shared` to indicate a port that is
-unique to the network.
+In the above partial service model, every service defines a
+`requireUniqueIdsFor` property to tell the ID generator for which resources it
+requires a unique ID. (The `requireUniqueIdsFor` property can be changed by
+passing the `--service-property` parameter to the generator tool).
 
-Each service has a `port` property that contains the actual port assignment
-value. This value is imported from the `ports.nix` expression and can be
-automatically generated.
+The generated IDs expression (`ids.nix`) is imported in the beginning of the
+expression. To allow the services to use the unique IDs in the `ids` attribute
+set, they are passed as parameters to each `pkg` constructor function.
 
-The following tool can be used to generate port assignments and to reuse
-previous port assignments to prevent unnecessary redeployments:
+With the following command, you can automatically generate an `ids.nix`
+expression assigning unique IDs to every services that is deployed in the
+distribution model that requires a unique ID:
 
-    $ dydisnix-port-assign -s services.nix -i infrastructure.nix -d distribution.nix -p ports.nix > ports2.nix
+```bash
+$ dydisnix-id-assign -s services.nix -i infrastructure.nix -d distribution.nix --id-resources idresources.nix --output-file ids.nix
+```
 
-The first three parameters refer to the Disnix service, infrastructure and
-distribution models in which the services model is augmented with `portAssign`
-properties. The last parameter `ports.nix` is a port specification expression
-that has the following structure:
+The output of the `ids.nix` expression may look as follows:
 
 ```nix
 {
   ports = {
-    roomservice = 8001;
-    zipcodeservice = 3003;
+    roomservice = 3000;
+    stafftracker = 3001;
   };
-  portConfiguration = {
-    globalConfig = {
-      lastPort = 3003;
-      minPort = 3000;
-      maxPort = 4000;
-      servicesToPorts = {
-        stafftracker = 3002;
-      };
-    };
-    targetConfigs = {
-      test2 = {
-        lastPort = 8001;
-        minPort = 8000;
-        maxPort = 9000;
-        servicesToPorts = {
-          roomservice = 8001;
-        };
-      };
-    };
+
+  uids = {
+    roomservice = 2000;
+    stafftracker = 2001;
+  };
+
+  gids = {
+    roomservice = 2000;
+    stafftracker = 2001;
   };
 }
 ```
 
-The above configuration attribute set contains three properties:
+The above Nix expression specifies for each resource type, a mapping from a
+service to a unique ID (that might be globally unique or unique to the target
+machine where the service is deployed to).
 
-* The `ports` attribute contains the actual port numbers that have been assigned
-  to each service.
-* The `portConfiguration` attribute contains port configuration settings for the
-  network and each target machine. The `globalConfig` attribute defines a TCP
-  port range with ports that must be unique to the network. Besides the port
-  range it also stores the last assigned TCP port number and all global port
-  reservations.
-* The `targetConfigs` attribute contains port configuration settings and
-  reservations for each target machine.
+In addition to creating ID assignments from scratch, it is also possible to
+update an existing `ids.nix` expression:
 
-When running the port assigner, a new port assignment expression gets generated
-that contains updated mappings for the services.
+```bash
+$ dydisnix-id-assign -s services.nix -i infrastructure.nix -d distribution.nix --id-resources idresources.nix --ids ids.nix --output-file ids.nix
+```
+
+The above command retains all previous ID assignments that are still valid, and
+will only assign IDs to service that have none assigned yet. Retaining valid
+assignments prevents unnecessary redeployments.
+
+The above commands will only assign IDs to services that are deployed to target
+machines. It is also possible to assign IDs to all services in a services model
+regardless whether they are actually used or not:
+
+```bash
+$ dydisnix-id-assign -s services.nix --id-resources idresources.nix --output-file ids.nix
+```
+
+When assigning IDs to all services, you can only use resource types that work
+on a global scope.
 
 Dynamically deploying a system
 ------------------------------
@@ -469,37 +524,49 @@ The following command deploys a service-oriented system in which the
 infrastructure is dynamically discovered, and the distribution dynamically
 generated:
 
-    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix
+```bash
+$ dydisnix-env -s services.nix -a augment.nix -q qos.nix
+```
 
-When adding a ports parameter, it will also automatically assign ports as part
-of the deployment process:
+When adding the `--ids` parameter, it will also automatically assign unique IDs
+as part of the deployment process:
 
-    $ dydisnix-env -s services.nix -a augment.nix -q qos.nix --ports ports.nix
+```bash
+$ dydisnix-env -s services.nix -a augment.nix -q qos.nix --id-resources idresources.nix --ids ids.nix
+```
 
 Self adaptive deployment of a system
 ------------------------------------
 We can also run a basic feedback loop regularly checking for changes and
 redeploying the machine if any change has been detected:
 
-    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix
+```bash
+$ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix
+```
 
-When adding a ports parameter, it will also automatically assign ports as part
-of the deployment process:
+When adding the `--ids` parameter, it will also automatically assign unique IDs
+as part of the deployment process:
 
-    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --ports ports.nix
+```bash
+$ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --id-resources idresources.nix --ids ids.nix
+```
 
 We can also preemtively take snapshots of all stateful services by providing the
 `--snapshot` parameter, so that if any of the machines disappears, a service's
 state can be restored when it is redeployed elsewhere:
 
-    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --snapshot
+```bash
+$ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --snapshot
+```
 
 Finally, it may also happen that a machine with an existing deployment
 configuration gets added to a network. In order to be able to manage them, their
 deployment configurations must be reconstructed. This can be done by adding the
 `--reconstruct` parameter:
 
-    $ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --reconstruct
+```bash
+$ dydisnix-self-adapt -s services.nix -a augment.nix -q qos.nix --reconstruct
+```
 
 Generating functional architecture documentation
 ------------------------------------------------
@@ -510,11 +577,15 @@ Running the following command will generate a HTML documentation catalog for the
 provided services expression, using SVG images for the diagrams, storing the
 output artefacts in the `out/` sub folder:
 
-    $ dydisnix-generate-services-docs -s services.nix -f svg --output-dir out
+```bash
+$ dydisnix-generate-services-docs -s services.nix -f svg --output-dir out
+```
 
 The catalog can be inspected by opening the root page in the output folder:
 
-    $ firefox out/index.html
+```bash
+$ firefox out/index.html
+```
 
 For complex architectures consisting of many services, it is also possible to
 group services (for example, by clustering services that implement a feature
@@ -598,7 +669,9 @@ By adding the `docs.nix` configuration as a command-line parameter, we can
 adjust the documentation generation process with additional descriptions and
 fields:
 
-     $ dydisnix-generate-services-docs -s services.nix --docs docs.nix -f svg --output-dir out
+```bash
+$ dydisnix-generate-services-docs -s services.nix --docs docs.nix -f svg --output-dir out
+```
 
 In addition to generating a full catalog, it is also possible to generate the
 diagrams (using `dydisnix-visualize-services`) and descriptions separately

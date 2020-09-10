@@ -8,6 +8,13 @@
 let
   pkgs = import nixpkgs {};
 
+  # Refer either to dysnomia in the parent folder, or to the one in Nixpkgs
+  dysnomiaJobset = if fetchDependenciesFromNixpkgs then {
+    build = pkgs.lib.genAttrs systems (system:
+      (import nixpkgs { inherit system; }).dysnomia
+    );
+  } else import ../dysnomia/release.nix { inherit nixpkgs systems officialRelease; };
+
   # Refer either to disnix in the parent folder, or to the one in Nixpkgs
   disnixJobset = if fetchDependenciesFromNixpkgs then {
     build = pkgs.lib.genAttrs systems (system:
@@ -52,24 +59,29 @@ let
 
     tests =
       let
+        dysnomia = builtins.getAttr (builtins.currentSystem) (dysnomiaJobset.build);
         disnix = builtins.getAttr (builtins.currentSystem) (disnixJobset.build);
         dydisnix = builtins.getAttr (builtins.currentSystem) build;
       in
       {
         augmentInfra = import ./tests/augment-infra.nix {
-          inherit nixpkgs pkgs disnix dydisnix;
+          inherit nixpkgs pkgs dysnomia disnix dydisnix;
         };
 
         gendist = import ./tests/gendist.nix {
-          inherit nixpkgs pkgs disnix dydisnix;
+          inherit nixpkgs pkgs dysnomia disnix dydisnix;
         };
 
-        portassign = import ./tests/portassign.nix {
-          inherit nixpkgs pkgs disnix dydisnix;
+        idassign = import ./tests/idassign.nix {
+          inherit nixpkgs pkgs dysnomia disnix dydisnix;
         };
 
         docs = import ./tests/docs.nix {
-          inherit nixpkgs pkgs disnix dydisnix;
+          inherit nixpkgs pkgs dysnomia disnix dydisnix;
+        };
+
+        deployment = import ./tests/deployment.nix {
+          inherit nixpkgs pkgs dysnomia disnix dydisnix;
         };
       };
 
@@ -82,8 +94,9 @@ let
       ++ [
         tests.augmentInfra
         tests.gendist
-        tests.portassign
+        tests.idassign
         tests.docs
+        tests.deployment
       ];
       meta.description = "Release-critical builds";
     };

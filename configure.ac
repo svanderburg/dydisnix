@@ -63,7 +63,7 @@ src/divide/Makefile
 src/multiwaycut/Makefile
 src/minsetcover/Makefile
 src/graphcol/Makefile
-src/portassign/Makefile
+src/idassign/Makefile
 src/libdistribution/Makefile
 src/libservices/Makefile
 src/libinfrastructure2/Makefile

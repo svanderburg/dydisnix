@@ -14,7 +14,7 @@ rec {
     requireAccess = [ "public" "private" ];
     stateful = true;
   };
-  
+
   testService2 = {
     name = "testService2";
     pkg = customPkgs.testService2;
@@ -27,7 +27,7 @@ rec {
     requireMem = 262143;
     requireAccess = [ "public" "private" ];
   };
-  
+
   testService3 = {
     name = "testService3";
     pkg = customPkgs.testService3;

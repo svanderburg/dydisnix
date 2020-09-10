@@ -87,4 +87,16 @@ in
       docs = import docsFile;
     in
     filters.generateDocsXML docs;
+
+  idResourcesToXML = {idResourcesFile}:
+    let
+      idResources = import idResourcesFile;
+    in
+    filters.generateIdResourcesXML idResources;
+
+  idsToXML = {idsFile}:
+    let
+      ids = import idsFile;
+    in
+    filters.generateIdsXML ids;
 }

@@ -63,6 +63,20 @@ rec {
       xsl = ./docs.xsl;
     };
 
+  generateIdResourcesXML = idResources:
+    nixExpressionToXML {
+      name = "idresources";
+      expr = idResources;
+      xsl = ./idresources.xsl;
+    };
+
+  generateIdsXML = ids:
+    nixExpressionToXML {
+      name = "ids";
+      expr = ids;
+      xsl = ./ids.xsl;
+    };
+
   generatePreviousDistribution = coordinatorProfile:
     import "${(pkgs.stdenv.mkDerivation {
       name = "distribution.nix";

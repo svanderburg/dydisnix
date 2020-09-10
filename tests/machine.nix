@@ -1,7 +1,9 @@
-{disnix, dydisnix}:
+{dysnomia, disnix, dydisnix}:
 {config, pkgs, ...}:
 
 {
+  services.openssh.enable = true;
+
   virtualisation.writableStore = true;
   virtualisation.pathsInNixDB = [ pkgs.stdenv pkgs.perlPackages.ArchiveCpio pkgs.busybox ];
 
@@ -12,5 +14,5 @@
     substitute = false
   '';
 
-  environment.systemPackages = [ disnix dydisnix pkgs.stdenv pkgs.graphviz ] ++ pkgs.libxml2.all ++ pkgs.libxslt.all;
+  environment.systemPackages = [ dysnomia disnix dydisnix pkgs.stdenv pkgs.graphviz ] ++ pkgs.libxml2.all ++ pkgs.libxslt.all;
 }

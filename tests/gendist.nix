@@ -1,10 +1,10 @@
-{nixpkgs, pkgs, disnix, dydisnix}:
+{nixpkgs, pkgs, dysnomia, disnix, dydisnix}:
 
 with import "${nixpkgs}/nixos/lib/testing.nix" { system = builtins.currentSystem; };
 
 let
   machine = import ./machine.nix {
-    inherit disnix dydisnix;
+    inherit dysnomia disnix dydisnix;
   };
 
   models = ./models;

@@ -40,14 +40,16 @@ typedef enum
 }
 DydisnixCommandLineOptions;
 
-int check_services_option(const char *services);
+typedef int dydisnix_bool;
 
-int check_infrastructure_option(const char *infrastructure);
+dydisnix_bool check_services_option(const char *services);
 
-int check_distribution_option(const char *distribution);
+dydisnix_bool check_infrastructure_option(const char *infrastructure);
 
-int check_service_mapping_property_option(const char *service_property);
+dydisnix_bool check_distribution_option(const char *distribution);
 
-int check_target_mapping_property_option(const char *target_property);
+dydisnix_bool check_service_mapping_property_option(const char *service_property);
+
+dydisnix_bool check_target_mapping_property_option(const char *target_property);
 
 #endif

@@ -14,11 +14,15 @@ simpleTest {
   nodes = {
     inherit machine;
   };
-  testScript = ''
-    # Generate a documentation catalog
-    $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-generate-services-docs -s ${models}/services.nix -f svg --output-dir \$TMPDIR/out1");
+  testScript =
+    let
+      env = "NIX_PATH='nixpkgs=${nixpkgs}'";
+    in
+    ''
+      # Generate a documentation catalog
+      $machine->mustSucceed("${env} dydisnix-generate-services-docs -s ${models}/services.nix -f svg --output-dir \$TMPDIR/out1");
 
-    # Generate a documentation catalog with extra documentation properties
-    $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-generate-services-docs -s ${models}/services.nix --docs ${models}/docs.nix -f svg --output-dir \$TMPDIR/out2");
-  '';
+      # Generate a documentation catalog with extra documentation properties
+      $machine->mustSucceed("${env} dydisnix-generate-services-docs -s ${models}/services.nix --docs ${models}/docs.nix -f svg --output-dir \$TMPDIR/out2");
+    '';
 }

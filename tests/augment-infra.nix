@@ -13,12 +13,16 @@ simpleTest {
   nodes = {
     inherit machine;
   };
-  testScript = ''
-    # Test augment infra. For each target in the infrastructure model
-    # we add the attribute: augment = "augment". This test should
-    # succeed.
+  testScript =
+    let
+      env = "NIX_PATH='nixpkgs=${nixpkgs}'";
+    in
+    ''
+      # Test augment infra. For each target in the infrastructure model
+      # we add the attribute: augment = "augment". This test should
+      # succeed.
 
-    my $result = $machine->mustSucceed("NIX_PATH='nixpkgs=${nixpkgs}' dydisnix-augment-infra -i ${models}/infrastructure.nix -a ${models}/augment.nix");
-    $machine->mustSucceed("[ \"\$((NIX_PATH='nixpkgs=${nixpkgs}' nix-instantiate --eval-only --xml --strict $result) | grep 'augment')\" != \"\" ]");
-  '';
+      my $result = $machine->mustSucceed("${env} dydisnix-augment-infra -i ${models}/infrastructure.nix -a ${models}/augment.nix");
+      $machine->mustSucceed("[ \"\$((${env} nix-instantiate --eval-only --xml --strict $result) | grep 'augment')\" != \"\" ]");
+    '';
 }

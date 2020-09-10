@@ -3,9 +3,8 @@
 Boundaries *compute_boundaries(IdResourceType *type, GHashTable *id_assignments_table, GPtrArray *service_names)
 {
     Boundaries *boundaries = (Boundaries*)g_malloc(sizeof(Boundaries));
-    boundaries->lowest_id = type->min + 1;
-    boundaries->highest_id = type->min;
 
+    NixXML_bool first = TRUE;
     unsigned int i;
 
     for(i = 0; i < service_names->len; i++)
@@ -15,12 +14,27 @@ Boundaries *compute_boundaries(IdResourceType *type, GHashTable *id_assignments_
 
         if(id != NULL)
         {
-            if(*id < boundaries->lowest_id)
+            if(first)
+            {
                 boundaries->lowest_id = *id;
-
-            if(*id > boundaries->highest_id)
                 boundaries->highest_id = *id;
+                first = FALSE;
+            }
+            else
+            {
+                if(*id < boundaries->lowest_id)
+                    boundaries->lowest_id = *id;
+
+                if(*id > boundaries->highest_id)
+                    boundaries->highest_id = *id;
+            }
         }
+    }
+
+    if(first)
+    {
+        boundaries->lowest_id = type->min + 1;
+        boundaries->highest_id = type->min;
     }
 
     return boundaries;

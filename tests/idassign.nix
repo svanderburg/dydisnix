@@ -185,7 +185,7 @@ simpleTest {
       # Execute port assignment test. We assign unique IDs to all services in a service model.
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix --id-resources ${models}/idresources-global.nix --output-xml --output-file ids.xml");
-      my $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -207,6 +207,36 @@ simpleTest {
           print "Port is 3002!\n";
       } else {
           die "Assigned port should be 3002!";
+      }
+
+      $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix --id-resources ${models}/idresources-global.nix --output-file ids.nix");
+
+      # Reassign port numbers from a resource pool with different boundaries.
+      # This invalidates the second and third assignment which should get new and lower port numbers.
+
+      $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix --id-resources ${models}/idresources-global-different-boundaries.nix --ids ids.nix --output-xml --output-file ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+
+      if($result eq "3000\n") {
+          print "Port is 3000!\n";
+      } else {
+          die "Assigned port should be 3000!";
+      }
+
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+
+      if($result eq "2999\n") {
+          print "Port is 2999!\n";
+      } else {
+          die "Assigned port should be 2999!";
+      }
+
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+
+      if($result eq "2998\n") {
+          print "Port is 2998!\n";
+      } else {
+          die "Assigned port should be 2998!";
       }
 
       # We now deploy the system with a different resource configuration no longer defining ports.

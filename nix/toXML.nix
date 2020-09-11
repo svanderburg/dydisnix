@@ -1,10 +1,14 @@
 { nixpkgs ? <nixpkgs>
 , defaultTargetProperty
+, disnix
+, dydisnix
 }:
 
 let
   pkgs = import nixpkgs {};
-  filters = import ./filters.nix { inherit pkgs; };
+  filters = import ./filters.nix {
+    inherit pkgs disnix dydisnix;
+  };
 
   getTargetProperty = {target, defaultTargetProperty}:
     if target ? targetProperty then target.targetProperty else defaultTargetProperty;

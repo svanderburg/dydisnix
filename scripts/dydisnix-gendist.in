@@ -172,6 +172,8 @@ result=$(nix-build --argstr servicesFile "$servicesFile" \
           $coordinatorProfileArg \
           $noOutLinkArg \
           $showTraceArg \
+          --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+          --arg dydisnix 'builtins.storePath @prefix@' \
           @datadir@/@PACKAGE@/gendist.nix)
 
 if [ "$displayStdout" = "1" ]

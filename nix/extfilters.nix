@@ -1,6 +1,6 @@
 { pkgs
-, dydisnix ? builtins.storePath @prefix@
-, disnix ? builtins.storePath @DISNIX_PREFIX@
+, dydisnix
+, disnix
 }:
 
 let

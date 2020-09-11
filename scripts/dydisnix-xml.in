@@ -112,6 +112,8 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A servicesToXML \
+        --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+        --arg dydisnix 'builtins.storePath @prefix@' \
         @datadir@/@PACKAGE@/toXML.nix
 elif [ "$distributionFile" != "" ] && [ "$infrastructureFile" != "" ]
 then
@@ -120,6 +122,8 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A distributionToXML \
+        --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+        --arg dydisnix 'builtins.storePath @prefix@' \
         @datadir@/@PACKAGE@/toXML.nix
 elif [ "$infrastructureFile" != "" ]
 then
@@ -127,6 +131,8 @@ then
         --argstr defaultTargetProperty $targetProperty \
         -A infrastructureToXML \
         $noOutLinkArg $showTraceArg \
+        --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+        --arg dydisnix 'builtins.storePath @prefix@' \
         @datadir@/@PACKAGE@/toXML.nix
 elif [ "$portsFile" != "" ]
 then
@@ -134,6 +140,8 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A portsToXML \
+        --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+        --arg dydisnix 'builtins.storePath @prefix@' \
         @datadir@/@PACKAGE@/toXML.nix
 elif [ "$docsFile" != "" ]
 then
@@ -141,6 +149,8 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A docsToXML \
+        --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+        --arg dydisnix 'builtins.storePath @prefix@' \
         @datadir@/@PACKAGE@/toXML.nix
 elif [ "$idResourcesFile" != "" ]
 then
@@ -148,6 +158,8 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A idResourcesToXML \
+        --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+        --arg dydisnix 'builtins.storePath @prefix@' \
         @datadir@/@PACKAGE@/toXML.nix
 elif [ "$idsFile" != "" ]
 then
@@ -155,6 +167,8 @@ then
         --argstr defaultTargetProperty $targetProperty \
         $noOutLinkArg $showTraceArg \
         -A idsToXML \
+        --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
+        --arg dydisnix 'builtins.storePath @prefix@' \
         @datadir@/@PACKAGE@/toXML.nix
 else
     echo "Don't know how to generate XML from the given input files. Are all models correctly specified?" >&2

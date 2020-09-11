@@ -6,12 +6,17 @@
 , outputExpr ? true
 , nixpkgs ? <nixpkgs>
 , coordinatorProfile ? null
+, disnix
+, dydisnix
 }:
 
 let
   # Dependencies
   pkgs = import nixpkgs {};
-  referenceFilters = import ./filters.nix { inherit pkgs; };
+  referenceFilters = import ./filters.nix {
+    inherit pkgs disnix dydisnix;
+  };
+
   distributionXSL = if outputExpr then ./distribution_expr.xsl else ./distribution.xsl;
 
   # Import files

@@ -247,5 +247,9 @@ simpleTest {
       $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
       $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
       $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+
+      # We now attempt to generate IDs for a resource pool that is too small. It should fail.
+
+      $machine->mustFail("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix --id-resources ${models}/idresources-global-small.nix --ids ids.nix --output-xml --output-file ids.xml");
     '';
 }

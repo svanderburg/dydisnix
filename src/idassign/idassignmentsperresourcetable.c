@@ -121,13 +121,13 @@ void delete_id_assignments_per_resource_table(GHashTable *id_assignments_per_res
 
 void print_id_assignments_per_resource_table_nix(FILE *file, GHashTable *id_assignments_per_resource_table, const int indent_level, void *userdata)
 {
-    NixXML_print_g_hash_table_nix(file, id_assignments_per_resource_table, indent_level, userdata, (NixXML_PrintValueFunc)print_id_assignments_table_nix);
+    NixXML_print_g_hash_table_ordered_nix(file, id_assignments_per_resource_table, indent_level, userdata, (NixXML_PrintValueFunc)print_id_assignments_table_nix);
 }
 
 void print_id_assignments_per_resource_table_xml(FILE *file, GHashTable *id_assignments_per_resource_table, const int indent_level, const char *type_property_name, void *userdata)
 {
     NixXML_print_open_root_tag(file, "ids");
-    NixXML_print_g_hash_table_verbose_xml(file, id_assignments_per_resource_table, "resource", "name", indent_level, NULL, userdata, (NixXML_PrintXMLValueFunc)print_id_assignments_table_xml);
+    NixXML_print_g_hash_table_verbose_ordered_xml(file, id_assignments_per_resource_table, "resource", "name", indent_level, NULL, userdata, (NixXML_PrintXMLValueFunc)print_id_assignments_table_xml);
     NixXML_print_close_root_tag(file, "ids");
 }
 

@@ -75,7 +75,6 @@ src/libinfrastructure2/Makefile
 src/visualize-services/Makefile
 src/document-services/Makefile
 src/previous-distribution/Makefile
-nix/try-build.nix
 nix/Makefile
 xsl/Makefile
 css/Makefile

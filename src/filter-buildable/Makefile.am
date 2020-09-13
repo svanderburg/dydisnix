@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -DDATADIR=\"$(datadir)\"
+AM_CPPFLAGS = -DDISNIX_PREFIX=\"$(DISNIX_PREFIX)\" -DDATADIR=\"$(datadir)\"
 
 bin_PROGRAMS = dydisnix-filter-buildable
 noinst_HEADERS = filterbuildable.h

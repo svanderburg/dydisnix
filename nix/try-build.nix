@@ -1,6 +1,6 @@
 { servicesFile, infrastructureFile, distributionFile, serviceName, targetName, defaultClientInterface, defaultTargetProperty, extraParams
 , nixpkgs ? <nixpkgs>
-, disnix ? builtins.storePath @DISNIX_PREFIX@
+, disnix
 }:
 
 let

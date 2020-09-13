@@ -17,6 +17,7 @@ static pid_t instantiate_all_services_on_all_targets_async(gchar *services_expr,
             "--argstr", "targetName", targetName,
             "--argstr", "defaultClientInterface", interface,
             "--argstr", "defaultTargetProperty", target_property,
+            "--arg", "disnix", "builtins.storePath " DISNIX_PREFIX,
             "--arg", "extraParams", extra_params,
             DATADIR "/dydisnix/try-build.nix", NULL};
         dup2(2, 1);

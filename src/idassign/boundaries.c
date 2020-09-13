@@ -33,8 +33,8 @@ Boundaries *compute_boundaries(IdResourceType *type, GHashTable *id_assignments_
 
     if(first)
     {
-        boundaries->lowest_id = type->min + 1;
-        boundaries->highest_id = type->min;
+        boundaries->lowest_id = type->min;
+        boundaries->highest_id = type->min - 1;
     }
 
     return boundaries;

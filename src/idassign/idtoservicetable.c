@@ -10,16 +10,16 @@ NixXML_bool derive_next_id(IdResourceType *type, Boundaries *boundaries, GHashTa
         g_printerr("The amount of IDs is depleted!\n");
         return FALSE;
     }
-    else if(boundaries->lowest_id > type->min)
-    {
-        boundaries->lowest_id--;
-        *next_id = boundaries->lowest_id;
-        return TRUE;
-    }
     else if(boundaries->highest_id < type->max)
     {
         boundaries->highest_id++;
         *next_id = boundaries->highest_id;
+        return TRUE;
+    }
+    else if(boundaries->lowest_id > type->min)
+    {
+        boundaries->lowest_id--;
+        *next_id = boundaries->lowest_id;
         return TRUE;
     }
     else

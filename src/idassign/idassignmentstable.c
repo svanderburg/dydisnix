@@ -1,13 +1,7 @@
 #include "idassignmentstable.h"
-#include <stdlib.h>
 #include <nixxml-ghashtable.h>
 #include <nixxml-print-nix.h>
 #include <nixxml-print-xml.h>
-#include <nixxml-node.h>
-#include <service.h>
-#include "idresourcetype.h"
-#include "boundaries.h"
-#include "idtoservicetable.h"
 
 GHashTable *create_empty_id_assignments_table(void)
 {
@@ -45,30 +39,6 @@ static void remove_id_assignments(GHashTable *id_assignments_table, GPtrArray *r
         g_hash_table_remove(id_assignments_table, service_name);
         free(id);
     }
-}
-
-static NixXML_bool service_requires_unique_resource_id(Service *service, gchar *resource_name, gchar *service_property)
-{
-    NixXML_Node *requires_unique_ids_for_node = g_hash_table_lookup(service->properties, service_property);
-
-    if(requires_unique_ids_for_node == NULL)
-        return FALSE;
-    else if(requires_unique_ids_for_node->type == NIX_XML_TYPE_LIST)
-    {
-        unsigned int i;
-        GPtrArray *require_unique_ids_for = (GPtrArray*)requires_unique_ids_for_node->value;
-
-        for(i = 0; i < require_unique_ids_for->len; i++)
-        {
-            NixXML_Node *value_node = (NixXML_Node*)g_ptr_array_index(require_unique_ids_for, i);
-            if(g_strcmp0(value_node->value, resource_name) == 0)
-                return TRUE;
-        }
-
-        return FALSE;
-    }
-    else
-        return FALSE;
 }
 
 static NixXML_bool check_service_assignment_is_valid(GHashTable *services_table, gchar *service_name, gchar *resource_name, gchar *service_property, IdResourceType *type, int id)
@@ -136,46 +106,4 @@ void remove_invalid_distribution_id_assignments(GHashTable *id_assignments_table
     GPtrArray *invalid_keys = determine_invalid_distribution_assignments(id_assignments_table, resource_name, services_table, distribution_table, type, service_property);
     remove_id_assignments(id_assignments_table, invalid_keys);
     g_ptr_array_free(invalid_keys, TRUE);
-}
-
-static void assign_id(gchar *service_name, int id, GHashTable *id_assignments_table, GHashTable *id_to_services_table)
-{
-    int *id_ptr = (int*)malloc(sizeof(int));
-    *id_ptr = id;
-    g_hash_table_insert(id_assignments_table, g_strdup(service_name), id_ptr);
-    g_hash_table_insert(id_to_services_table, id_ptr, service_name);
-}
-
-NixXML_bool create_id_assignments_for_services(GHashTable *id_assignments_table, GPtrArray *service_names, gchar *resource_name, IdResourceType *type, GHashTable *services_table, gchar *service_property)
-{
-    NixXML_bool result = TRUE;
-
-    GHashTable *id_to_services_table = derive_id_to_service_table(id_assignments_table);
-    Boundaries *boundaries = compute_boundaries(type, id_assignments_table, service_names);
-
-    unsigned int i;
-
-    for(i = 0; i < service_names->len; i++)
-    {
-        gchar *service_name = g_ptr_array_index(service_names, i);
-        Service *service = g_hash_table_lookup(services_table, service_name);
-
-        if(service != NULL && service_requires_unique_resource_id(service, resource_name, service_property) && !g_hash_table_contains(id_assignments_table, service_name))
-        {
-            int id;
-
-            if(!derive_next_id(type, boundaries, id_to_services_table, &id))
-            {
-                result = FALSE;
-                break;
-            }
-
-            assign_id(service_name, id, id_assignments_table, id_to_services_table);
-        }
-    }
-
-    g_free(boundaries);
-    g_hash_table_destroy(id_to_services_table);
-
-    return result;
 }

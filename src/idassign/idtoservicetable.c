@@ -1,7 +1,17 @@
 #include "idtoservicetable.h"
 #include <distributiontable.h>
 
-NixXML_bool derive_next_id(IdResourceType *type, Boundaries *boundaries, GHashTable *id_to_service_table, int *next_id)
+static int increase_search_id(int search_id, const IdResourceType *type)
+{
+    search_id++;
+
+    if(search_id > type->max)
+        search_id = type->min;
+
+    return search_id;
+}
+
+NixXML_bool derive_next_id(const IdResourceType *type, GHashTable *id_to_service_table, int *last_id, int *next_id)
 {
     int max_num_of_ids = type->max - type->min + 1;
 
@@ -10,48 +20,42 @@ NixXML_bool derive_next_id(IdResourceType *type, Boundaries *boundaries, GHashTa
         g_printerr("The amount of IDs is depleted!\n");
         return FALSE;
     }
-    else if(boundaries->highest_id < type->max)
-    {
-        boundaries->highest_id++;
-        *next_id = boundaries->highest_id;
-        return TRUE;
-    }
-    else if(boundaries->lowest_id > type->min)
-    {
-        boundaries->lowest_id--;
-        *next_id = boundaries->lowest_id;
-        return TRUE;
-    }
     else
     {
-        int i;
+        int search_id;
 
-        for(i = type->min; i <= type->max; i++)
+        if(last_id == NULL)
+            search_id = type->min;
+        else
+            search_id = increase_search_id(*last_id, type);
+
+        while(TRUE)
         {
-            if(!g_hash_table_contains(id_to_service_table, &i))
+            if(g_hash_table_contains(id_to_service_table, &search_id))
+                search_id = increase_search_id(search_id, type);
+            else
             {
-                *next_id = i;
-                return TRUE;
+                *next_id = search_id;
+                break;
             }
         }
 
-        return FALSE;
+        return TRUE;
     }
 }
 
-GHashTable *derive_id_to_service_table(GHashTable *id_assignments_table)
+GHashTable *derive_id_to_service_table(GHashTable *id_assignments_table, GPtrArray *service_names)
 {
+    unsigned int i;
     GHashTable *id_to_service_table = g_hash_table_new(g_int_hash, g_int_equal);
 
-    GHashTableIter iter;
-    gpointer key, value;
-
-    g_hash_table_iter_init(&iter, id_assignments_table);
-    while(g_hash_table_iter_next(&iter, &key, &value))
+    for(i = 0; i < service_names->len; i++)
     {
-        gchar *service_name = (gchar*)key;
-        int *id = (int*)value;
-        g_hash_table_insert(id_to_service_table, id, service_name);
+        gchar *service_name = (gchar*)g_ptr_array_index(service_names, i);
+        int *id = (int*)g_hash_table_lookup(id_assignments_table, service_name);
+
+        if(id != NULL)
+            g_hash_table_insert(id_to_service_table, id, service_name);
     }
 
     return id_to_service_table;

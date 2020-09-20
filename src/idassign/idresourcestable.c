@@ -1,5 +1,4 @@
 #include "idresourcestable.h"
-#include <string.h>
 #include <unistd.h>
 #include <procreact_future.h>
 #include <nixxml-ghashtable.h>

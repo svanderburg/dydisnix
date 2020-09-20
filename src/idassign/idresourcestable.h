@@ -2,7 +2,6 @@
 #define __DYDISNIX_IDRESOURCESTABLE_H
 #include <libxml/parser.h>
 #include <glib.h>
-#include <nixxml-types.h>
 #include "idresourcetype.h"
 
 GHashTable *create_id_resources_table_from_xml(const gchar *id_resources_xml_file);

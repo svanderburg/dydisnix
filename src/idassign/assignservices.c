@@ -25,15 +25,15 @@ static GPtrArray *derive_service_names(GHashTable *services_table)
     return service_names;
 }
 
-static NixXML_bool assign_global_ids_to_services(GHashTable *id_assignments_table, gchar *resource_name, IdResourceType *type, GHashTable *services_table, gchar *service_property)
+static NixXML_bool assign_global_ids_to_services(GHashTable *id_assignments_table, GHashTable *last_assignments_table, gchar *resource_name, IdResourceType *type, GHashTable *services_table, gchar *service_property)
 {
     GPtrArray *service_names = derive_service_names(services_table);
-    NixXML_bool result = create_id_assignments_for_services(id_assignments_table, service_names, resource_name, type, services_table, service_property);
+    NixXML_bool result = create_id_assignments_for_services(id_assignments_table, last_assignments_table, service_names, resource_name, type, services_table, service_property);
     g_ptr_array_free(service_names, TRUE);
     return result;
 }
 
-NixXML_bool assign_ids_to_services(GHashTable *id_resources_table, GHashTable *id_assignments_per_resource_table, GHashTable *services_table, gchar *service_property)
+NixXML_bool assign_ids_to_services(GHashTable *id_resources_table, IdsConfig *ids_config, GHashTable *services_table, gchar *service_property)
 {
     GHashTableIter iter;
     gpointer key, value;
@@ -45,12 +45,12 @@ NixXML_bool assign_ids_to_services(GHashTable *id_resources_table, GHashTable *i
         IdResourceType *type = (IdResourceType*)value;
 
         // Create ID assignments table
-        GHashTable *id_assignments_table = retrieve_or_add_empty_id_assignments_table_for_resource(id_assignments_per_resource_table, resource_name);
+        GHashTable *id_assignments_table = retrieve_or_add_empty_id_assignments_table_for_resource(ids_config->id_assignments_per_resource_table, resource_name);
 
         // Assign IDs
         if(xmlStrcmp(type->scope, (xmlChar*) "global") == 0)
         {
-            if(!assign_global_ids_to_services(id_assignments_table, resource_name, type, services_table, service_property))
+            if(!assign_global_ids_to_services(id_assignments_table, ids_config->last_assignments_table, resource_name, type, services_table, service_property))
                 return FALSE;
         }
         else

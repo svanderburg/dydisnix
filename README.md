@@ -65,7 +65,9 @@ Augmenting a discovered infrastructure model
 The following command takes an infrastructure model and augmentation model and
 produces a new infrastructure model with the properties augmented:
 
-    $ dydisnix-augment-infra -i infrastructure-discovered -a augment.nix
+```bash
+$ dydisnix-augment-infra -i infrastructure-discovered -a augment.nix
+```
 
 The first parameter refers to a Disnix infrastructure model that can be written
 by hand or generated through `disnix-capture-infra` or the
@@ -418,7 +420,7 @@ a service model as follows:
 {distribution, system, pkgs}:
 
 let
-  ids = import ./ids.nix;
+  ids = if builtins.pathExists ./ids.nix then (import ./ids.nix).ids else {};
 in
 rec {
   roomservice = rec {
@@ -475,19 +477,26 @@ The output of the `ids.nix` expression may look as follows:
 
 ```nix
 {
-  ports = {
-    roomservice = 3000;
-    stafftracker = 3001;
-  };
+  ids = {
+    ports = {
+      roomservice = 3000;
+      stafftracker = 3001;
+    };
 
-  uids = {
-    roomservice = 2000;
-    stafftracker = 2001;
-  };
+    uids = {
+      roomservice = 2000;
+      stafftracker = 2001;
+    };
 
-  gids = {
-    roomservice = 2000;
-    stafftracker = 2001;
+    gids = {
+      roomservice = 2000;
+      stafftracker = 2001;
+    };
+  };
+  lastAssignments = {
+    ports = 3001;
+    uids = 2001;
+    gids = 2001;
   };
 }
 ```
@@ -495,6 +504,10 @@ The output of the `ids.nix` expression may look as follows:
 The above Nix expression specifies for each resource type, a mapping from a
 service to a unique ID (that might be globally unique or unique to the target
 machine where the service is deployed to).
+
+It also memorizes the last assigned IDs per resource (and optionally per target)
+so that it will not reuse any previously assigned IDs, unless the limit has been
+reached.
 
 In addition to creating ID assignments from scratch, it is also possible to
 update an existing `ids.nix` expression:

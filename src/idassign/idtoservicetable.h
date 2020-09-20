@@ -3,10 +3,9 @@
 #include <glib.h>
 #include <nixxml-types.h>
 #include "idresourcetype.h"
-#include "boundaries.h"
 
-NixXML_bool derive_next_id(IdResourceType *type, Boundaries *boundaries, GHashTable *id_to_service_table, int *next_id);
+NixXML_bool derive_next_id(const IdResourceType *type, GHashTable *id_to_service_table, int *last_id, int *next_id);
 
-GHashTable *derive_id_to_service_table(GHashTable *id_assignments_table);
+GHashTable *derive_id_to_service_table(GHashTable *id_assignments_table, GPtrArray *service_names);
 
 #endif

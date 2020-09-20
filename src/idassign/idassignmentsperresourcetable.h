@@ -2,18 +2,13 @@
 #define __DYDISNIX_IDASSIGNMENTSPERRESOURCETABLE_H
 #include <stdio.h>
 #include <libxml/parser.h>
-#include <nixxml-types.h>
 #include "idassignmentstable.h"
-
-GHashTable *create_id_assignments_per_resource_table_from_xml(const gchar *ids_xml_file);
-
-GHashTable *create_id_assignments_per_resource_table_from_nix(gchar *ids_nix);
-
-GHashTable *create_id_assignments_per_resource_table(gchar *ids, const NixXML_bool xml);
 
 GHashTable *create_empty_id_assignments_per_resource_table(void);
 
 GHashTable *retrieve_or_add_empty_id_assignments_table_for_resource(GHashTable *id_assignments_per_resource_table, const gchar *resource_name);
+
+void *parse_id_assignments_per_resource_table(xmlNodePtr element, void *userdata);
 
 void delete_id_assignments_per_resource_table(GHashTable *id_assignments_per_resource_table);
 

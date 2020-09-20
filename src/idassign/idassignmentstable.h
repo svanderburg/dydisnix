@@ -20,6 +20,4 @@ void remove_invalid_service_id_assignments(GHashTable *id_assignments_table, gch
 
 void remove_invalid_distribution_id_assignments(GHashTable *id_assignments_table, gchar *resource_name, GHashTable *services_table, GHashTable *distribution_table, IdResourceType *type, gchar *service_property);
 
-NixXML_bool create_id_assignments_for_services(GHashTable *id_assignments_table, GPtrArray *service_names, gchar *resource_name, IdResourceType *type, GHashTable *services_table, gchar *service_property);
-
 #endif

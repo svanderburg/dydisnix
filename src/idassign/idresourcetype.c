@@ -1,6 +1,7 @@
 #include "idresourcetype.h"
 #include <stdlib.h>
 #include <glib.h>
+#include <nixxml-node.h>
 #include <nixxml-parse.h>
 
 static void *create_id_resource_type_from_element(xmlNodePtr element, void *userdata)
@@ -65,4 +66,28 @@ void delete_id_resource_type(IdResourceType *type)
 NixXML_bool id_is_outside_range(IdResourceType *type, int id)
 {
     return (id < type->min || id > type->max);
+}
+
+NixXML_bool service_requires_unique_resource_id(Service *service, gchar *resource_name, gchar *service_property)
+{
+    NixXML_Node *requires_unique_ids_for_node = g_hash_table_lookup(service->properties, service_property);
+
+    if(requires_unique_ids_for_node == NULL)
+        return FALSE;
+    else if(requires_unique_ids_for_node->type == NIX_XML_TYPE_LIST)
+    {
+        unsigned int i;
+        GPtrArray *require_unique_ids_for = (GPtrArray*)requires_unique_ids_for_node->value;
+
+        for(i = 0; i < require_unique_ids_for->len; i++)
+        {
+            NixXML_Node *value_node = (NixXML_Node*)g_ptr_array_index(require_unique_ids_for, i);
+            if(g_strcmp0(value_node->value, resource_name) == 0)
+                return TRUE;
+        }
+
+        return FALSE;
+    }
+    else
+        return FALSE;
 }

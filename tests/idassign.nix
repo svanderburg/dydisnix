@@ -22,7 +22,7 @@ simpleTest {
       # to each service using a shared ports pool among all machines.
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix -i ${models}/infrastructure.nix -d ${models}/distribution.nix --id-resources ${models}/idresources-global.nix --output-xml --output-file ids.xml");
-      my $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      my $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -30,7 +30,7 @@ simpleTest {
           die "Assigned port should be 3000, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
       if($result eq "3001\n") {
           print "Port is 3001!\n";
@@ -38,7 +38,7 @@ simpleTest {
           die "Assigned port should be 3001, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       if($result eq "3002\n") {
           print "Port is 3002!\n";
@@ -53,7 +53,7 @@ simpleTest {
       # identical.
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix -i ${models}/infrastructure.nix -d ${models}/distribution.nix --id-resources ${models}/idresources-global.nix --ids ids.nix --output-xml --output-file ids.xml");
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -61,7 +61,7 @@ simpleTest {
           die "Assigned port should be 3000, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
       if($result eq "3001\n") {
           print "Port is 3001!\n";
@@ -69,7 +69,7 @@ simpleTest {
           die "Assigned port should be 3001, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       if($result eq "3002\n") {
           print "Port is 3002!\n";
@@ -82,8 +82,8 @@ simpleTest {
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids2.nix -i ${models}/infrastructure.nix -d ${models}/distribution2.nix --id-resources ${models}/idresources-global.nix --ids ids.nix --output-xml --output-file ids.xml");
 
-      $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
       if($result eq "3001\n") {
           print "Port is 3001!\n";
@@ -91,7 +91,7 @@ simpleTest {
           die "Assigned port should be 3001, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       if($result eq "3002\n") {
           print "Port is 3002!\n";
@@ -105,7 +105,7 @@ simpleTest {
       # number (an higher id than the previously highest assigned id).
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix -i ${models}/infrastructure.nix -d ${models}/distribution.nix --id-resources ${models}/idresources-global.nix --ids ids.nix --output-xml --output-file ids.xml");
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
 
       if($result eq "3003\n") {
           print "Port is 3003!\n";
@@ -113,7 +113,7 @@ simpleTest {
           die "Assigned port should be 3003, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
       if($result eq "3001\n") {
           print "Port is 3001!\n";
@@ -121,7 +121,7 @@ simpleTest {
           die "Assigned port should be 3001, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       if($result eq "3002\n") {
           print "Port is 3002!\n";
@@ -136,16 +136,16 @@ simpleTest {
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix -i ${models}/infrastructure.nix -d ${models}/distribution.nix --id-resources ${models}/idresources-differentresource.nix --ids ids.nix --output-xml --output-file ids.xml");
 
-      $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
-      $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
-      $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       # Map two services with private ID assignments to the same
       # machine. They should have different IDs
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix -i ${models}/infrastructure.nix -d ${models}/distribution2.nix --id-resources ${models}/idresources-machine.nix --output-xml --output-file ids.xml ");
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -153,7 +153,7 @@ simpleTest {
           die "Assigned port should be 3000, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       if($result eq "3001\n") {
           print "Port is 3001!\n";
@@ -166,7 +166,7 @@ simpleTest {
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix -i ${models}/infrastructure.nix -d ${models}/distribution3.nix --id-resources ${models}/idresources-machine.nix --output-xml --output-file ids.xml ");
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -174,7 +174,7 @@ simpleTest {
           die "Assigned port should be 3000, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -185,7 +185,7 @@ simpleTest {
       # Execute port assignment test. We assign unique IDs to all services in a service model.
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix --id-resources ${models}/idresources-global.nix --output-xml --output-file ids.xml");
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -193,7 +193,7 @@ simpleTest {
           die "Assigned port should be 3000, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
       if($result eq "3001\n") {
           print "Port is 3001!\n";
@@ -201,7 +201,7 @@ simpleTest {
           die "Assigned port should be 3001, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       if($result eq "3002\n") {
           print "Port is 3002!\n";
@@ -215,7 +215,7 @@ simpleTest {
       # This invalidates the second and third assignment which should get new and lower port numbers.
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix --id-resources ${models}/idresources-global-different-boundaries.nix --ids ids.nix --output-xml --output-file ids.xml");
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
 
       if($result eq "3000\n") {
           print "Port is 3000!\n";
@@ -223,20 +223,20 @@ simpleTest {
           die "Assigned port should be 3000, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
 
-      if($result eq "2999\n") {
-          print "Port is 2999!\n";
+      if($result eq "2000\n") {
+          print "Port is 2000!\n";
       } else {
-          die "Assigned port should be 2999, instead it is: $result!";
+          die "Assigned port should be 2000, instead it is: $result!";
       }
 
-      $result = $machine->mustSucceed("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $result = $machine->mustSucceed("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
-      if($result eq "2998\n") {
-          print "Port is 2998!\n";
+      if($result eq "2001\n") {
+          print "Port is 2001!\n";
       } else {
-          die "Assigned port should be 2998, instead it is: $result!";
+          die "Assigned port should be 2001, instead it is: $result!";
       }
 
       # We now deploy the system with a different resource configuration no longer defining ports.
@@ -244,9 +244,9 @@ simpleTest {
 
       $machine->mustSucceed("${env} dydisnix-id-assign -s ${models}/services-with-ids.nix --id-resources ${models}/idresources-differentresource.nix --ids ids.nix --output-xml --output-file ids.xml");
 
-      $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
-      $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
-      $machine->mustFail("xmllint --xpath \"/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
 
       # We now attempt to generate IDs for a resource pool that is too small. It should fail.
 

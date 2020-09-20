@@ -8,10 +8,11 @@
 #include "idresourcestable.h"
 #include "idassignmentstable.h"
 #include "idassignmentsperresourcetable.h"
+#include "idsconfig.h"
 #include "assignservices.h"
 #include "assigndistribution.h"
 
-static NixXML_bool print_assignments_per_resource_table(GHashTable *id_assignments_per_resource_table, const char *output_file, NixXML_bool xml, NixXML_bool automapped)
+static NixXML_bool print_ids_config(IdsConfig *ids_config, const char *output_file, const NixXML_bool xml, NixXML_bool automapped)
 {
     FILE *file;
 
@@ -27,9 +28,9 @@ static NixXML_bool print_assignments_per_resource_table(GHashTable *id_assignmen
     }
 
     if(xml)
-        print_id_assignments_per_resource_table_xml(file, id_assignments_per_resource_table, 0, NULL, NULL);
+        print_ids_config_xml(file, ids_config, 0, NULL, NULL);
     else
-        print_id_assignments_per_resource_table_nix(file, id_assignments_per_resource_table, 0, &automapped);
+        print_ids_config_nix(file, ids_config, 0, &automapped);
 
     if(output_file != NULL)
         fclose(file);
@@ -45,12 +46,12 @@ static int idassign_to_services(gchar *services, gchar *resources, gchar *ids, g
     GHashTable *services_table = create_service_table(services, xml);
     GHashTable *id_resources_table = create_id_resources_table(resources, xml);
 
-    GHashTable *id_assignments_per_resource_table;
+    IdsConfig *ids_config;
 
     if(ids == NULL)
-        id_assignments_per_resource_table = create_empty_id_assignments_per_resource_table();
+        ids_config = create_empty_ids_config();
     else
-        id_assignments_per_resource_table = create_id_assignments_per_resource_table(ids, xml);
+        ids_config = create_ids_config(ids, xml);
 
     if(services_table == NULL)
     {
@@ -62,19 +63,19 @@ static int idassign_to_services(gchar *services, gchar *resources, gchar *ids, g
         g_printerr("Error with opening the ID resources model!\n");
         exit_status = 1;
     }
-    else if(id_assignments_per_resource_table == NULL)
+    else if(ids_config == NULL)
     {
         g_printerr("Error with opening the IDs model!\n");
         exit_status = 1;
     }
     else
     {
-        remove_invalid_service_id_assignments_per_resource(id_assignments_per_resource_table, services_table, id_resources_table, service_property);
+        remove_invalid_service_ids(ids_config, services_table, id_resources_table, service_property);
 
-        if(assign_ids_to_services(id_resources_table, id_assignments_per_resource_table, services_table, service_property))
+        if(assign_ids_to_services(id_resources_table, ids_config, services_table, service_property))
         {
            NixXML_bool automapped = TRUE;
-            if(!print_assignments_per_resource_table(id_assignments_per_resource_table, output_file, flags & DYDISNIX_FLAG_OUTPUT_XML, automapped))
+            if(!print_ids_config(ids_config, output_file, flags & DYDISNIX_FLAG_OUTPUT_XML, automapped))
                 exit_status = 1;
         }
         else
@@ -82,7 +83,7 @@ static int idassign_to_services(gchar *services, gchar *resources, gchar *ids, g
     }
 
     // Cleanup
-    delete_id_assignments_per_resource_table(id_assignments_per_resource_table);
+    delete_ids_config(ids_config);
     delete_id_resources_table(id_resources_table);
     delete_service_table(services_table);
 
@@ -100,12 +101,12 @@ static int idassign_to_distribution(gchar *services, gchar *infrastructure, gcha
 
     GHashTable *id_resources_table = create_id_resources_table(resources, xml);
 
-    GHashTable *id_assignments_per_resource_table;
+    IdsConfig *ids_config;
 
     if(ids == NULL)
-        id_assignments_per_resource_table = create_empty_id_assignments_per_resource_table();
+        ids_config = create_empty_ids_config();
     else
-        id_assignments_per_resource_table = create_id_assignments_per_resource_table(ids, xml);
+        ids_config = create_ids_config(ids, xml);
 
     if(services_table == NULL)
     {
@@ -122,7 +123,7 @@ static int idassign_to_distribution(gchar *services, gchar *infrastructure, gcha
         g_printerr("Error with opening the ID resources model!\n");
         exit_status = 1;
     }
-    else if(id_assignments_per_resource_table == NULL)
+    else if(ids_config == NULL)
     {
         g_printerr("Error with opening the IDs model!\n");
         exit_status = 1;
@@ -131,11 +132,11 @@ static int idassign_to_distribution(gchar *services, gchar *infrastructure, gcha
     {
         GHashTable *target_to_services_table = create_target_to_services_table(distribution_table);
 
-        remove_invalid_distribution_id_assignments_per_resource(id_assignments_per_resource_table, services_table, distribution_table, id_resources_table, service_property);
+        remove_invalid_distribution_ids(ids_config, services_table, distribution_table, target_to_services_table, id_resources_table, service_property);
 
-        if(assign_ids_to_distributed_services(id_resources_table, id_assignments_per_resource_table, services_table, distribution_table, target_to_services_table, service_property))
+        if(assign_ids_to_distributed_services(id_resources_table, ids_config, services_table, distribution_table, target_to_services_table, service_property))
         {
-            if(!print_assignments_per_resource_table(id_assignments_per_resource_table, output_file, flags & DYDISNIX_FLAG_OUTPUT_XML, automapped))
+            if(!print_ids_config(ids_config, output_file, flags & DYDISNIX_FLAG_OUTPUT_XML, automapped))
                 exit_status = 1;
         }
         else
@@ -145,7 +146,7 @@ static int idassign_to_distribution(gchar *services, gchar *infrastructure, gcha
     }
 
     // Cleanup
-    delete_id_assignments_per_resource_table(id_assignments_per_resource_table);
+    delete_ids_config(ids_config);
     delete_id_resources_table(id_resources_table);
     delete_distribution_table(distribution_table);
     delete_service_table(services_table);

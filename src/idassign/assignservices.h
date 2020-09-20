@@ -3,7 +3,8 @@
 #include <glib.h>
 #include <nixxml-types.h>
 #include "idresourcetype.h"
+#include "idsconfig.h"
 
-NixXML_bool assign_ids_to_services(GHashTable *id_resources_table, GHashTable *id_assignments_per_resource_table, GHashTable *services_table, gchar *service_property);
+NixXML_bool assign_ids_to_services(GHashTable *id_resources_table, IdsConfig *ids_config, GHashTable *services_table, gchar *service_property);
 
 #endif

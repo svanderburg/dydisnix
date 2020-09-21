@@ -247,6 +247,7 @@ simpleTest {
       $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService1']/text()\" ids.xml");
       $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService2']/text()\" ids.xml");
       $machine->mustFail("xmllint --xpath \"/ids/ids/resource[\@name='ports']/assignment[\@name='testService3']/text()\" ids.xml");
+      $machine->mustFail("xmllint --xpath \"/lastAssignments/assignment[\@name='ports']/text()\" ids.xml");
 
       # We now attempt to generate IDs for a resource pool that is too small. It should fail.
 

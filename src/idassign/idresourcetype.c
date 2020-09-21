@@ -39,17 +39,27 @@ static void parse_and_insert_id_resource_type_properties(xmlNodePtr element, voi
     }
     else if(xmlStrcmp(key, (xmlChar*) "scope") == 0)
         type->scope = NixXML_parse_value(element, userdata);
+    else if(xmlStrcmp(key, (xmlChar*) "step") == 0)
+    {
+        int *step = NixXML_parse_int(element, userdata);
+        type->step = *step;
+        free(step);
+    }
 }
 
 void *parse_id_resource_type(xmlNodePtr element, void *userdata)
 {
     IdResourceType *type = NixXML_parse_simple_heterogeneous_attrset(element, userdata, create_id_resource_type_from_element, parse_and_insert_id_resource_type_properties);
 
+    /* Set default values */
     if(type->scope == NULL || xmlStrcmp(type->scope, (xmlChar*) "") == 0)
     {
         xmlFree(type->scope);
         type->scope = xmlStrdup((xmlChar*) "global");
     }
+
+    if(type->step == 0)
+        type->step = 1;
 
     return type;
 }

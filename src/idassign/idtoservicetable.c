@@ -3,7 +3,7 @@
 
 static int increase_search_id(int search_id, const IdResourceType *type)
 {
-    search_id++;
+    search_id += type->step;
 
     if(search_id > type->max)
         search_id = type->min;

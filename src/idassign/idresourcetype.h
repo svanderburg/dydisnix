@@ -11,6 +11,8 @@ typedef struct
     int max;
 
     xmlChar *scope;
+
+    int step;
 }
 IdResourceType;
 

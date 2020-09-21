@@ -380,6 +380,7 @@ you need to specify an ID resources model that has the following structure:
     min = 3000;
     max = 4000;
     scope = "global";
+    step = 1;
   };
 
   uids = {
@@ -412,6 +413,10 @@ Each resource defines the following configuration properties:
   an ID should be unique to the machine where a service is deployed to.
   In case the scope is `machine`, a service becomes target-specific and can
   only be deployed to one machine in the network only.
+* `step` specifies the step size of the search algorithm. The default the value
+  is 1, but can be increased to any number. A higher number is useful to auto
+  assign port numbers to services that requires multiple port assignments in
+  which port numbers are derived from a base port number.
 
 To make it possible to automatically assign IDs to services, we can annotate
 a service model as follows:

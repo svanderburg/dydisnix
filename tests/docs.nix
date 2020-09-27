@@ -1,6 +1,6 @@
 {nixpkgs, pkgs, dysnomia, disnix, dydisnix}:
 
-with import "${nixpkgs}/nixos/lib/testing.nix" { system = builtins.currentSystem; };
+with import "${nixpkgs}/nixos/lib/testing-python.nix" { system = builtins.currentSystem; };
 
 let
   machine = import ./machine.nix {
@@ -20,9 +20,13 @@ simpleTest {
     in
     ''
       # Generate a documentation catalog
-      $machine->mustSucceed("${env} dydisnix-generate-services-docs -s ${models}/services.nix -f svg --output-dir \$TMPDIR/out1");
+      machine.succeed(
+          "${env} dydisnix-generate-services-docs -s ${models}/services.nix -f svg --output-dir $TMPDIR/out1"
+      )
 
       # Generate a documentation catalog with extra documentation properties
-      $machine->mustSucceed("${env} dydisnix-generate-services-docs -s ${models}/services.nix --docs ${models}/docs.nix -f svg --output-dir \$TMPDIR/out2");
+      machine.succeed(
+          "${env} dydisnix-generate-services-docs -s ${models}/services.nix --docs ${models}/docs.nix -f svg --output-dir $TMPDIR/out2"
+      )
     '';
 }

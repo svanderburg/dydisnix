@@ -1,6 +1,6 @@
 {nixpkgs, pkgs, dysnomia, disnix, dydisnix}:
 
-with import "${nixpkgs}/nixos/lib/testing.nix" { system = builtins.currentSystem; };
+with import "${nixpkgs}/nixos/lib/testing-python.nix" { system = builtins.currentSystem; };
 
 let
   machine = import ./machine.nix {
@@ -22,7 +22,13 @@ simpleTest {
       # we add the attribute: augment = "augment". This test should
       # succeed.
 
-      my $result = $machine->mustSucceed("${env} dydisnix-augment-infra -i ${models}/infrastructure.nix -a ${models}/augment.nix");
-      $machine->mustSucceed("[ \"\$((${env} nix-instantiate --eval-only --xml --strict $result) | grep 'augment')\" != \"\" ]");
+      result = machine.succeed(
+          "${env} dydisnix-augment-infra -i ${models}/infrastructure.nix -a ${models}/augment.nix"
+      )
+      machine.succeed(
+          "[ \"$((${env} nix-instantiate --eval-only --xml --strict {}) | grep 'augment')\" != \"\" ]".format(
+              result
+          )
+      )
     '';
 }

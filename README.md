@@ -231,12 +231,13 @@ following algorithms are provided:
 * A one dimensional division method, using a `greedy`, `lowest-bidder` or
   `highest-bidder` strategy
 * An approximation alogrithm for the minimum set cover problem (optimize costs
-  when machines have a fixed price).
+  when machines have a fixed price, no matter the amount of services they run).
 * An approximation algorithm for the multiway cut problem (try to reduce the
   amount of network links between machines, to make deployments more reliable)
 * An approximation algorithm for the graph coloring problem (try to manifest
   all dependencies as network links between machines, with the minimum amount
-  of machines).
+  of machines). This can be useful to test a system for reliability and
+  recoverability.
 
 Implementing custom filter functions
 ------------------------------------

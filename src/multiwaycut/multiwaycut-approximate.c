@@ -187,11 +187,28 @@ static void delete_cuts_per_terminal_table(GHashTable *cuts_per_terminal_table)
 void approximate_multiway_cut_solution(ApplicationHostGraph *graph, GHashTable *distribution_table)
 {
     // The three steps of the approximation algorithm
+
+    /*
+     * Step 1: For each terminal (target machine) find a minimum-cost set of
+     * edges (distribution mappings from target machine to services) whose
+     * removal disconnects the terminal (machine) from the rest of the terminals
+     * (other machines).
+     */
     GHashTable *cuts_per_terminal_table = generate_minimum_cuts_per_terminal(graph);
+
+    // Step 2: Discard the cut (host -> service mapping) whose cost is the heaviest
     discard_heaviest_cut(cuts_per_terminal_table);
+
+    /*
+     * Step 3: Output the union of the rest.
+     * Equivalent step: the union contains the cuts that need to be removed from
+     * the graph. After removal, what remains is the intended/near optimal
+     * mapping of targets to services -- the terminals that remain attached to
+     * the graph, specify to which machines the services need to be distributed.
+     */
     unlink_cuts_in_graph(graph, cuts_per_terminal_table);
 
-    // Fix orphaned services
+    // Fix orphaned services (also described in the paper, as a fixup after applying the approximation algorithm)
     fix_orphaned_services(graph, distribution_table);
 
     // Cleanup

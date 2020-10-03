@@ -154,9 +154,10 @@ NixXML_bool approximate_graph_coloring_dsatur(PartialColoredGraph *graph)
 {
     NixXML_bool result = TRUE;
 
+    // Step 1: arrange the vertices by decreasing order of degrees
     GPtrArray *nodes_ordered_by_degree = order_nodes_by_degree(graph->uncolored_nodes_table);
 
-    // Approximation starts here
+    // Step 2: color a vertex of a maximal degree with color 1
     Node *first_node = find_node_with_highest_degree(nodes_ordered_by_degree);
 
     if(first_node == NULL)
@@ -165,9 +166,17 @@ NixXML_bool approximate_graph_coloring_dsatur(PartialColoredGraph *graph)
     {
         assign_color(graph, first_node, 0, nodes_ordered_by_degree);
 
+        // Step 5: If all the vertices are colored stop.
         while(g_hash_table_size(graph->uncolored_nodes_table) > 0)
         {
+            /*
+             * Step 3: choose a vertex with a maximal saturation degree.
+             * If there is an equality, choose any vertex of a maximal degree
+             * in the uncolored subgraph
+             */
             Node *node = select_node_to_color(graph, nodes_ordered_by_degree);
+
+            // Step 4: Color the vertex with the lowest numbered color
             unsigned int color_index = pick_lowest_possible_color(node, graph->colors, graph->colored_nodes_table);
 
             if(color_index < graph->colors->len)

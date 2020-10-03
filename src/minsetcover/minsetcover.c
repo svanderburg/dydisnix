@@ -129,20 +129,31 @@ static void process_min_cost_target_mapping(gchar *host_name, GPtrArray *service
     }
 }
 
+/*
+ * Applies the approximation algorithm for minimum set cover.
+ * This approximation method is described in the paper:
+ * "A Graph-based Approach for Deploying Component-based Applications into Channel-based Distributed Environments"
+ * by A. Heydarnoori and W. Binder
+ */
 static GHashTable *approximate_minset_cover_greedy(GHashTable *service_table, GHashTable *targets_table, GHashTable *distribution_table, GHashTable *target_to_services_table, gchar *target_property)
 {
-    /* Create a result table with the same services as in the input distribution model and empty candidate hosts */
+    // Step 1: create empty data structures for covered mappings and covered services table
     GHashTable *result_table = generate_empty_mappings_table(distribution_table);
-
     GHashTable *covered_services_table = g_hash_table_new(g_str_hash, g_str_equal);
 
+    // Step 2: keep repeating until all services have been covered
     while(g_hash_table_size(covered_services_table) < g_hash_table_size(service_table))
     {
+        // Step 3: Find target machine with smallest cost fraction
         gchar *host_name = find_target_with_smallest_cost_fraction(target_to_services_table, targets_table, target_property, covered_services_table);
+
+        // Step 4: Add service and corresponding mapping to target machine to covered mappings and covered services
         process_min_cost_target_mapping(host_name, g_hash_table_lookup(target_to_services_table, host_name), result_table, covered_services_table);
     }
 
     g_hash_table_destroy(covered_services_table);
+
+    // Step 5: the result is all the covered mappings
     return result_table;
 }
 

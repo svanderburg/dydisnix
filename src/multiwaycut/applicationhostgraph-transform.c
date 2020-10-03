@@ -3,12 +3,12 @@
 #include <service.h>
 #include <distributionmapping.h>
 
-static void generate_initial_application_nodes(ApplicationHostGraph *graph, GHashTable *candidate_target_table)
+static void generate_initial_application_nodes(ApplicationHostGraph *graph, GHashTable *distribution_table)
 {
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init(&iter, candidate_target_table);
+    g_hash_table_iter_init(&iter, distribution_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         gchar *service_name = (gchar*)key;
@@ -52,10 +52,10 @@ static void generate_edges_for_application_dependencies(ApplicationHostGraph *gr
  * - Every service in the service model is an application node.
  * - Every inter-dependency (dependsOn, connectsTo) translates to a bidirectional link between corresponding app nodes with weight: 1
  */
-static void generate_application_graph(ApplicationHostGraph *graph, GHashTable *services_table, GHashTable *candidate_target_table)
+static void generate_application_graph(ApplicationHostGraph *graph, GHashTable *services_table, GHashTable *distribution_table)
 {
     /* Create application nodes */
-    generate_initial_application_nodes(graph, candidate_target_table);
+    generate_initial_application_nodes(graph, distribution_table);
 
     /* Create edges between application nodes */
     generate_edges_for_application_dependencies(graph, services_table);
@@ -103,12 +103,12 @@ static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GHashTab
  * - Every service becomes an app node. Every inter-dependencies translates to a bidirectional link with weight: 1
  * - Every target machines becomes a host. When a target machine is a candidate deployment target for a service, a link gets created with a very heavy weight: n^2
  */
-ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table, GHashTable *candidate_target_table, GHashTable *target_to_services_table)
+ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table, GHashTable *distribution_table, GHashTable *target_to_services_table)
 {
     ApplicationHostGraph *graph = create_application_host_graph();
 
     /* Construct application graph first */
-    generate_application_graph(graph, services_table, candidate_target_table);
+    generate_application_graph(graph, services_table, distribution_table);
 
     /* Create host nodes and attach them to the application nodes */
     generate_and_attach_host_nodes(graph, target_to_services_table);
@@ -119,7 +119,7 @@ ApplicationHostGraph *generate_application_host_graph(GHashTable *services_table
 
 GHashTable *generate_distribution_table_from_application_host_graph(ApplicationHostGraph *graph)
 {
-    GHashTable *candidate_target_table = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTable *distribution_table = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTableIter iter;
     gpointer key, value;
 
@@ -140,10 +140,10 @@ GHashTable *generate_distribution_table_from_application_host_graph(ApplicationH
             }
         }
 
-        g_hash_table_insert(candidate_target_table, app_node->name, targets);
+        g_hash_table_insert(distribution_table, app_node->name, targets);
     }
 
-    return candidate_target_table;
+    return distribution_table;
 }
 
 void delete_application_host_graph_result_table(GHashTable *result_table)

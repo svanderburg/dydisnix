@@ -1,4 +1,5 @@
 #include "applicationhostgraph-transform.h"
+#include <string.h>
 #include <node.h>
 #include <service.h>
 #include <distributionmapping.h>
@@ -13,7 +14,7 @@ static void generate_initial_application_nodes(ApplicationHostGraph *graph, GHas
     {
         gchar *service_name = (gchar*)key;
         Node *app_node = create_app_node(service_name);
-        g_hash_table_insert(graph->appnodes_table, service_name, app_node);
+        g_hash_table_insert(graph->app_nodes_table, service_name, app_node);
     }
 }
 
@@ -24,9 +25,9 @@ static void generate_links_for_service_dependency_type(Node *app_node, Applicati
     for(i = 0; i < dependencies->len; i++)
     {
         gchar *dependency_name = (gchar*)g_ptr_array_index(dependencies, i);
-        Node *dependency_app_node = g_hash_table_lookup(graph->appnodes_table, dependency_name);
+        Node *dependency_app_node = g_hash_table_lookup(graph->app_nodes_table, dependency_name);
 
-        link_nodes_bidirectional(app_node, dependency_app_node);
+        link_nodes_bidirectional_with_annotation(app_node, dependency_app_node, "1");
     }
 }
 
@@ -35,11 +36,12 @@ static void generate_edges_for_application_dependencies(ApplicationHostGraph *gr
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init(&iter, graph->appnodes_table);
+    g_hash_table_iter_init(&iter, graph->app_nodes_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
+        gchar *service_name = (gchar*)key;
         Node *app_node = (Node*)value;
-        Service *service = (Service*)g_hash_table_lookup(services_table, app_node->name);
+        Service *service = (Service*)g_hash_table_lookup(services_table, service_name);
 
         generate_links_for_service_dependency_type(app_node, graph, service->depends_on);
         generate_links_for_service_dependency_type(app_node, graph, service->connects_to);
@@ -61,16 +63,16 @@ static void generate_application_graph(ApplicationHostGraph *graph, GHashTable *
     generate_edges_for_application_dependencies(graph, services_table);
 }
 
-static void generate_host_to_app_node_links(Node *host_node, GPtrArray *services, GHashTable *appnodes_table)
+static void generate_host_to_app_node_links(Node *host_node, GPtrArray *services, GHashTable *app_nodes_table)
 {
     unsigned int i;
 
     for(i = 0; i < services->len; i++)
     {
         gchar *service = (gchar*)g_ptr_array_index(services, i);
-        Node *app_node = g_hash_table_lookup(appnodes_table, service);
+        Node *app_node = g_hash_table_lookup(app_nodes_table, service);
 
-        link_nodes_bidirectional(host_node, app_node);
+        link_nodes_bidirectional_with_annotation(host_node, app_node, "n^2");
     }
 }
 
@@ -92,9 +94,9 @@ static void generate_and_attach_host_nodes(ApplicationHostGraph *graph, GHashTab
         GPtrArray *services = (GPtrArray*)value;
 
         Node *host_node = create_host_node(target);
-        g_hash_table_insert(graph->hosts_table, target, host_node);
+        g_hash_table_insert(graph->host_nodes_table, target, host_node);
 
-        generate_host_to_app_node_links(host_node, services, graph->appnodes_table);
+        generate_host_to_app_node_links(host_node, services, graph->app_nodes_table);
     }
 }
 
@@ -123,10 +125,12 @@ GHashTable *generate_distribution_table_from_application_host_graph(ApplicationH
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init(&iter, graph->appnodes_table);
+    g_hash_table_iter_init(&iter, graph->app_nodes_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
+        gchar *service_name = (gchar*)key;
         Node *app_node = (Node*)value;
+
         GPtrArray *targets = g_ptr_array_new();
         unsigned int i;
 
@@ -135,12 +139,13 @@ GHashTable *generate_distribution_table_from_application_host_graph(ApplicationH
             Node *link_node = (Node*)g_ptr_array_index(app_node->links, i);
             if(!node_is_app_node(link_node))
             {
-                DistributionMapping *mapping = create_distribution_auto_mapping((xmlChar*)link_node->name);
+                gchar *host_name = g_strdup(link_node->name + strlen("host:"));
+                DistributionMapping *mapping = create_distribution_auto_mapping((xmlChar*)host_name);
                 g_ptr_array_add(targets, mapping);
             }
         }
 
-        g_hash_table_insert(distribution_table, app_node->name, targets);
+        g_hash_table_insert(distribution_table, service_name, targets);
     }
 
     return distribution_table;
@@ -162,7 +167,7 @@ void delete_application_host_graph_result_table(GHashTable *result_table)
             for(i = 0; i < mappings_array->len; i++)
             {
                 DistributionMapping *mapping = (DistributionMapping*)g_ptr_array_index(mappings_array, i);
-                g_free(mapping);
+                delete_distribution_mapping(mapping);
             }
 
             g_ptr_array_free(mappings_array, TRUE);

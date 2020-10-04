@@ -20,7 +20,7 @@ static GHashTable *generate_minimum_cuts_per_terminal(ApplicationHostGraph *grap
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init(&iter, graph->hosts_table);
+    g_hash_table_iter_init(&iter, graph->host_nodes_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         gchar *host_name = (gchar*)key;
@@ -36,7 +36,7 @@ static GHashTable *generate_minimum_cuts_per_terminal(ApplicationHostGraph *grap
             GHashTableIter iter2;
             gpointer key2, value2;
 
-            g_hash_table_iter_init(&iter2, graph->hosts_table);
+            g_hash_table_iter_init(&iter2, graph->host_nodes_table);
             while(g_hash_table_iter_next(&iter2, &key2, &value2))
             {
                 Node *target_host_node = (Node*)value2;
@@ -120,7 +120,7 @@ static void unlink_cuts_in_graph(ApplicationHostGraph *graph, GHashTable *cuts_p
     {
         gchar *host_name = (gchar*)key;
         GPtrArray *cut_app_nodes_array = (GPtrArray*)value;
-        Node *host_node = g_hash_table_lookup(graph->hosts_table, host_name);
+        Node *host_node = g_hash_table_lookup(graph->host_nodes_table, host_name);
         unsigned int i;
 
         for(i = 0; i < cut_app_nodes_array->len; i++)
@@ -145,11 +145,11 @@ static NixXML_bool check_app_node_is_orphaned_from_host_node(Node *app_node)
     return TRUE;
 }
 
-static void attach_app_node_to_first_host_node(Node *app_node, GHashTable *distribution_table, GHashTable *hosts_table)
+static void attach_app_node_to_first_host_node(gchar *service_name, Node *app_node, GHashTable *distribution_table, GHashTable *host_nodes_table)
 {
-    GPtrArray *targets = g_hash_table_lookup(distribution_table, app_node->name);
+    GPtrArray *targets = g_hash_table_lookup(distribution_table, service_name);
     DistributionMapping *first_mapping = g_ptr_array_index(targets, 0);
-    Node *host_node = g_hash_table_lookup(hosts_table, first_mapping->target);
+    Node *host_node = g_hash_table_lookup(host_nodes_table, first_mapping->target);
     link_nodes_bidirectional(app_node, host_node);
 }
 
@@ -162,13 +162,14 @@ static void fix_orphaned_services(ApplicationHostGraph *graph, GHashTable *distr
     GHashTableIter iter;
     gpointer key, value;
 
-    g_hash_table_iter_init(&iter, graph->appnodes_table);
+    g_hash_table_iter_init(&iter, graph->app_nodes_table);
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
+        gchar *service_name = (gchar*)key;
         Node *app_node = (Node*)value;
 
         if(check_app_node_is_orphaned_from_host_node(app_node))
-            attach_app_node_to_first_host_node(app_node, distribution_table, graph->hosts_table);
+            attach_app_node_to_first_host_node(service_name, app_node, distribution_table, graph->host_nodes_table);
     }
 }
 

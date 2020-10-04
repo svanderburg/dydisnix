@@ -12,6 +12,7 @@ struct Node
     NixXML_bool visited;
     void *attachment;
     GPtrArray *links;
+    GPtrArray *link_annotations;
 };
 
 Node *create_node_with_value(gchar *name, int value);
@@ -22,9 +23,13 @@ void delete_node(Node *node);
 
 void link_nodes(Node *node_from, Node *node_to);
 
+void link_nodes_with_annotation(Node *node_from, Node *node_to, gchar *annotation);
+
 void unlink_nodes(Node *node_from, Node *node_to);
 
 void link_nodes_bidirectional(Node *node1, Node *node2);
+
+void link_nodes_bidirectional_with_annotation(Node *node1, Node *node2, gchar *annotation);
 
 void unlink_nodes_bidirectional(Node *node1, Node *node2);
 

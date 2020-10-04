@@ -28,6 +28,11 @@ static void print_usage(const char *command)
     "                           Nix expression language.\n"
     "      --output-xml         Specifies that the output should be in XML not the\n"
     "                           Nix expression language\n"
+    "      --output-graph       Specifies that the output should be a representation\n"
+    "                           of the problem graph in the DOT language\n"
+    "      --output-resolved-graph\n"
+    "                           Specifies that the output should be a representation\n"
+    "                           of the resolved problem graph in the DOT language\n"
     "  -h, --help               Shows the usage of this command to the user\n"
     );
 }
@@ -43,6 +48,8 @@ int main(int argc, char *argv[])
         {"distribution", required_argument, 0, DYDISNIX_OPTION_DISTRIBUTION},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
         {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
+        {"output-graph", no_argument, 0, DYDISNIX_OPTION_OUTPUT_GRAPH},
+        {"output-resolved-graph", no_argument, 0, DYDISNIX_OPTION_OUTPUT_RESOLVED_GRAPH},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
@@ -50,6 +57,7 @@ int main(int argc, char *argv[])
     char *infrastructure = NULL;
     char *distribution = NULL;
     unsigned int flags = 0;
+    OutputArtifactType artifact_type = ARTIFACT_NIX;
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "s:i:d:h", long_options, &option_index)) != -1)
@@ -69,7 +77,13 @@ int main(int argc, char *argv[])
                 flags |= DYDISNIX_FLAG_XML;
                 break;
             case DYDISNIX_OPTION_OUTPUT_XML:
-                flags |= DYDISNIX_FLAG_OUTPUT_XML;
+                artifact_type = ARTIFACT_XML;
+                break;
+            case DYDISNIX_OPTION_OUTPUT_GRAPH:
+                artifact_type = ARTIFACT_GRAPH;
+                break;
+            case DYDISNIX_OPTION_OUTPUT_RESOLVED_GRAPH:
+                artifact_type = ARTIFACT_RESOLVED_GRAPH;
                 break;
             case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
@@ -88,5 +102,5 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return multiwaycut(services, distribution, infrastructure, flags);
+    return multiwaycut(services, distribution, infrastructure, flags, artifact_type);
 }

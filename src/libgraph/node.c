@@ -8,6 +8,7 @@ Node *create_node_with_value(gchar *name, int value)
     node->visited = FALSE;
     node->attachment = NULL;
     node->links = g_ptr_array_new();
+    node->link_annotations = g_ptr_array_new();
     return node;
 }
 
@@ -16,10 +17,24 @@ Node *create_node(gchar *name)
     return create_node_with_value(name, 0);
 }
 
+static void delete_node_link_annotations(GPtrArray *link_annotations)
+{
+    unsigned int i;
+
+    for(i = 0; i < link_annotations->len; i++)
+    {
+        gchar *annotation = (gchar*)g_ptr_array_index(link_annotations, i);
+        g_free(annotation);
+    }
+
+    g_ptr_array_free(link_annotations, TRUE);
+}
+
 void delete_node(Node *node)
 {
     if(node != NULL)
     {
+        delete_node_link_annotations(node->link_annotations);
         g_ptr_array_free(node->links, TRUE);
         g_free(node);
     }
@@ -28,6 +43,12 @@ void delete_node(Node *node)
 void link_nodes(Node *node_from, Node *node_to)
 {
     g_ptr_array_add(node_from->links, node_to);
+}
+
+void link_nodes_with_annotation(Node *node_from, Node *node_to, gchar *annotation)
+{
+    link_nodes(node_from, node_to);
+    g_ptr_array_add(node_from->link_annotations, g_strdup(annotation));
 }
 
 void unlink_nodes(Node *node_from, Node *node_to)
@@ -41,6 +62,14 @@ void unlink_nodes(Node *node_from, Node *node_to)
         if(linked_node == node_to)
         {
             g_ptr_array_remove_index(node_from->links, i);
+
+            if(node_from->link_annotations->len > 0) // Also remove link annotation if the table is used
+            {
+                gchar *annotation = g_ptr_array_index(node_from->link_annotations, i);
+                g_ptr_array_remove_index(node_from->link_annotations, i);
+                g_free(annotation);
+            }
+
             break;
         }
     }
@@ -50,6 +79,12 @@ void link_nodes_bidirectional(Node *node1, Node *node2)
 {
     link_nodes(node1, node2);
     link_nodes(node2, node1);
+}
+
+void link_nodes_bidirectional_with_annotation(Node *node1, Node *node2, gchar *annotation)
+{
+    link_nodes_with_annotation(node1, node2, annotation);
+    link_nodes_with_annotation(node2, node1, annotation);
 }
 
 void unlink_nodes_bidirectional(Node *node1, Node *node2)

@@ -72,7 +72,7 @@ static void generate_host_to_app_node_links(Node *host_node, GPtrArray *services
         gchar *service = (gchar*)g_ptr_array_index(services, i);
         Node *app_node = g_hash_table_lookup(app_nodes_table, service);
 
-        link_nodes_bidirectional_with_annotation(host_node, app_node, "n^2");
+        link_nodes_bidirectional_with_annotation(host_node, app_node, "n&#178;");
     }
 }
 

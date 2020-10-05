@@ -28,5 +28,13 @@ simpleTest {
       machine.succeed(
           "${env} dydisnix-generate-services-docs -s ${models}/services.nix --docs ${models}/docs.nix -f svg --output-dir $TMPDIR/out2"
       )
+
+      # Generate a visualization of an infrastructure model
+      machine.succeed(
+          "${env} dydisnix-visualize-infra -i ${models}/infrastructure.nix > out.dot"
+      )
+      machine.succeed(
+          "${pkgs.graphviz}/bin/dot -Tpng out.dot -o out.png"
+      )
     '';
 }

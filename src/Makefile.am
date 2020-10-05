@@ -9,6 +9,7 @@ SUBDIRS = libservices \
 	minsetcover \
 	graphcol \
 	idassign \
+	visualize-infra \
 	visualize-services \
 	document-services \
 	previous-distribution

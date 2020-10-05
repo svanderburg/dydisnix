@@ -44,7 +44,7 @@ static int print_container_providers_annotation(FILE *fd, const Service *service
 {
     if(service->provides_container != NULL)
     {
-        fprintf(fd, " ->\\n%s", service->provides_container);
+        fprintf(fd, " &#8594;\\n%s", service->provides_container);
         return TRUE;
     }
     else if(g_hash_table_size(service->provides_containers_table) > 0)
@@ -54,7 +54,7 @@ static int print_container_providers_annotation(FILE *fd, const Service *service
         gpointer value;
         int first = TRUE;
 
-        fprintf(fd, "\\n -> { ");
+        fprintf(fd, "\\n &#8594; { ");
 
         NixXML_g_hash_table_ordered_iter_init(&iter, service->provides_containers_table);
         while(NixXML_g_hash_table_ordered_iter_next(&iter, &key, &value))

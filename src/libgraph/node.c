@@ -53,7 +53,7 @@ void link_nodes_with_annotation(Node *node_from, Node *node_to, gchar *annotatio
 
 void unlink_nodes(Node *node_from, Node *node_to)
 {
-    unsigned int i = 0;
+    unsigned int i;
 
     for(i = 0; node_from->links->len; i++)
     {
@@ -147,7 +147,7 @@ void print_node_with_name_dot(FILE *file, const Node *node)
 
 void print_node_with_name_and_value_dot(FILE *file, const Node *node)
 {
-    fprintf(stderr, "\"%s\" [ label = \"<f0> %s|<f1> %d\" ]\n", node->name, node->name, node->value);
+    fprintf(file, "\"%s\" [ label = \"<f0> %s|<f1> %d\" ]\n", node->name, node->name, node->value);
 }
 
 void print_node_edges_dot(FILE *file, const Node *node)

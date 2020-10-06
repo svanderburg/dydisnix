@@ -87,7 +87,7 @@ static void print_nodes_table(FILE *file, GHashTable *nodes_table)
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Node *node = (Node*)value;
-        fprintf(file, "\"%s\" [ label = \"%s\" ]\n", node->name, node->name);
+        print_node_with_name_dot(file, node);
     }
 }
 
@@ -100,16 +100,7 @@ static void print_undirected_node_links(FILE *file, GHashTable *nodes_table)
     while(g_hash_table_iter_next(&iter, &key, &value))
     {
         Node *node = (Node*)value;
-        unsigned int i;
-
-        for(i = 0; i < node->links->len; i++)
-        {
-            Node *linked_node = (Node*)g_ptr_array_index(node->links, i);
-            gchar *annotation = (gchar*)g_ptr_array_index(node->link_annotations, i);
-
-            if(g_strcmp0(node->name, linked_node->name) <= 0) /* Only print an edge from the perspective of the lowest node name. Otherwise, we will get a double connection */
-                fprintf(file, "\"%s\" -- \"%s\" [ label = \"%s\", weight=\"%s\" ]\n", node->name, linked_node->name, annotation, annotation);
-        }
+        print_node_edges_with_annotations_dot(file, node);
     }
 }
 

@@ -1,5 +1,6 @@
 #ifndef __DYDISNIX_NODE_H
 #define __DYDISNIX_NODE_H
+#include <stdio.h>
 #include <nixxml-types.h>
 #include <glib.h>
 
@@ -40,5 +41,13 @@ typedef NixXML_bool (*check_target_node_function) (Node *start_node, Node *exami
 NixXML_bool check_nodes_have_indirect_connection(Node *start_node, Node *examine_node, void *data);
 
 Node *search_node_breadth_first(Node *start_node, check_target_node_function, void *data);
+
+void print_node_with_name_dot(FILE *file, const Node *node);
+
+void print_node_with_name_and_value_dot(FILE *file, const Node *node);
+
+void print_node_edges_dot(FILE *file, const Node *node);
+
+void print_node_edges_with_annotations_dot(FILE *file, const Node *node);
 
 #endif

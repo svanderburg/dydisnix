@@ -139,3 +139,40 @@ Node *search_node_breadth_first(Node *start_node, check_target_node_function che
     g_ptr_array_free(queue, TRUE);
     return NULL;
 }
+
+void print_node_with_name_dot(FILE *file, const Node *node)
+{
+    fprintf(file, "\"%s\" [ label = \"%s\" ]\n", node->name, node->name);
+}
+
+void print_node_with_name_and_value_dot(FILE *file, const Node *node)
+{
+    fprintf(stderr, "\"%s\" [ label = \"<f0> %s|<f1> %d\" ]\n", node->name, node->name, node->value);
+}
+
+void print_node_edges_dot(FILE *file, const Node *node)
+{
+    unsigned int i;
+
+    for(i = 0; i < node->links->len; i++)
+    {
+        Node *linked_node = (Node*)g_ptr_array_index(node->links, i);
+
+        if(g_strcmp0(node->name, linked_node->name) <= 0) /* Only print an edge from the perspective of the lowest node name. Otherwise, we will get a double connection */
+            fprintf(file, "\"%s\" -- \"%s\"\n", node->name, linked_node->name);
+    }
+}
+
+void print_node_edges_with_annotations_dot(FILE *file, const Node *node)
+{
+    unsigned int i;
+
+    for(i = 0; i < node->links->len; i++)
+    {
+        Node *linked_node = (Node*)g_ptr_array_index(node->links, i);
+        gchar *annotation = (gchar*)g_ptr_array_index(node->link_annotations, i);
+
+        if(g_strcmp0(node->name, linked_node->name) <= 0) /* Only print an edge from the perspective of the lowest node name. Otherwise, we will get a double connection */
+            fprintf(file, "\"%s\" -- \"%s\" [ label = \"%s\", weight=\"%s\" ]\n", node->name, linked_node->name, annotation, annotation);
+    }
+}

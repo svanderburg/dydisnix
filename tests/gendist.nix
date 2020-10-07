@@ -358,12 +358,39 @@ simpleTest {
           "xmllint --xpath \"/distribution/service[@name='testService3']/mapping/target[text() = 'testtarget2']\" result"
       )
 
-      # Execute multiway cut approximation method.
+      # Execute multiway cut approximation method with 2 machines.
       # In this case all services should be mapped to testtarget1.
       # This test should succeed.
 
       result = machine.succeed(
           "${env} dydisnix-gendist -s ${models}/services.nix -i ${models}/infrastructure.nix -q ${models}/qos/qos-multiwaycut.nix --output-xml"
+      )
+
+      machine.succeed(
+          "xmllint --xpath \"/distribution/service[@name='testService1']/mapping/target[text() = 'testtarget1']\" result"
+      )
+      machine.fail(
+          "xmllint --xpath \"/distribution/service[@name='testService1']/mapping/target[text() = 'testtarget2']\" result"
+      )
+      machine.succeed(
+          "xmllint --xpath \"/distribution/service[@name='testService2']/mapping/target[text() = 'testtarget1']\" result"
+      )
+      machine.fail(
+          "xmllint --xpath \"/distribution/service[@name='testService2']/mapping/target[text() = 'testtarget2']\" result"
+      )
+      machine.succeed(
+          "xmllint --xpath \"/distribution/service[@name='testService3']/mapping/target[text() = 'testtarget1']\" result"
+      )
+      machine.fail(
+          "xmllint --xpath \"/distribution/service[@name='testService3']/mapping/target[text() = 'testtarget2']\" result"
+      )
+
+      # Execute multiway cut approximation method with 3 machines.
+      # In this case all services should be mapped to testtarget1.
+      # This test should succeed.
+
+      result = machine.succeed(
+          "${env} dydisnix-gendist -s ${models}/services.nix -i ${models}/infrastructure-3.nix -q ${models}/qos/qos-multiwaycut.nix --output-xml"
       )
 
       machine.succeed(

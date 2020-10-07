@@ -48,7 +48,7 @@ static GHashTable *generate_reliable_distribution_using_multiway_cut_approximati
 static void display_reliable_distribution(GHashTable *services_table, GHashTable *distribution_table, GHashTable *target_to_services_table, NixXML_bool xml)
 {
     GHashTable *result_table = generate_reliable_distribution_using_multiway_cut_approximation(services_table, distribution_table, target_to_services_table);
-    NixXML_bool automapped;
+    NixXML_bool automapped = TRUE;
 
     /* Print Nix expression of the result */
     if(xml)

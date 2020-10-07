@@ -27,7 +27,7 @@ static GHashTable *generate_minimum_cuts_per_terminal(ApplicationHostGraph *grap
         Node *host_node = (Node*)value;
         GPtrArray *cut_app_nodes_array = g_ptr_array_new();
 
-        unsigned int i = 0;
+        unsigned int i;
 
         for(i = 0; i < host_node->links->len; i++)
         {
@@ -46,7 +46,10 @@ static GHashTable *generate_minimum_cuts_per_terminal(ApplicationHostGraph *grap
                     mark_all_nodes_unvisited(graph);
 
                     if(search_node_breadth_first(app_node, check_nodes_have_indirect_connection, target_host_node) != NULL)
+                    {
                         g_ptr_array_add(cut_app_nodes_array, app_node);
+                        break;
+                    }
                 }
             }
         }

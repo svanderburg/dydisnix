@@ -38,12 +38,12 @@ static NixXML_bool print_ids_config(IdsConfig *ids_config, const char *output_fi
     return TRUE;
 }
 
-static int idassign_to_services(gchar *services, gchar *resources, gchar *ids, gchar *service_property, const char *output_file, const unsigned int flags)
+static int idassign_to_services(gchar *services, gchar *resources, gchar *ids, gchar *service_property, const char *output_file, gchar *extra_params, const unsigned int flags)
 {
     int exit_status = 0;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
 
-    GHashTable *services_table = create_service_table(services, xml);
+    GHashTable *services_table = create_service_table(services, extra_params, xml);
     GHashTable *id_resources_table = create_id_resources_table(resources, xml);
 
     IdsConfig *ids_config;
@@ -90,14 +90,14 @@ static int idassign_to_services(gchar *services, gchar *resources, gchar *ids, g
     return exit_status;
 }
 
-static int idassign_to_distribution(gchar *services, gchar *infrastructure, gchar *distribution, gchar *resources, gchar *ids, gchar *service_property, const char *output_file, const unsigned int flags)
+static int idassign_to_distribution(gchar *services, gchar *infrastructure, gchar *distribution, gchar *resources, gchar *ids, gchar *service_property, const char *output_file, gchar *extra_params, const unsigned int flags)
 {
     int exit_status = 0;
     NixXML_bool automapped;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
 
-    GHashTable *services_table = create_service_table(services, xml);
-    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *services_table = create_service_table(services, extra_params, xml);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, extra_params, xml, &automapped);
 
     GHashTable *id_resources_table = create_id_resources_table(resources, xml);
 
@@ -154,10 +154,10 @@ static int idassign_to_distribution(gchar *services, gchar *infrastructure, gcha
     return exit_status;
 }
 
-int idassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *resources, gchar *ids, gchar *service_property, const char *output_file, const unsigned int flags)
+int idassign(gchar *services, gchar *infrastructure, gchar *distribution, gchar *resources, gchar *ids, gchar *service_property, const char *output_file, gchar *extra_params, const unsigned int flags)
 {
     if(distribution == NULL)
-        return idassign_to_services(services, resources, ids, service_property, output_file, flags);
+        return idassign_to_services(services, resources, ids, service_property, output_file, extra_params, flags);
     else
-        return idassign_to_distribution(services, infrastructure, distribution, resources, ids, service_property, output_file, flags);
+        return idassign_to_distribution(services, infrastructure, distribution, resources, ids, service_property, output_file, extra_params, flags);
 }

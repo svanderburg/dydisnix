@@ -12,6 +12,6 @@ typedef enum
 }
 OutputArtifactType;
 
-int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, const unsigned int flags, const OutputArtifactType artifact_type);
+int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, gchar *extra_params, const unsigned int flags, const OutputArtifactType artifact_type);
 
 #endif

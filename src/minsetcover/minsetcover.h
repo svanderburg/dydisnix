@@ -3,6 +3,6 @@
 #include <glib.h>
 #include <checkoptions.h>
 
-int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, const unsigned int flags);
+int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, gchar *extra_params, const unsigned int flags);
 
 #endif

@@ -14,15 +14,18 @@ let
     if target ? targetProperty then target.targetProperty else defaultTargetProperty;
 in
 {
-  servicesToXML = {servicesFile}:
+  servicesToXML = {servicesFile, extraParams ? {}}:
     let
       servicesFun = import servicesFile;
-      services = servicesFun {
+
+      extraServiceParams = builtins.intersectAttrs (builtins.functionArgs servicesFun) extraParams;
+
+      services = servicesFun ({
         distribution = {};
         invDistribution = {};
         system = builtins.currentSystem;
         inherit pkgs;
-      };
+      } // extraServiceParams);
       serviceProperties = filters.filterDerivations services;
     in
     filters.generateServicesXML serviceProperties;
@@ -33,11 +36,16 @@ in
     in
     filters.generateInfrastructureXML infrastructure;
 
-
-  distributionToXML = {infrastructureFile, distributionFile}:
+  distributionToXML = {infrastructureFile, distributionFile, extraParams ? {}}:
     let
       infrastructure = import infrastructureFile;
-      distribution = import distributionFile { inherit infrastructure; };
+      distributionFun = import distributionFile;
+
+      extraDistributionParams = builtins.intersectAttrs (builtins.functionArgs distributionFun) extraParams;
+
+      distribution = distributionFun ({
+        inherit infrastructure;
+      } // extraDistributionParams);
 
       # Attribute set that can be used to map unique target properties to targets
       targetMappings = builtins.listToAttrs (map (targetName:

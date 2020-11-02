@@ -53,6 +53,9 @@ Options:
                                       more space efficient, but slower.
       --keep=NUM                      Amount of snapshot generations to keep.
                                       Defaults to: 1
+      --extra-params=PARAMS           A string with an attribute set in the Nix
+                                      expression language propagating extra
+                                      parameters to the input models
       --show-trace                    Shows a trace of the output
       --target-property=PROP          The target property of an infrastructure
                                       model, that specifies how to connect to
@@ -80,7 +83,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:q:a:F:p:m:h -l services:,qos:,augment:,ids:,id-resources:,ids-service-property:,filters:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,interface:,target-property:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:q:a:F:p:m:h -l services:,qos:,augment:,ids:,id-resources:,ids-service-property:,filters:,interval:,profile:,coordinator-profile-path:,max-concurrent-transfers:,no-migration,delete-state,geninfra:,snapshot,reconstruct,depth-first,keep:,show-trace,interface:,extra-params:,target-property:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -157,6 +160,9 @@ do
             ;;
         --target-property)
             targetPropertyArg="--target-property $2"
+            ;;
+        --extra-params)
+            extraParamsArg=("--extra-params" "$2")
             ;;
         -h|--help)
             showUsage
@@ -237,7 +243,7 @@ do
         fi
 
         echo "[coordinator]: Generating a new distribution model..." >&2
-        distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $filtersArg $coordinatorProfilePathArg $interfaceArg $targetPropertyArg $showTraceArg`
+        distribution=`dydisnix-gendist --services $servicesFile --infrastructure $infrastructureFile --qos $qosFile --no-out-link $profileArg $filtersArg $coordinatorProfilePathArg "${extraParamsArg[@]}" $interfaceArg $targetPropertyArg $showTraceArg`
         echo "[coordinator]: Using generated distribution model: $distribution" >&2
 
         if [ "$idsFile" != "" ]

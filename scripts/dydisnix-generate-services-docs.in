@@ -18,6 +18,9 @@ Options:
                                outputs are stored (default to current directory)
   -f, --image-format=FORMAT    Image format to use for the outputs (e.g. svg or
                                png)
+      --extra-params=PARAMS    A string with an attribute set in the Nix
+                               expression language propagating extra parameters
+                               to the input models
   -h, --help                   Shows the usage of this command to the user
 EOF
 }
@@ -32,7 +35,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:f:h -l services:,docs:,format:,xml,output-dir:,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:f:h -l services:,docs:,format:,xml,output-dir:,extra-params:,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -62,6 +65,9 @@ do
         --output-dir)
             outputDirArg="--output-dir $2"
             ;;
+        --extra-params)
+            extraParamsArg=("--extra-params" "$2")
+            ;;
         -h|--help)
             showUsage
             exit 0
@@ -77,5 +83,5 @@ checkServicesFile
 
 # Execute operation
 
-dydisnix-visualize-services --batch -s "$servicesFile" $formatArg $xmlArg $outputDirArg
-dydisnix-document-services --batch -s "$servicesFile" $docsArg $formatArg $xmlArg $outputDirArg
+dydisnix-visualize-services --batch -s "$servicesFile" $formatArg $xmlArg $outputDirArg "${extraParamsArg[@]}"
+dydisnix-document-services --batch -s "$servicesFile" $docsArg $formatArg $xmlArg $outputDirArg "${extraParamsArg[@]}"

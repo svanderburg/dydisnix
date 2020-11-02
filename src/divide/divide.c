@@ -158,15 +158,15 @@ static NixXML_bool select_target_for_each_mapping(GHashTable *service_table, GHa
     return TRUE;
 }
 
-int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, const unsigned int flags)
+int divide(Strategy strategy, gchar *services, gchar *infrastructure, gchar *distribution, gchar *service_property, gchar *target_property, gchar *extra_params, const unsigned int flags)
 {
     int exit_status = 0;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     NixXML_bool automapped;
 
-    GHashTable *service_table = create_service_table(services, xml);
+    GHashTable *service_table = create_service_table(services, extra_params, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
-    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, extra_params, xml, &automapped);
 
     if(service_table == NULL)
     {

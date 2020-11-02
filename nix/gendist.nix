@@ -8,6 +8,7 @@
 , coordinatorProfile ? null
 , disnix
 , dydisnix
+, extraParams ? {}
 }:
 
 let
@@ -25,12 +26,14 @@ let
   qosFun = import qosFile;
 
   # Evaluations
-  services = servicesFun {
+  extraServiceParams = builtins.intersectAttrs (builtins.functionArgs servicesFun) extraParams;
+
+  services = servicesFun ({
     distribution = {};
     invDistribution = {};
     system = builtins.currentSystem;
     inherit pkgs;
-  };
+  } // extraServiceParams);
 
   serviceProperties = referenceFilters.filterDerivations services;
 

@@ -27,6 +27,9 @@ static void print_usage(const char *command)
     "                               outputs are stored (default to current directory)\n"
     "  -f, --format=FORMAT          Image format to use for the outputs (e.g. svg or\n"
     "                               png)\n"
+    "      --extra-params           A string with an attribute set in the Nix\n"
+    "                               expression language propagating extra parameters\n"
+    "                               to the input models\n"
     "  -h, --help                   Shows the usage of this command to the user\n"
     );
 }
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
         {"group", required_argument, 0, DYDISNIX_OPTION_GROUP},
         {"output-dir", required_argument, 0, DYDISNIX_OPTION_OUTPUT_DIR},
         {"format", required_argument, 0, DYDISNIX_OPTION_FORMAT},
+        {"extra-params", required_argument, 0, DYDISNIX_OPTION_EXTRA_PARAMS},
         {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
         {0, 0, 0, 0}
     };
@@ -55,6 +59,7 @@ int main(int argc, char *argv[])
     int batch = DYDISNIX_DEFAULT_BATCH;
     char *output_dir = ".";
     char *image_format = NULL;
+    char *extra_params = "{}";
 
     /* Parse command-line options */
     while((c = getopt_long(argc, argv, "f:s:h", long_options, &option_index)) != -1)
@@ -85,6 +90,9 @@ int main(int argc, char *argv[])
             case DYDISNIX_OPTION_FORMAT:
                 image_format = optarg;
                 break;
+            case DYDISNIX_OPTION_EXTRA_PARAMS:
+                extra_params = optarg;
+                break;
             case DYDISNIX_OPTION_HELP:
                 print_usage(argv[0]);
                 return 0;
@@ -101,7 +109,7 @@ int main(int argc, char *argv[])
 
     /* Execute visualize operation */
     if(batch)
-        return document_services_batch(services, flags, output_dir, image_format, docs);
+        return document_services_batch(services, flags, output_dir, image_format, docs, extra_params);
     else
-        return document_services(services, group, flags, docs);
+        return document_services(services, group, flags, docs, extra_params);
 }

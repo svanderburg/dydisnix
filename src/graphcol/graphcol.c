@@ -86,13 +86,13 @@ static NixXML_bool display_fragile_distribution(GHashTable *services_table, GHas
     return result;
 }
 
-int graphcol(char *services_xml, char *infrastructure_xml, const unsigned int flags, const OutputArtifactType artifact_type)
+int graphcol(char *services_xml, char *infrastructure_xml, char *extra_params, const unsigned int flags, const OutputArtifactType artifact_type)
 {
     /* Load input models */
 
     int exit_status = 1;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
-    GHashTable *services_table = create_service_table(services_xml, xml);
+    GHashTable *services_table = create_service_table(services_xml, extra_params, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure_xml, xml);
 
     if(services_table == NULL)

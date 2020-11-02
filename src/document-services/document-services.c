@@ -267,10 +267,10 @@ static int generate_architecture_description(gchar *filepath, gchar *image_forma
     return TRUE;
 }
 
-int document_services(gchar *services, gchar *group, const unsigned int flags, gchar *docs)
+int document_services(gchar *services, gchar *group, const unsigned int flags, gchar *docs, gchar *extra_params)
 {
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
-    GHashTable *service_table = create_service_table(services, xml);
+    GHashTable *service_table = create_service_table(services, extra_params, xml);
 
     if(service_table == NULL)
     {
@@ -316,7 +316,7 @@ static int generate_architecture_descriptions_for_group(GHashTable *service_tabl
     return status;
 }
 
-static int copy_stylesheet(gchar *output_dir)
+static NixXML_bool copy_stylesheet(gchar *output_dir)
 {
     FILE *src, *dest;
     gchar *output_file;
@@ -349,10 +349,10 @@ static int copy_stylesheet(gchar *output_dir)
     return TRUE;
 }
 
-int document_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format, gchar *docs)
+int document_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format, gchar *docs, gchar *extra_params)
 {
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
-    GHashTable *service_table = create_service_table(services, xml);
+    GHashTable *service_table = create_service_table(services, extra_params, xml);
 
     if(service_table == NULL)
     {

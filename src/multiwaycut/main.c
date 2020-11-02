@@ -24,6 +24,9 @@ static void print_usage(const char *command)
     "  -d, --distribution=distribution_nix\n"
     "                           Distribution Nix expression which maps services to\n"
     "                           machines in the network\n"
+    "      --extra-params       A string with an attribute set in the Nix expression\n"
+    "                           language propagating extra parameters to the input\n"
+    "                           models\n"
     "      --xml                Specifies that the configurations are in XML not the\n"
     "                           Nix expression language.\n"
     "      --output-xml         Specifies that the output should be in XML not the\n"
@@ -46,6 +49,7 @@ int main(int argc, char *argv[])
         {"services", required_argument, 0, DYDISNIX_OPTION_SERVICES},
         {"infrastructure", required_argument, 0, DYDISNIX_OPTION_INFRASTRUCTURE},
         {"distribution", required_argument, 0, DYDISNIX_OPTION_DISTRIBUTION},
+        {"extra-params", required_argument, 0, DYDISNIX_OPTION_EXTRA_PARAMS},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
         {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
         {"output-graph", no_argument, 0, DYDISNIX_OPTION_OUTPUT_GRAPH},
@@ -56,6 +60,7 @@ int main(int argc, char *argv[])
     char *services = NULL;
     char *infrastructure = NULL;
     char *distribution = NULL;
+    char *extra_params = "{}";
     unsigned int flags = 0;
     OutputArtifactType artifact_type = ARTIFACT_NIX;
 
@@ -72,6 +77,9 @@ int main(int argc, char *argv[])
                 break;
             case DYDISNIX_OPTION_DISTRIBUTION:
                 distribution = optarg;
+                break;
+            case DYDISNIX_OPTION_EXTRA_PARAMS:
+                extra_params = optarg;
                 break;
             case DYDISNIX_OPTION_XML:
                 flags |= DYDISNIX_FLAG_XML;
@@ -102,5 +110,5 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return multiwaycut(services, distribution, infrastructure, flags, artifact_type);
+    return multiwaycut(services, distribution, infrastructure, extra_params, flags, artifact_type);
 }

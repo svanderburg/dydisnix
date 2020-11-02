@@ -4,13 +4,13 @@
 #include <procreact_future.h>
 #include <nixxml-ghashtable.h>
 
-static ProcReact_Future generate_service_xml_from_expr_async(char *service_expr)
+static ProcReact_Future generate_service_xml_from_expr_async(char *service_expr, char *extra_params)
 {
     ProcReact_Future future = procreact_initialize_future(procreact_create_string_type());
 
     if(future.pid == 0)
     {
-        char *const args[] = {"dydisnix-xml", "-s", service_expr, "--no-out-link", NULL};
+        char *const args[] = {"dydisnix-xml", "-s", service_expr, "--extra-params", extra_params, "--no-out-link", NULL};
         dup2(future.fd, 1); /* Attach write-end to stdout */
         execvp(args[0], args);
         _exit(1);
@@ -19,10 +19,10 @@ static ProcReact_Future generate_service_xml_from_expr_async(char *service_expr)
     return future;
 }
 
-char *generate_service_xml_from_expr(char *service_expr)
+char *generate_service_xml_from_expr(char *service_expr, char *extra_params)
 {
     ProcReact_Status status;
-    ProcReact_Future future = generate_service_xml_from_expr_async(service_expr);
+    ProcReact_Future future = generate_service_xml_from_expr_async(service_expr, extra_params);
     char *path = procreact_future_get(&future, &status);
 
     if(status == PROCREACT_STATUS_OK && path != NULL)
@@ -72,9 +72,9 @@ GHashTable *create_service_table_from_xml(const gchar *services_xml_file)
     return service_table;
 }
 
-GHashTable *create_service_table_from_nix(gchar *services_nix)
+GHashTable *create_service_table_from_nix(gchar *services_nix, gchar *extra_params)
 {
-    char *services_xml = generate_service_xml_from_expr(services_nix);
+    char *services_xml = generate_service_xml_from_expr(services_nix, extra_params);
 
     if(services_xml == NULL)
         return NULL;
@@ -86,12 +86,12 @@ GHashTable *create_service_table_from_nix(gchar *services_nix)
     }
 }
 
-GHashTable *create_service_table(gchar *services, const NixXML_bool xml)
+GHashTable *create_service_table(gchar *services, gchar *extra_params, const NixXML_bool xml)
 {
     if(xml)
         return create_service_table_from_xml(services);
     else
-        return create_service_table_from_nix(services);
+        return create_service_table_from_nix(services, extra_params);
 }
 
 void delete_service_table(GHashTable *service_table)

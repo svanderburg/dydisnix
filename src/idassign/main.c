@@ -35,6 +35,9 @@ static void print_usage(const char *command)
     "      --output-file            Specifies the file where to write the IDS to.\n"
     "                               If no file was provided, it writes to the\n"
     "                               standard output\n"
+    "      --extra-params           A string with an attribute set in the Nix\n"
+    "                               expression language propagating extra parameters\n"
+    "                               to the input models\n"
     "      --xml                    Specifies that the configurations are in XML not\n"
     "                               the Nix expression language.\n"
     "      --output-xml             Specifies that the output should be in XML not the\n"
@@ -66,6 +69,7 @@ int main(int argc, char *argv[])
         {"id-resources", required_argument, 0, DYDISNIX_OPTION_ID_RESOURCES},
         {"ids", required_argument, 0, DYDISNIX_OPTION_IDS},
         {"service-property", required_argument, 0, DYDISNIX_OPTION_SERVICE_PROPERTY},
+        {"extra-params", required_argument, 0, DYDISNIX_OPTION_EXTRA_PARAMS},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
         {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
         {"output-file", required_argument, 0, DYDISNIX_OPTION_OUTPUT},
@@ -78,6 +82,7 @@ int main(int argc, char *argv[])
     char *id_resources = NULL;
     char *ids = NULL;
     char *service_property = "requiresUniqueIdsFor";
+    char *extra_params = "{}";
     char *output_file = NULL;
 
     unsigned int flags = 0;
@@ -105,6 +110,9 @@ int main(int argc, char *argv[])
             case DYDISNIX_OPTION_SERVICE_PROPERTY:
                 service_property = optarg;
                 break;
+            case DYDISNIX_OPTION_EXTRA_PARAMS:
+                extra_params = optarg;
+                break;
             case DYDISNIX_OPTION_XML:
                 flags |= DYDISNIX_FLAG_XML;
                 break;
@@ -130,5 +138,5 @@ int main(int argc, char *argv[])
         return 1;
 
     /* Execute operation */
-    return idassign(services, infrastructure, distribution, id_resources, ids, service_property, output_file, flags);
+    return idassign(services, infrastructure, distribution, id_resources, ids, service_property, output_file, extra_params, flags);
 }

@@ -32,6 +32,9 @@ Options:
                                resources
       --ids=ids_nix            IDs Nix expression mapping services to unique IDs per
                                resource
+      --extra-params=PARAMS    A string with an attribute set in the Nix
+                               expression language propagating extra parameters
+                               to the input models
       --no-out-link            Do not create a result symlink
       --show-trace             Shows a trace of the output
   -h, --help                   Shows the usage of this command
@@ -51,7 +54,7 @@ source @DISNIX_PREFIX@/share/disnix/checks
 
 # Parse valid argument options
 
-PARAMS=`@getopt@ -n $0 -o s:i:d:p:h -l services:,infrastructure:,distribution:,ports:,docs:,id-resources:,ids:,no-out-link,show-trace,help -- "$@"`
+PARAMS=`@getopt@ -n $0 -o s:i:d:p:h -l services:,infrastructure:,distribution:,ports:,docs:,id-resources:,ids:,extra-params:,no-out-link,show-trace,help -- "$@"`
 
 if [ $? != 0 ]
 then
@@ -87,6 +90,9 @@ do
         --ids)
             idsFile=`@readlink@ -f $2`
             ;;
+        --extra-params)
+            extraParamsArg=("--arg" "extraParams" "$2")
+            ;;
         --no-out-link)
             noOutLinkArg="--no-out-link"
             ;;
@@ -110,7 +116,7 @@ if [ "$servicesFile" != "" ]
 then
     nix-build $showTraceArg --arg servicesFile $servicesFile \
         --argstr defaultTargetProperty $targetProperty \
-        $noOutLinkArg $showTraceArg \
+        $noOutLinkArg $showTraceArg "${extraParamsArg[@]}" \
         -A servicesToXML \
         --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
         --arg dydisnix 'builtins.storePath @prefix@' \
@@ -120,7 +126,7 @@ then
     nix-build $showTraceArg --arg distributionFile $distributionFile \
         --arg infrastructureFile $infrastructureFile \
         --argstr defaultTargetProperty $targetProperty \
-        $noOutLinkArg $showTraceArg \
+        $noOutLinkArg $showTraceArg "${extraParamsArg[@]}" \
         -A distributionToXML \
         --arg disnix 'builtins.storePath @DISNIX_PREFIX@' \
         --arg dydisnix 'builtins.storePath @prefix@' \

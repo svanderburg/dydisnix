@@ -87,7 +87,7 @@ static void delete_filtered_distribution_table(GHashTable *filtered_distribution
 int filter_buildable(char *services_expr, char *infrastructure_expr, char *distribution_expr, const unsigned int flags, char *interface, char *target_property, char *extra_params)
 {
     NixXML_bool automapped;
-    GHashTable *distribution_table = create_distribution_table(distribution_expr, infrastructure_expr, flags & DYDISNIX_FLAG_XML, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution_expr, infrastructure_expr, extra_params, flags & DYDISNIX_FLAG_XML, &automapped);
 
     if(distribution_table == NULL)
     {

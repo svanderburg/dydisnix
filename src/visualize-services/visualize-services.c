@@ -340,9 +340,9 @@ static GHashTable *query_services_in_group_with_context(GHashTable *service_tabl
     return queried_services_table;
 }
 
-int visualize_services(gchar *services, const unsigned int flags, gchar *group)
+int visualize_services(gchar *services, const unsigned int flags, gchar *group, gchar *extra_params)
 {
-    GHashTable *service_table = create_service_table(services, flags & DYDISNIX_FLAG_XML);
+    GHashTable *service_table = create_service_table(services, extra_params, flags & DYDISNIX_FLAG_XML);
 
     if(service_table == NULL)
     {
@@ -375,9 +375,9 @@ void generate_architecute_diagrams_for_group(GHashTable *service_table, gchar *g
     delete_service_table(table);
 }
 
-int visualize_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format)
+int visualize_services_batch(gchar *services, const unsigned int flags, gchar *output_dir, gchar *image_format, gchar *extra_params)
 {
-    GHashTable *service_table = create_service_table(services, flags & DYDISNIX_FLAG_XML);
+    GHashTable *service_table = create_service_table(services, extra_params, flags & DYDISNIX_FLAG_XML);
 
     if(service_table == NULL)
     {

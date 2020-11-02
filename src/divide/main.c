@@ -29,6 +29,9 @@ static void print_usage(const char *command)
     "      --target-property=targetProperty\n"
     "                           Specifies which target property stores the total\n"
     "                           capacity\n"
+    "      --extra-params       A string with an attribute set in the Nix expression\n"
+    "                           language propagating extra parameters to the input\n"
+    "                           models\n"
     "      --xml                Specifies that the configurations are in XML not the\n"
     "                           Nix expression language.\n"
     "      --output-xml         Specifies that the output should be in XML not the\n"
@@ -49,6 +52,7 @@ int main(int argc, char *argv[])
         {"distribution", required_argument, 0, DYDISNIX_OPTION_DISTRIBUTION},
         {"service-property", required_argument, 0, DYDISNIX_OPTION_SERVICE_PROPERTY},
         {"target-property", required_argument, 0, DYDISNIX_OPTION_TARGET_PROPERTY},
+        {"extra-params", required_argument, 0, DYDISNIX_OPTION_EXTRA_PARAMS},
         {"xml", no_argument, 0, DYDISNIX_OPTION_XML},
         {"output-xml", no_argument, 0, DYDISNIX_OPTION_OUTPUT_XML},
         {"help", no_argument, 0, DYDISNIX_OPTION_HELP},
@@ -59,6 +63,7 @@ int main(int argc, char *argv[])
     char *distribution = NULL;
     char *service_property = NULL;
     char *target_property = NULL;
+    char *extra_params = "{}";
     Strategy strategy = STRATEGY_NONE;
     unsigned int flags = 0;
 
@@ -95,6 +100,9 @@ int main(int argc, char *argv[])
             case DYDISNIX_OPTION_TARGET_PROPERTY:
                 target_property = optarg;
                 break;
+            case DYDISNIX_OPTION_EXTRA_PARAMS:
+                extra_params = optarg;
+                break;
             case DYDISNIX_OPTION_XML:
                 flags |= DYDISNIX_FLAG_XML;
                 break;
@@ -127,5 +135,5 @@ int main(int argc, char *argv[])
         return 1;
     }
     else
-        return divide(strategy, services, infrastructure, distribution, service_property, target_property, flags);
+        return divide(strategy, services, infrastructure, distribution, service_property, target_property, extra_params, flags);
 }

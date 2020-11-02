@@ -157,13 +157,13 @@ static GHashTable *approximate_minset_cover_greedy(GHashTable *service_table, GH
     return result_table;
 }
 
-int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, const unsigned int flags)
+int minsetcover(gchar *services, gchar *infrastructure, gchar *distribution, gchar *target_property, gchar *extra_params, const unsigned int flags)
 {
     NixXML_bool automapped;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
-    GHashTable *service_table = create_service_table(services, xml);
+    GHashTable *service_table = create_service_table(services, extra_params, xml);
     GHashTable *targets_table = create_targets_table2(infrastructure, xml);
-    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, extra_params, xml, &automapped);
     int exit_status;
 
     if(service_table == NULL)

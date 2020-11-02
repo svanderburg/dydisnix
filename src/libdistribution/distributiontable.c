@@ -6,13 +6,13 @@
 #include <nixxml-print-nix.h>
 #include <nixxml-print-xml.h>
 
-static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribution_expr, char *infrastructure_expr)
+static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribution_expr, char *infrastructure_expr, char *extra_params)
 {
     ProcReact_Future future = procreact_initialize_future(procreact_create_string_type());
 
     if(future.pid == 0)
     {
-        char *const args[] = {"dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, "--no-out-link", NULL};
+        char *const args[] = {"dydisnix-xml", "-i", infrastructure_expr, "-d", distribution_expr, "--extra-params", extra_params, "--no-out-link", NULL};
         dup2(future.fd, 1); /* Attach write-end to stdout */
         execvp(args[0], args);
         _exit(1);
@@ -21,10 +21,10 @@ static ProcReact_Future generate_distribution_xml_from_expr_async(char *distribu
     return future;
 }
 
-char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr)
+char *generate_distribution_xml_from_expr(char *distribution_expr, char *infrastructure_expr, char *extra_params)
 {
     ProcReact_Status status;
-    ProcReact_Future future = generate_distribution_xml_from_expr_async(distribution_expr, infrastructure_expr);
+    ProcReact_Future future = generate_distribution_xml_from_expr_async(distribution_expr, infrastructure_expr, extra_params);
     char *path = procreact_future_get(&future, &status);
 
     if(status == PROCREACT_STATUS_OK && path != NULL)
@@ -75,9 +75,9 @@ GHashTable *create_distribution_table_from_xml(const char *distribution_file, Ni
     return distribution_table;
 }
 
-GHashTable *create_distribution_table_from_nix(gchar *distribution_expr, gchar *infrastructure_expr, NixXML_bool *automapped)
+GHashTable *create_distribution_table_from_nix(gchar *distribution_expr, gchar *infrastructure_expr, gchar *extra_params, NixXML_bool *automapped)
 {
-    char *distribution_xml = generate_distribution_xml_from_expr(distribution_expr, infrastructure_expr);
+    char *distribution_xml = generate_distribution_xml_from_expr(distribution_expr, infrastructure_expr, extra_params);
 
     if(distribution_xml == NULL)
         return NULL;
@@ -89,12 +89,12 @@ GHashTable *create_distribution_table_from_nix(gchar *distribution_expr, gchar *
     }
 }
 
-GHashTable *create_distribution_table(gchar *distribution_expr, gchar *infrastructure_expr, NixXML_bool xml, NixXML_bool *automapped)
+GHashTable *create_distribution_table(gchar *distribution_expr, gchar *infrastructure_expr, gchar *extra_params, NixXML_bool xml, NixXML_bool *automapped)
 {
     if(xml)
         return create_distribution_table_from_xml(distribution_expr, automapped);
     else
-        return create_distribution_table_from_nix(distribution_expr, infrastructure_expr, automapped);
+        return create_distribution_table_from_nix(distribution_expr, infrastructure_expr, extra_params, automapped);
 }
 
 void delete_distribution_table(GHashTable *distribution_table)

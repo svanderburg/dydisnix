@@ -11,6 +11,6 @@ typedef enum
 }
 OutputArtifactType;
 
-int graphcol(char *services, char *infrastructure, const unsigned int flags, const OutputArtifactType artifact_type);
+int graphcol(char *services, char *infrastructure, char *extra_params, const unsigned int flags, const OutputArtifactType artifact_type);
 
 #endif

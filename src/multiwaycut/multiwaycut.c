@@ -59,14 +59,14 @@ static void display_reliable_distribution(GHashTable *services_table, GHashTable
     delete_application_host_graph_result_table(result_table);
 }
 
-int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, const unsigned int flags, const OutputArtifactType artifact_type)
+int multiwaycut(gchar *services, gchar *distribution, gchar *infrastructure, gchar *extra_params, const unsigned int flags, const OutputArtifactType artifact_type)
 {
     int exit_status;
     NixXML_bool xml = flags & DYDISNIX_FLAG_XML;
     NixXML_bool automapped;
 
-    GHashTable *services_table = create_service_table(services, xml);
-    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, xml, &automapped);
+    GHashTable *services_table = create_service_table(services, extra_params, xml);
+    GHashTable *distribution_table = create_distribution_table(distribution, infrastructure, extra_params, xml, &automapped);
 
     if(services_table == NULL)
     {

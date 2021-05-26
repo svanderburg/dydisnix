@@ -4,8 +4,10 @@
 
 showUsage()
 {
+    me="$(basename "$0")"
+
     cat <<EOF
-Usage: $0 -s services_nix -q qos_nix [-i infrastructure_nix] [OPTION]
+Usage: $me -s services_nix -q qos_nix [-i infrastructure_nix] [OPTION]
 
 The command \`dydisnix-env' is a wrapper around the \`disnix-env' command that
 automatically deploys a service-oriented system. The major difference between
@@ -171,7 +173,7 @@ do
             exit 0
             ;;
     esac
-    
+
     shift
 done
 

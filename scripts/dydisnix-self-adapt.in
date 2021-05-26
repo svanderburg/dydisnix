@@ -4,8 +4,10 @@
 
 showUsage()
 {
+    me="$(basename "$0")"
+
     cat <<EOF
-Usage: $0 -s services_nix -q qos_nix [OPTION]
+Usage: $me -s services_nix -q qos_nix [OPTION]
 
 The command \`dydisnix-self-adapt' continuously monitors for changes in the
 infrastructure model and automatically reconfigures and redeploys a system when

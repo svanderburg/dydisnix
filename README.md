@@ -52,6 +52,13 @@ $ make
 $ make install
 ```
 
+When building from the Git repository, you should run the bootstrap script
+first:
+
+```bash
+$ ./bootstrap
+```
+
 For more information about using the autotools setup or for customizing the
 configuration, take a look at the `./INSTALL` file.
 

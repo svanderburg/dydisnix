@@ -4,8 +4,10 @@
 
 showUsage()
 {
+    me="$(basename "$0")"
+
     cat <<EOF
-Usage: $0 -s services_expr [OPTION]
+Usage: $me -s services_expr [OPTION]
 
 Options:
   -s, --services=services_expr Services configuration which describes all

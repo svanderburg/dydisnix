@@ -4,8 +4,10 @@
 
 showUsage()
 {
+    me="$(basename "$0")"
+
     cat <<EOF
-Usage: $0 -s services_nix -i infrastructure_nix [-q qos_nix] [OPTION]
+Usage: $me -s services_nix -i infrastructure_nix [-q qos_nix] [OPTION]
 
 The command \`dydisnix-gendist' automatically generates a distribution model
 using properties in the service model and infrastructure model. A QoS policy

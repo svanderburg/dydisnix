@@ -4,14 +4,16 @@
 
 showUsage()
 {
+    me="$(basename "$0")"
+
     cat <<EOF
-Usage: $0 -s services_nix [OPTION]
-  or: $0 -i infrastructure_nix [OPTION]
-  or: $0 -d distribution_nix -i infrastructure_nix [OPTION]
-  or: $0 -p ports_nix [OPTION]
-  or: $0 --docs docs.nix [OPTION]
-  or: $0 --id-resources idresources.nix [OPTION]
-  or: $0 --ids ids.nix [OPTION]
+Usage: $me -s services_nix [OPTION]
+  or: $me -i infrastructure_nix [OPTION]
+  or: $me -d distribution_nix -i infrastructure_nix [OPTION]
+  or: $me -p ports_nix [OPTION]
+  or: $me --docs docs.nix [OPTION]
+  or: $me --id-resources idresources.nix [OPTION]
+  or: $me --ids ids.nix [OPTION]
 
 The command \`dydisnix-xml' generates XML representations of the Disnix models
 so that they can be used by external tools.

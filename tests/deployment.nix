@@ -20,6 +20,8 @@ simpleTest {
       env = "SSH_OPTS='-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no' DISNIX_REMOTE_CLIENT='disnix-run-activity' NIX_PATH='nixpkgs=${nixpkgs}'";
     in
     ''
+      import subprocess
+
       start_all()
 
       # Initialise ssh stuff by creating a key pair for communication

@@ -21,12 +21,12 @@ simpleTest {
     ''
       # Generate a documentation catalog
       machine.succeed(
-          "${env} dydisnix-generate-services-docs -s ${models}/services.nix -f svg --output-dir $TMPDIR/out1"
+          "${env} dydisnix-generate-services-docs -s ${models}/services.nix -f svg --output-dir /tmp/out1"
       )
 
       # Generate a documentation catalog with extra documentation properties
       machine.succeed(
-          "${env} dydisnix-generate-services-docs -s ${models}/services.nix --docs ${models}/docs.nix -f svg --output-dir $TMPDIR/out2"
+          "${env} dydisnix-generate-services-docs -s ${models}/services.nix --docs ${models}/docs.nix -f svg --output-dir /tmp/out2"
       )
 
       # Generate a visualization of an infrastructure model

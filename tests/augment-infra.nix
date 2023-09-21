@@ -10,6 +10,7 @@ let
   models = ./models;
 in
 simpleTest {
+  name = "augment-infra";
   nodes = {
     inherit machine;
   };

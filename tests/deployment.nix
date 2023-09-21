@@ -10,6 +10,7 @@ let
   models = ./models;
 in
 simpleTest {
+  name = "deployment";
   nodes = {
     coordinator = machine;
     testtarget1 = machine;

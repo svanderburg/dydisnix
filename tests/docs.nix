@@ -11,6 +11,7 @@ let
 in
 
 simpleTest {
+  name = "docs";
   nodes = {
     inherit machine;
   };

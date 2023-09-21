@@ -10,6 +10,7 @@ let
   models = ./models;
 in
 simpleTest {
+  name = "gendist";
   nodes = {
     inherit machine;
   };
